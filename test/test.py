@@ -112,6 +112,31 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             self.assertTrue(len(doc.txt) > 0)
 
 
+    def testExample(self):
+
+        conn = self.redis()
+
+        with conn as r:
+            # Creating a client with a given index name
+            client = Client('myIndex', port=conn.port)
+
+            # Creating the index definition and schema
+            client.create_index(TextField('title', weight=5.0), TextField('body'))
+
+            # Indexing a document
+            client.add_document('doc1', title = 'RediSearch', body = 'Redisearch impements a search engine on top of redis')
+
+            # Searching
+            res = client.search("search engine")
+
+            print res.total # "1"
+            print res.docs[0].title 
+
+            
+        self.assertTrue(True)
+
+
+
 
 
 if __name__ == '__main__':
