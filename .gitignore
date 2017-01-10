@@ -1,0 +1,7 @@
+*
+!/**/
+.env
+!.gitignore
+!requirements.txt
+!**/*.py
+!**/*.csv
