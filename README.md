@@ -29,7 +29,7 @@ For more details, visit [http://redisearch.io](http://redisearch.io)
 
 ```py
 # Creating a client with a given index name
-client = Client('myIndex', port=conn.port)
+client = Client('myIndex')
 
 # Creating the index definition and schema
 client.create_index(TextField('title', weight=5.0), TextField('body'))
