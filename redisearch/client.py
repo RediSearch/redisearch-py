@@ -88,12 +88,16 @@ class Client(object):
             self.pipeline.execute()
             self.current_chunk = 0
 
-    def __init__(self, index_name, host='localhost', port=6379):
-        self.host = host
-        self.port = port
+    def __init__(self, index_name, host='localhost', port=6379, conn = None):
+        """
+        Create a new Client for the given index_name, and optional host and port
+
+        If conn is not None, we employ an already existing redis connection
+        """
+      
         self.index_name = index_name
 
-        self.redis = Redis(
+        self.redis = conn if conn is not None else Redis(
             connection_pool = ConnectionPool(host=host, port=port))
 
     def batch_indexer(self, chunk_size = 100):
@@ -105,8 +109,10 @@ class Client(object):
     def create_index(self, *fields):
         """
         Create the search index. Creating an existing index juts updates its properties
-        :param fields: a list of TextField or NumericField objects
-        :return:
+
+        ### Parameters:
+
+        - **fields**: a list of TextField or NumericField objects
         """
         self.redis.execute_command(
             self.CREATE_CMD, self.index_name, 'SCHEMA', *itertools.chain(*(f.redis_args() for f in fields)))
@@ -114,7 +120,6 @@ class Client(object):
     def drop_index(self):
         """
         Drop the index if it exists
-        :return:
         """
         self.redis.execute_command(self.DROP_CMD, self.index_name)
 
@@ -135,11 +140,13 @@ class Client(object):
     def add_document(self, doc_id, nosave = False, score=1.0, **fields):
         """
         Add a single document to the index.
-        :param doc_id: the id of the saved document.
-        :param nosave: if set to true, we just index the document, and don't save a copy of it. 
-                       this means that searches will just return ids.
-        :param score: the document ranking, between 0.0 and 1.0. 
-        :fields: kwargs dictionary of the document fields to be saved and/or indexed 
+
+        ### Parameters
+        
+        - **doc_id**: the id of the saved document.
+        - **nosave**: if set to true, we just index the document, and don't save a copy of it. This means that searches will just return ids.
+        - **score**: the document ranking, between 0.0 and 1.0 
+        - **fields** kwargs dictionary of the document fields to be saved and/or indexed
         """
         return self._add_document(doc_id, conn=None, nosave=nosave, score=score, **fields)
 
@@ -156,6 +163,9 @@ class Client(object):
         return Document(id=id, **fields)
 
     def info(self):
+        """
+        Get info an stats about the the current index, including the number of documents, memory consumption, etc
+        """
 
         res = self.redis.execute_command('FT.INFO', self.index_name)
         
@@ -164,11 +174,19 @@ class Client(object):
     def search(self, query, offset =0, num = 10, verbatim = False, no_content=False,
                no_stopwords = False, fields=None, snippet_size = 500, **filters):
         """
-        Search eht
-        :param query:
-        :param fields:
-        :param filters:
-        :return:
+        Search the index for a given query, and return a result of documents
+        
+        ### Parameters
+
+        - **query**: the search query, see RediSearch's documentation on query format
+        - **offset**: Paging offset for the results. Defaults to 0
+        - **num**: How many results do we want
+        - **verbatim**: If True, we do not attempt stemming on the query
+        - **no_content**: If True, we only return ids and not the document content
+        - **no_stopwords**: If True, we do not match the query against stopwords
+        - **fields**: An optional list/tuple of field names to focus the search in
+        - **snippet_size**: the size of the text snippet we attempt to extract from the document
+        - **filters**: optional numeric filters, in the format of `field = (min,max)`
         """
 
         args = [self.index_name, query]

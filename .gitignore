@@ -1,5 +1,7 @@
 *
 !/**/
+build
+dist
 .env
 !.gitignore
 !requirements.txt
