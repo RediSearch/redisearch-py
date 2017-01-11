@@ -42,8 +42,8 @@ class Client(object):
     It abstracts the API of the module and lets you just use the engine 
     """
 
-    NUMERIC = 'numeric'
-
+    NUMERIC = 'NUMERIC'
+    
     CREATE_CMD = 'FT.CREATE'
     SEARCH_CMD = 'FT.SEARCH'
     ADD_CMD = 'FT.ADD'

@@ -32,6 +32,23 @@ print res.docs[0].title
 
 ```
 
+### Example: Using the Auto Completer Client:
+
+```py
+
+# Using the auto-completer
+ac = AutoCompleter('ac')
+
+# Adding some terms
+ac.add_suggestions(Suggestion('foo', 5.0), Suggestion('bar', 1.0))
+
+# Getting suggestions
+suggs = ac.get_suggestions('goo') # returns nothing
+
+suggs = ac.get_suggestions('goo', fuzzy = True) # returns ['foo']
+
+```
+
 ### Installing
 
 1. Install redis 4.0 RC2 or above
@@ -47,6 +64,6 @@ $ pip install redisearch
 from .result import Result
 from .document import Document
 from .client import Client, NumericField, TextField
-
+from .auto_complete import AutoCompleter, Suggestion
 
 

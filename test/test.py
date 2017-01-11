@@ -9,7 +9,7 @@ import time
 import bz2
 import csv
 
-from redisearch import Client, Document, Result, NumericField, TextField
+from redisearch import Client, Document, Result, NumericField, TextField, AutoCompleter, Suggestion
 
 class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
@@ -129,13 +129,56 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             # Searching
             res = client.search("search engine")
 
-            print res.total # "1"
-            print res.docs[0].title 
+            
 
             
         self.assertTrue(True)
 
+    def testAutoComplete(self):
+        with self.redis() as r:
+            self.assertTrue(True)
+            
+            ac = AutoCompleter('ac', conn=r)
+            n = 0
+            with open('titles.csv') as f:
+                cr = csv.reader(f)
 
+                for row in cr:
+                    n+=1
+                    term, score = row[0], float(row[1])
+                    #print term, score
+                    self.assertEqual(n,ac.add_suggestions(Suggestion(term,score=score)))
+
+            self.assertEqual(n, ac.len())
+
+            ret = ac.get_suggestions('bad', with_scores = True)
+
+            self.assertEqual(2, len(ret))
+            self.assertEqual('badger', ret[0].string)
+            self.assertIsInstance(ret[0].score, float)
+            self.assertNotEquals(1.0, ret[0].score)
+            self.assertEqual('badalte rishtey', ret[1].string)
+            self.assertIsInstance(ret[1].score, float)
+            self.assertNotEquals(1.0, ret[1].score)
+
+            ret= ac.get_suggestions('bad', fuzzy=True, num=10)
+            self.assertEqual(10, len(ret))
+            self.assertEquals(1.0, ret[0].score)
+            strs = {x.string for x in ret}
+            for sug in strs:
+                self.assertEqual(1, ac.delete(sug))
+            # make sure a second delete returns 0
+            for sug in strs:
+                self.assertEqual(0, ac.delete(sug))
+            
+            # make sure they were actually deleted
+            ret2 = ac.get_suggestions('bad', fuzzy=True, num=10)
+            for sug in ret2:
+                self.assertNotIn(sug.string, strs)
+
+
+                
+                
 
 
 
