@@ -32,7 +32,7 @@ For more details, visit [http://redisearch.io](http://redisearch.io)
 client = Client('myIndex')
 
 # Creating the index definition and schema
-client.create_index(TextField('title', weight=5.0), TextField('body'))
+client.create_index((TextField('title', weight=5.0), TextField('body')))
 
 # Indexing a document
 client.add_document('doc1', title = 'RediSearch', body = 'Redisearch impements a search engine on top of redis')

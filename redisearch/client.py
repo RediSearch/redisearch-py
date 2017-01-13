@@ -49,7 +49,9 @@ class Client(object):
     ADD_CMD = 'FT.ADD'
     DROP_CMD = 'FT.DROP'
 
-    
+    NOOFFSETS = 'NOOFFSETS'
+    NOFIELDS = 'NOFIELDS'
+    NOSCOREIDX = 'NOSCOREIDX'
 
 
     class BatchIndexer(object):
@@ -106,16 +108,32 @@ class Client(object):
         """
         return Client.BatchIndexer(self, chunk_size = chunk_size)
     
-    def create_index(self, *fields):
+    def create_index(self, fields, no_term_offsets = False, 
+                     no_field_flags = False, no_score_indexes = False):
         """
         Create the search index. Creating an existing index juts updates its properties
 
         ### Parameters:
 
         - **fields**: a list of TextField or NumericField objects
+        - **no_term_offsets**: If true, we will not save term offsets in the index
+        - **no_field_flags**: If true, we will not save field flags that allow searching in specific fields
+        - **no_score_indexes**: If true, we will not save optimized top score indexes for single word queries
         """
-        self.redis.execute_command(
-            self.CREATE_CMD, self.index_name, 'SCHEMA', *itertools.chain(*(f.redis_args() for f in fields)))
+
+        args = [self.CREATE_CMD, self.index_name]
+        if no_term_offsets:
+            args.append(self.NOOFFSETS)
+        if no_field_flags:
+            args.append(self.NOFIELDS)
+        if no_score_indexes:
+            args.append(self.NOSCOREIDX)
+
+        args.append('SCHEMA')
+
+        args += list(itertools.chain(*(f.redis_args() for f in fields)))
+        print args
+        self.redis.execute_command(*args)
 
     def drop_index(self):
         """

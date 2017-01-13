@@ -11,14 +11,16 @@ import csv
 
 from redisearch import Client, Document, Result, NumericField, TextField, AutoCompleter, Suggestion
 
-class RedisSearchTestCase(ModuleTestCase('../module.so')):
+class RedisSearchTestCase(ModuleTestCase('../module.so', fixed_port=6379)):
 
     def createIndex(self, client, num_docs = 100):
 
         assert isinstance(client, Client)
         #conn.flushdb()
         #client = Client('test', port=conn.port)
-        client.create_index(TextField('play', weight=5.0), TextField('txt'), NumericField('chapter'))
+        client.create_index((TextField('play', weight=5.0), 
+                             TextField('txt'), 
+                              NumericField('chapter')))
         chapters = {}
         
         with bz2.BZ2File('will_play_text.csv.bz2') as fp:
@@ -121,7 +123,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             client = Client('myIndex', port=conn.port)
 
             # Creating the index definition and schema
-            client.create_index(TextField('title', weight=5.0), TextField('body'))
+            client.create_index((TextField('title', weight=5.0), TextField('body')))
 
             # Indexing a document
             client.add_document('doc1', title = 'RediSearch', body = 'Redisearch impements a search engine on top of redis')
