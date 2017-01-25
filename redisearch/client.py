@@ -3,13 +3,14 @@ import itertools
 import time
 from .document import Document
 from .result import Result
-
+from .query import Query, Filter
 
 class Field(object):
 
     NUMERIC = 'NUMERIC'
     TEXT = 'TEXT'
     WEIGHT = 'WEIGHT'
+    GEO  = 'GEO'
 
 
     def __init__(self, name, *args):
@@ -35,6 +36,17 @@ class NumericField(Field):
     def __init__(self, name):
         Field.__init__(self, name, Field.NUMERIC)
 
+
+class GeoField(Field):
+    """
+    GeoField is used to define a geo-indexing field in a schema defintion
+    """
+
+    def __init__(self, name):
+        Field.__init__(self, name, Field.GEO)
+
+
+    
 
 class Client(object):
     """
@@ -164,7 +176,8 @@ class Client(object):
         - **doc_id**: the id of the saved document.
         - **nosave**: if set to true, we just index the document, and don't save a copy of it. This means that searches will just return ids.
         - **score**: the document ranking, between 0.0 and 1.0 
-        - **fields** kwargs dictionary of the document fields to be saved and/or indexed
+        - **fields** kwargs dictionary of the document fields to be saved and/or indexed. 
+                     NOTE: Geo points shoule be encoded as strings of "lon,lat"
         """
         return self._add_document(doc_id, conn=None, nosave=nosave, score=score, **fields)
 
@@ -189,47 +202,31 @@ class Client(object):
         
         return {res[i]: res[i+1] for i in range(0, len(res), 2)}
 
-    def search(self, query, offset =0, num = 10, verbatim = False, no_content=False,
-               no_stopwords = False, fields=None, snippet_size = 500, **filters):
+    def search(self, query, snippet_sizes = None):
         """
         Search the index for a given query, and return a result of documents
         
         ### Parameters
 
-        - **query**: the search query, see RediSearch's documentation on query format
-        - **offset**: Paging offset for the results. Defaults to 0
-        - **num**: How many results do we want
-        - **verbatim**: If True, we do not attempt stemming on the query
-        - **no_content**: If True, we only return ids and not the document content
-        - **no_stopwords**: If True, we do not match the query against stopwords
-        - **fields**: An optional list/tuple of field names to focus the search in
-        - **snippet_size**: the size of the text snippet we attempt to extract from the document
-        - **filters**: optional numeric filters, in the format of `field = (min,max)`
+        - **query**: the search query. Either a text for simple queries with default parameters, or a Query object for complex queries.
+                     See RediSearch's documentation on query format
+        - **snippet_sizes**: A dictionary of {field: snippet_size} used to trim and format the result. e.g.e {'body': 500}
         """
 
-        args = [self.index_name, query]
-        if no_content:
-            args.append('NOCONTENT')
-
-        if fields:
-
-            args.append('INFIELDS')
-            args.append(len(fields))
-            args += fields
+        args = [self.index_name]
         
-        if verbatim:
-            args.append('VERBATIM')
+        if isinstance(query, (str, unicode)):
+            #convert the query from a text to a query object
+            query = Query(query)
+        if not isinstance(query, Query):
+            raise ValueError("Bad query type %s" % type(query))
 
-        if no_stopwords:
-            args.append('NOSTOPWORDS')
 
-        if filters:
-            for k, v in filters.iteritems():
-                args += ['FILTER', k] + list(v)
-
-        args += ["LIMIT", offset, num]
-
+        args += query.get_args()
+        query_text = query.query_string()
+            
+        
         st = time.time()
         res = self.redis.execute_command(self.SEARCH_CMD, *args)
 
-        return Result(res,  not no_content, queryText=query, snippet_size=snippet_size, duration = (time.time()-st)*1000.0)
+        return Result(res,  not query._no_content, query_text=query_text, snippets = snippet_sizes, duration = (time.time()-st)*1000.0)

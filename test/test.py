@@ -9,9 +9,9 @@ import time
 import bz2
 import csv
 
-from redisearch import Client, Document, Result, NumericField, TextField, AutoCompleter, Suggestion
+from redisearch import *
 
-class RedisSearchTestCase(ModuleTestCase('../module.so', fixed_port=6379)):
+class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
     def createIndex(self, client, num_docs = 100):
 
@@ -86,7 +86,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so', fixed_port=6379)):
                 self.assertTrue(len(doc.txt) > 0)
                 
             # test no content
-            res = client.search('king', no_content=True)
+            res = client.search(Query('king').no_content())
             self.assertEqual(194, res.total)
             self.assertEqual(10, len(res.docs))
             for doc in res.docs:
@@ -94,14 +94,14 @@ class RedisSearchTestCase(ModuleTestCase('../module.so', fixed_port=6379)):
                 self.assertNotIn('play', doc.__dict__)
             
             #test verbatim vs no verbatim
-            total = client.search('kings', no_content=True).total
-            vtotal = client.search('kings', no_content=True, verbatim = True).total
+            total = client.search(Query('kings').no_content()).total
+            vtotal = client.search(Query('kings').no_content().verbatim()).total
             self.assertGreater(total, vtotal)  
 
             # test in fields
-            txt_total =  client.search('henry', no_content=True, fields = ('txt',)).total
-            play_total = client.search('henry', no_content=True, fields = ('play',)).total
-            both_total = client.search('henry', no_content=True, fields = ('play','txt')).total
+            txt_total =  client.search(Query('henry').no_content().limit_fields('txt')).total
+            play_total = client.search(Query('henry').no_content().limit_fields('play')).total
+            both_total = client.search(Query('henry').no_content().limit_fields('play','txt')).total
             self.assertEqual(129, txt_total)
             self.assertEqual(494, play_total)
             self.assertEqual(494, both_total)
@@ -113,6 +113,43 @@ class RedisSearchTestCase(ModuleTestCase('../module.so', fixed_port=6379)):
             self.assertEqual(doc.play, 'Henry VI Part 3')
             self.assertTrue(len(doc.txt) > 0)
 
+
+    def testFilters(self):
+
+        conn = self.redis()
+
+        with conn as r:
+            # Creating a client with a given index name
+            client = Client('idx', port=conn.port)
+
+            client.create_index((TextField('txt'), NumericField('num'), GeoField('loc')))
+
+            client.add_document('doc1', txt = 'foo bar', num = 3.141, loc = '-0.441,51.458')
+            client.add_document('doc2', txt = 'foo baz', num = 2, loc = '-0.1,51.2')
+
+            
+            # Test numerical filter
+            q1 = Query("foo").add_filter(NumericFilter('num', 0, 2)).no_content()
+            q2 = Query("foo").add_filter(NumericFilter('num', 2, NumericFilter.INF, minExclusive=True)).no_content()
+            res1, res2 =  client.search(q1), client.search(q2)
+
+            self.assertEqual(1, res1.total)
+            self.assertEqual(1, res2.total)
+            self.assertEqual('doc2', res1.docs[0].id)
+            self.assertEqual('doc1', res2.docs[0].id)
+
+            # Test geo filter
+            q1 = Query("foo").add_filter(GeoFilter('loc', -0.44, 51.45, 10)).no_content()
+            q2 = Query("foo").add_filter(GeoFilter('loc', -0.44, 51.45, 100)).no_content()
+            res1, res2 =  client.search(q1), client.search(q2)
+
+            self.assertEqual(1, res1.total)
+            self.assertEqual(2, res2.total)
+            self.assertEqual('doc1', res1.docs[0].id)
+            self.assertEqual('doc1', res2.docs[0].id)
+            self.assertEqual('doc2', res2.docs[1].id)
+
+            print res1, res2
 
     def testExample(self):
 
@@ -128,9 +165,13 @@ class RedisSearchTestCase(ModuleTestCase('../module.so', fixed_port=6379)):
             # Indexing a document
             client.add_document('doc1', title = 'RediSearch', body = 'Redisearch impements a search engine on top of redis')
 
-            # Searching
-            res = client.search("search engine")
+            # Searching with snippet sizes
+            res = client.search("search engine", snippet_sizes = {'body': 50})
 
+            # Searching with complext parameters:
+            q = Query("search engine").verbatim().no_content().paging(0,5)
+
+            res = client.search(q)
             
 
             

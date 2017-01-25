@@ -6,13 +6,16 @@ class Result(object):
     Represents the result of a search query, and has an array of Document objects
     """
 
-    def __init__(self, res, hascontent, queryText, duration=0, snippet_size = 500):
+    def __init__(self, res, hascontent, query_text, duration=0, snippets = None):
+        """
+        - **snippets**: An optional dictionary of the form {field: snippet_size} for snippet formatting
+        """
 
         self.total = res[0]
         self.duration = duration
         self.docs = []
 
-        tokens = filter(None, queryText.rstrip("\" ").lstrip(" \"").split(' '))
+        tokens = filter(None, query_text.rstrip("\" ").lstrip(" \"").split(' '))
         for i in xrange(1, len(res), 2 if hascontent else 1):
             id = res[i]
             fields = {} 
@@ -26,8 +29,9 @@ class Result(object):
 
             doc = Document(id, **fields)
             #print doc
-            if hascontent:
-                doc.snippetize('body', size=snippet_size, bold_tokens = tokens)
+            if hascontent and snippets:
+                for k,v in snippets.iteritems():
+                    doc.snippetize(k, size=v, bold_tokens = tokens)
                 
             self.docs.append(doc)
 

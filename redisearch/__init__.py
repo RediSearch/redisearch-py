@@ -63,7 +63,8 @@ $ pip install redisearch
 """
 from .result import Result
 from .document import Document
-from .client import Client, NumericField, TextField
+from .client import Client, NumericField, TextField, GeoField
+from .query import Query, NumericFilter, GeoFilter
 from .auto_complete import AutoCompleter, Suggestion
 
 
