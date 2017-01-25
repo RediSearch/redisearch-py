@@ -60,58 +60,59 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
             self.createIndex(client, num_docs =num_docs)
 
-            #verify info
-            info = client.info()
-            for k in ['inverted_cap_ovh', 'num_docs', 'offsets_per_term_avg', 'fields', 'index_name', 
-                        'inverted_cap_mb', 'skip_index_size_mb', 'bytes_per_record_avg', 'inverted_sz_mb', 
-                        'num_terms', 'offset_vectors_sz_mb', 'records_per_doc_avg', 'num_records', 
-                        'offset_bits_per_record_avg', 'score_index_size_mb']:
-                self.assertIn(k, info)
+            for _ in r.retry_with_rdb_reload():
+                #verify info
+                info = client.info()
+                for k in ['inverted_cap_ovh', 'num_docs', 'offsets_per_term_avg', 'fields', 'index_name', 
+                            'inverted_cap_mb', 'skip_index_size_mb', 'bytes_per_record_avg', 'inverted_sz_mb', 
+                            'num_terms', 'offset_vectors_sz_mb', 'records_per_doc_avg', 'num_records', 
+                            'offset_bits_per_record_avg', 'score_index_size_mb']:
+                    self.assertIn(k, info)
 
-            self.assertEqual(client.index_name, info['index_name'])
-            self.assertEqual(num_docs, int(info['num_docs']))
+                self.assertEqual(client.index_name, info['index_name'])
+                self.assertEqual(num_docs, int(info['num_docs']))
 
 
-            res =  client.search("henry iv")
-            self.assertIsInstance(res, Result)
-            assert isinstance(res, Result)
-            self.assertEqual(225, res.total)
-            self.assertEqual(10, len(res.docs))
-            self.assertGreater(res.duration, 0)
+                res =  client.search("henry iv")
+                self.assertIsInstance(res, Result)
+                assert isinstance(res, Result)
+                self.assertEqual(225, res.total)
+                self.assertEqual(10, len(res.docs))
+                self.assertGreater(res.duration, 0)
 
-            for doc in res.docs:
+                for doc in res.docs:
 
-                self.assertTrue(doc.id)
-                self.assertEqual(doc.play, 'Henry IV')
-                self.assertTrue(len(doc.txt) > 0)
+                    self.assertTrue(doc.id)
+                    self.assertEqual(doc.play, 'Henry IV')
+                    self.assertTrue(len(doc.txt) > 0)
+                    
+                # test no content
+                res = client.search(Query('king').no_content())
+                self.assertEqual(194, res.total)
+                self.assertEqual(10, len(res.docs))
+                for doc in res.docs:
+                    self.assertNotIn('txt', doc.__dict__)
+                    self.assertNotIn('play', doc.__dict__)
                 
-            # test no content
-            res = client.search(Query('king').no_content())
-            self.assertEqual(194, res.total)
-            self.assertEqual(10, len(res.docs))
-            for doc in res.docs:
-                self.assertNotIn('txt', doc.__dict__)
-                self.assertNotIn('play', doc.__dict__)
-            
-            #test verbatim vs no verbatim
-            total = client.search(Query('kings').no_content()).total
-            vtotal = client.search(Query('kings').no_content().verbatim()).total
-            self.assertGreater(total, vtotal)  
+                #test verbatim vs no verbatim
+                total = client.search(Query('kings').no_content()).total
+                vtotal = client.search(Query('kings').no_content().verbatim()).total
+                self.assertGreater(total, vtotal)  
 
-            # test in fields
-            txt_total =  client.search(Query('henry').no_content().limit_fields('txt')).total
-            play_total = client.search(Query('henry').no_content().limit_fields('play')).total
-            both_total = client.search(Query('henry').no_content().limit_fields('play','txt')).total
-            self.assertEqual(129, txt_total)
-            self.assertEqual(494, play_total)
-            self.assertEqual(494, both_total)
+                # test in fields
+                txt_total =  client.search(Query('henry').no_content().limit_fields('txt')).total
+                play_total = client.search(Query('henry').no_content().limit_fields('play')).total
+                both_total = client.search(Query('henry').no_content().limit_fields('play','txt')).total
+                self.assertEqual(129, txt_total)
+                self.assertEqual(494, play_total)
+                self.assertEqual(494, both_total)
 
-            # test load_document
-            doc = client.load_document('henry vi part 3:62')
-            self.assertIsNotNone(doc)
-            self.assertEqual('henry vi part 3:62', doc.id)
-            self.assertEqual(doc.play, 'Henry VI Part 3')
-            self.assertTrue(len(doc.txt) > 0)
+                # test load_document
+                doc = client.load_document('henry vi part 3:62')
+                self.assertIsNotNone(doc)
+                self.assertEqual('henry vi part 3:62', doc.id)
+                self.assertEqual(doc.play, 'Henry VI Part 3')
+                self.assertTrue(len(doc.txt) > 0)
 
 
     def testFilters(self):
@@ -127,29 +128,30 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             client.add_document('doc1', txt = 'foo bar', num = 3.141, loc = '-0.441,51.458')
             client.add_document('doc2', txt = 'foo baz', num = 2, loc = '-0.1,51.2')
 
-            
-            # Test numerical filter
-            q1 = Query("foo").add_filter(NumericFilter('num', 0, 2)).no_content()
-            q2 = Query("foo").add_filter(NumericFilter('num', 2, NumericFilter.INF, minExclusive=True)).no_content()
-            res1, res2 =  client.search(q1), client.search(q2)
+            for i in r.retry_with_rdb_reload():
+                
+                # Test numerical filter
+                q1 = Query("foo").add_filter(NumericFilter('num', 0, 2)).no_content()
+                q2 = Query("foo").add_filter(NumericFilter('num', 2, NumericFilter.INF, minExclusive=True)).no_content()
+                res1, res2 =  client.search(q1), client.search(q2)
 
-            self.assertEqual(1, res1.total)
-            self.assertEqual(1, res2.total)
-            self.assertEqual('doc2', res1.docs[0].id)
-            self.assertEqual('doc1', res2.docs[0].id)
+                self.assertEqual(1, res1.total)
+                self.assertEqual(1, res2.total)
+                self.assertEqual('doc2', res1.docs[0].id)
+                self.assertEqual('doc1', res2.docs[0].id)
 
-            # Test geo filter
-            q1 = Query("foo").add_filter(GeoFilter('loc', -0.44, 51.45, 10)).no_content()
-            q2 = Query("foo").add_filter(GeoFilter('loc', -0.44, 51.45, 100)).no_content()
-            res1, res2 =  client.search(q1), client.search(q2)
+                # Test geo filter
+                q1 = Query("foo").add_filter(GeoFilter('loc', -0.44, 51.45, 10)).no_content()
+                q2 = Query("foo").add_filter(GeoFilter('loc', -0.44, 51.45, 100)).no_content()
+                res1, res2 =  client.search(q1), client.search(q2)
 
-            self.assertEqual(1, res1.total)
-            self.assertEqual(2, res2.total)
-            self.assertEqual('doc1', res1.docs[0].id)
-            self.assertEqual('doc1', res2.docs[0].id)
-            self.assertEqual('doc2', res2.docs[1].id)
+                self.assertEqual(1, res1.total)
+                self.assertEqual(2, res2.total)
+                self.assertEqual('doc1', res1.docs[0].id)
+                self.assertEqual('doc1', res2.docs[0].id)
+                self.assertEqual('doc2', res2.docs[1].id)
 
-            print res1, res2
+                print res1, res2
 
     def testExample(self):
 
@@ -192,22 +194,25 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                     #print term, score
                     self.assertEqual(n,ac.add_suggestions(Suggestion(term,score=score)))
 
+            
             self.assertEqual(n, ac.len())
+            strs = []
+            for _ in r.retry_with_rdb_reload():
+                ret = ac.get_suggestions('bad', with_scores = True)
 
-            ret = ac.get_suggestions('bad', with_scores = True)
+                self.assertEqual(2, len(ret))
+                self.assertEqual('badger', ret[0].string)
+                self.assertIsInstance(ret[0].score, float)
+                self.assertNotEquals(1.0, ret[0].score)
+                self.assertEqual('badalte rishtey', ret[1].string)
+                self.assertIsInstance(ret[1].score, float)
+                self.assertNotEquals(1.0, ret[1].score)
 
-            self.assertEqual(2, len(ret))
-            self.assertEqual('badger', ret[0].string)
-            self.assertIsInstance(ret[0].score, float)
-            self.assertNotEquals(1.0, ret[0].score)
-            self.assertEqual('badalte rishtey', ret[1].string)
-            self.assertIsInstance(ret[1].score, float)
-            self.assertNotEquals(1.0, ret[1].score)
+                ret= ac.get_suggestions('bad', fuzzy=True, num=10)
+                self.assertEqual(10, len(ret))
+                self.assertEquals(1.0, ret[0].score)
+                strs = {x.string for x in ret}
 
-            ret= ac.get_suggestions('bad', fuzzy=True, num=10)
-            self.assertEqual(10, len(ret))
-            self.assertEquals(1.0, ret[0].score)
-            strs = {x.string for x in ret}
             for sug in strs:
                 self.assertEqual(1, ac.delete(sug))
             # make sure a second delete returns 0
