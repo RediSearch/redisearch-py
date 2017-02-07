@@ -145,13 +145,13 @@ class Client(object):
 
         args += list(itertools.chain(*(f.redis_args() for f in fields)))
 
-        self.redis.execute_command(*args)
+        return self.redis.execute_command(*args)
 
     def drop_index(self):
         """
         Drop the index if it exists
         """
-        self.redis.execute_command(self.DROP_CMD, self.index_name)
+        return self.redis.execute_command(self.DROP_CMD, self.index_name)
 
     def _add_document(self, doc_id, conn=None, nosave=False, score=1.0, payload=None,
                       replace=False, **fields):
