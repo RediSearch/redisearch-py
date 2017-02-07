@@ -115,6 +115,57 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                 self.assertTrue(len(doc.txt) > 0)
 
 
+    def testPayloads(self):
+        
+        conn = self.redis()
+
+        with conn as r:
+            # Creating a client with a given index name
+            client = Client('idx', port=conn.port)
+
+            client.create_index((TextField('txt'),))
+
+            client.add_document('doc1', payload = 'foo baz', txt = 'foo bar')
+            client.add_document('doc2', txt = 'foo bar')
+
+            q = Query("foo bar").with_payloads()
+            res = client.search(q)
+            self.assertEqual(2, res.total)
+            self.assertEqual('doc1', res.docs[0].id)
+            self.assertEqual('foo baz', res.docs[0].payload)
+            self.assertEqual('doc2', res.docs[1].id)
+            self.assertIsNone(res.docs[1].payload)
+
+    def testReplace(self):
+        
+        conn = self.redis()
+
+        with conn as r:
+            # Creating a client with a given index name
+            client = Client('idx', port=conn.port)
+
+            client.create_index((TextField('txt'),))
+
+            client.add_document('doc1', txt = 'foo bar')
+            client.add_document('doc2', txt = 'foo bar')
+
+            res = client.search("foo bar")
+            self.assertEqual(2, res.total)
+            client.add_document('doc1', replace = True, txt = 'this is a replaced doc')
+            
+            
+            res = client.search("foo bar")
+            self.assertEqual(1, res.total)
+            self.assertEqual('doc2', res.docs[0].id)
+
+            
+            res = client.search("replaced doc")
+            self.assertEqual(1, res.total)
+            self.assertEqual('doc1', res.docs[0].id)
+
+
+                      
+
     def testFilters(self):
 
         conn = self.redis()
@@ -151,7 +202,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                 self.assertEqual('doc1', res2.docs[0].id)
                 self.assertEqual('doc2', res2.docs[1].id)
 
-                print res1, res2
+                #print res1, res2
 
     def testExample(self):
 

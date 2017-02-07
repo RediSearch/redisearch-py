@@ -22,6 +22,7 @@ class Query(object):
         self._no_stopwords = False
         self._fields = None
         self._verbatim = False
+        self._with_payloads = False
         self._filters = []
 
 
@@ -57,6 +58,9 @@ class Query(object):
             for flt in self._filters:
                 assert isinstance(flt, Filter)
                 args += flt.args
+
+        if self._with_payloads:
+            args.append('WITHPAYLOADS')
 
         args += ["LIMIT", self._offset, self._num]
         
@@ -94,6 +98,13 @@ class Query(object):
         Only useful in very big queries that you are certain contain no stopwords.
         """
         self._no_stopwords = True
+        return self
+
+    def with_payloads(self):
+        """
+        Ask the engine to return document payloads
+        """
+        self._with_payloads = True
         return self
     
     def limit_fields(self, *fields):
