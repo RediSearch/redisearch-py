@@ -459,6 +459,19 @@ def get_args(self)
 Format the redis arguments for this query and return them
 
 
+### in\_order
+```py
+
+def in_order(self)
+
+```
+
+
+
+Match only documents where the query terms appear in the same order in the document.
+i.e. for the query 'hello world', we do not match 'world hello'
+
+
 ### limit\_fields
 ```py
 
@@ -471,6 +484,18 @@ def limit_fields(self, *fields)
 Limit the search to specific TEXT fields only
 
 - **fields**: A list of strings, case sensitive field names from the defined schema
+
+
+### limit\_ids
+```py
+
+def limit_ids(self, *ids)
+
+```
+
+
+
+Limit the results to a specific set of pre-known document ids of any length
 
 
 ### no\_content
@@ -523,6 +548,18 @@ def query_string(self)
 
 
 Return the query string of this query only
+
+
+### slop
+```py
+
+def slop(self, slop)
+
+```
+
+
+
+Allow a masimum of N intervening non matched terms between phrase terms (0 means exact phrase)
 
 
 ### verbatim
