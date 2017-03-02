@@ -114,6 +114,21 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                 self.assertEqual(doc.play, 'Henry VI Part 3')
                 self.assertTrue(len(doc.txt) > 0)
 
+                # test inkeys
+                ids = [x.id for x in client.search(Query('henry')).docs]
+                self.assertEqual(10, len(ids))
+                subset = ids[:5]
+                docs = client.search(Query('henry').limit_ids(*subset))
+                self.assertEqual(len(subset), docs.total)
+                ids = [x.id for x in docs.docs]
+                self.assertEqual(set(ids), set(subset))
+                
+                # test slop and in order
+                self.assertEqual(193, client.search(Query('henry king')).total)
+                self.assertEqual(2,client.search(Query('henry king').slop(0).in_order()).total)
+                self.assertEqual(25,client.search(Query('king henry').slop(0).in_order()).total)
+                self.assertEqual(53,client.search(Query('henry king').slop(0)).total)
+                self.assertEqual(167,client.search(Query('henry king').slop(100)).total)
 
     def testPayloads(self):
         

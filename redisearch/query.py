@@ -23,7 +23,10 @@ class Query(object):
         self._fields = None
         self._verbatim = False
         self._with_payloads = False
-        self._filters = []
+        self._filters = list()
+        self._ids = None
+        self._slop = -1
+        self._in_order = False
 
 
     def query_string(self):
@@ -31,6 +34,28 @@ class Query(object):
         Return the query string of this query only
         """
         return self._query_string
+
+    def limit_ids(self, *ids):
+        """
+        Limit the results to a specific set of pre-known document ids of any length
+        """
+        self._ids = ids
+        return self
+
+    def slop(self, slop):
+        """
+        Allow a masimum of N intervening non matched terms between phrase terms (0 means exact phrase)
+        """
+        self._slop = slop
+        return self
+
+    def in_order(self):
+        """
+        Match only documents where the query terms appear in the same order in the document.
+        i.e. for the query 'hello world', we do not match 'world hello'
+        """
+        self._in_order = True
+        return self
 
     def get_args(self):
         """
@@ -61,6 +86,17 @@ class Query(object):
 
         if self._with_payloads:
             args.append('WITHPAYLOADS')
+        
+        if self._ids:
+            args.append('INKEYS')
+            args.append(len(self._ids))
+            args += self._ids
+
+        if self._slop >= 0:
+            args += ['SLOP', self._slop]
+
+        if self._in_order:
+            args.append('INORDER')
 
         args += ["LIMIT", self._offset, self._num]
         
