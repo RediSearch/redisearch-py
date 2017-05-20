@@ -1,4 +1,4 @@
-import redis
+from redis import Redis, ConnectionPool
 
 class Suggestion(object):
     """
