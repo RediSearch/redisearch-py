@@ -12,11 +12,12 @@ class Field(object):
     TEXT = 'TEXT'
     WEIGHT = 'WEIGHT'
     GEO = 'GEO'
+    SORTABLE = 'SORTABLE'
 
     def __init__(self, name, *args):
         self.name = name
         self.args = args
-
+    
     def redis_args(self):
 
         return [self.name] + list(self.args)
@@ -27,8 +28,12 @@ class TextField(Field):
     TextField is used to define a text field in a schema definition
     """
 
-    def __init__(self, name, weight=1.0):
-        Field.__init__(self, name, Field.TEXT, Field.WEIGHT, weight)
+    def __init__(self, name, weight=1.0, sortable = False):
+        args = [Field.TEXT, Field.WEIGHT, weight]
+        if sortable:
+            args.append(Field.SORTABLE)
+
+        Field.__init__(self, name, *args)
 
 
 class NumericField(Field):
@@ -36,8 +41,11 @@ class NumericField(Field):
     NumericField is used to define a numeric field in a schema defintion
     """
 
-    def __init__(self, name):
-        Field.__init__(self, name, Field.NUMERIC)
+    def __init__(self, name, sortable = False):
+        if sortable:
+            Field.__init__(self, name, Field.NUMERIC, Field.SORTABLE)
+        else:
+            Field.__init__(self, name, Field.NUMERIC)
 
 
 class GeoField(Field):
@@ -61,10 +69,12 @@ class Client(object):
     SEARCH_CMD = 'FT.SEARCH'
     ADD_CMD = 'FT.ADD'
     DROP_CMD = 'FT.DROP'
+    EXPLAIN_CMD = 'FT.EXPLAIN'
 
     NOOFFSETS = 'NOOFFSETS'
     NOFIELDS = 'NOFIELDS'
     NOSCOREIDX = 'NOSCOREIDX'
+    STOPWORDS = 'STOPWORDS'
 
     class BatchIndexer(object):
         """
@@ -121,7 +131,7 @@ class Client(object):
         return Client.BatchIndexer(self, chunk_size=chunk_size)
 
     def create_index(self, fields, no_term_offsets=False,
-                     no_field_flags=False, no_score_indexes=False):
+                     no_field_flags=False, no_score_indexes=False, stopwords = None):
         """
         Create the search index. Creating an existing index juts updates its properties
 
@@ -131,6 +141,7 @@ class Client(object):
         - **no_term_offsets**: If true, we will not save term offsets in the index
         - **no_field_flags**: If true, we will not save field flags that allow searching in specific fields
         - **no_score_indexes**: If true, we will not save optimized top score indexes for single word queries
+        - **stopwords**: If not None, we create the index with this custom stopword list. The list can be empty
         """
 
         args = [self.CREATE_CMD, self.index_name]
@@ -140,7 +151,11 @@ class Client(object):
             args.append(self.NOFIELDS)
         if no_score_indexes:
             args.append(self.NOSCOREIDX)
-
+        if stopwords is not None and isinstance(stopwords, (list, tuple, set)):
+            args += [self.STOPWORDS, len(stopwords)]
+            if len(stopwords) > 0:
+                args += list(stopwords)
+    
         args.append('SCHEMA')
 
         args += list(itertools.chain(*(f.redis_args() for f in fields)))

@@ -52,7 +52,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
     def testClient(self):
 
         conn = self.redis()
-
+        
         with conn as r:
             num_docs = 500
             r.flushdb()
@@ -179,7 +179,22 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             self.assertEqual('doc1', res.docs[0].id)
 
 
-                      
+    def testStopwords(self): 
+        conn = self.redis()
+
+        with conn as r:
+            # Creating a client with a given index name
+            client = Client('idx', port=conn.port)
+
+            client.create_index((TextField('txt'),), stopwords = ['foo', 'bar', 'baz'])
+            client.add_document('doc1', txt = 'foo bar')
+            client.add_document('doc2', txt = 'hello world')
+            
+            q1 = Query("foo bar").no_content()
+            q2 = Query("foo bar hello world").no_content()
+            res1, res2 =  client.search(q1), client.search(q2)
+            self.assertEqual(0, res1.total)
+            self.assertEqual(1, res2.total)
 
     def testFilters(self):
 
