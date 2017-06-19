@@ -70,6 +70,7 @@ class Client(object):
     ADD_CMD = 'FT.ADD'
     DROP_CMD = 'FT.DROP'
     EXPLAIN_CMD = 'FT.EXPLAIN'
+    DEL_CMD = 'FT.DEL'
 
     NOOFFSETS = 'NOOFFSETS'
     NOFIELDS = 'NOFIELDS'
@@ -204,6 +205,17 @@ class Client(object):
         """
         return self._add_document(doc_id, conn=None, nosave=nosave, score=score, 
                                   payload=payload, replace=replace, **fields)
+
+    def delete_document(self, doc_id, conn=None):
+        """
+        Delete a document from index
+        """
+        if conn is None:
+            conn = self.redis
+
+        args = [self.DEL_CMD, self.index_name, doc_id]
+
+        return conn.execute_command(*args);
 
     def load_document(self, id):
         """
