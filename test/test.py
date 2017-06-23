@@ -114,6 +114,15 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                 self.assertEqual(doc.play, 'Henry VI Part 3')
                 self.assertTrue(len(doc.txt) > 0)
 
+                # test delete document
+                client.add_document('doc-5ghs2', play = 'Death of a Salesman')
+                newDoc = client.load_document('doc-5ghs2')
+                self.assertIsNotNone(newDoc)
+
+                client.delete_document('doc-5ghs2')
+                newDoc = client.load_document('doc-5ghs2')
+                self.assertIsNone(newDoc)
+
                 # test inkeys
                 ids = [x.id for x in client.search(Query('henry')).docs]
                 self.assertEqual(10, len(ids))
