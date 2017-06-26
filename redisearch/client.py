@@ -168,7 +168,7 @@ class Client(object):
         Drop the index if it exists
         """
         return self.redis.execute_command(self.DROP_CMD, self.index_name)
-
+        
     def _add_document(self, doc_id, conn=None, nosave=False, score=1.0, payload=None,
                       replace=False, **fields):
         """ 
@@ -209,13 +209,12 @@ class Client(object):
     def delete_document(self, doc_id, conn=None):
         """
         Delete a document from index
+        Returns 1 if the document was deleted, 0 if not
         """
         if conn is None:
             conn = self.redis
 
-        args = [self.DEL_CMD, self.index_name, doc_id]
-
-        return conn.execute_command(*args);
+        return conn.execute_command(self.DEL_CMD, self.index_name, doc_id)
 
     def load_document(self, id):
         """
