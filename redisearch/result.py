@@ -6,7 +6,7 @@ class Result(object):
     Represents the result of a search query, and has an array of Document objects
     """
 
-    def __init__(self, res, hascontent, query_text, duration=0, snippets = None, has_payload = False):
+    def __init__(self, res, hascontent, withscores, query_text, duration=0, snippets = None, has_payload = False):
         """
         - **snippets**: An optional dictionary of the form {field: snippet_size} for snippet formatting
         """
@@ -22,13 +22,23 @@ class Result(object):
         else:
             # we can't have nocontent and payloads in the same response
             has_payload = False
-            
+
+        if withscores:
+            step = step + 1
         
         for i in xrange(1, len(res), step):
             id = res[i]
-            payload = res[i+1] if has_payload else None
+
+            score = None
+            if withscores:
+                score = res[i+1]
+                payload = res[i+2] if has_payload else None
+            else:
+                payload = res[i+1] if has_payload else None
+
             fields_offset = 2 if has_payload else 1
-            
+            fields_offset = (fields_offset + 1) if withscores else fields_offset
+
             fields = {} 
             if hascontent:
                 fields = dict(
@@ -38,7 +48,7 @@ class Result(object):
             except KeyError:
                 pass
 
-            doc = Document(id, payload=payload, **fields)
+            doc = Document(id, payload=payload, internal_score=score, **fields)
             #print doc
             if hascontent and snippets:
                 for k,v in snippets.iteritems():
