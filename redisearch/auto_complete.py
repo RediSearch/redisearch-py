@@ -141,4 +141,5 @@ class AutoCompleter(object):
             return results
 
         parser = SuggestionParser(with_scores, with_payloads, ret)
+
         return [s for s in parser]

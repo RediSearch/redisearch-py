@@ -3,10 +3,14 @@ class Document(object):
     Represents a single document in a result set 
     """
 
-    def __init__(self, id, payload = None, **fields):
+    def __init__(self, id, payload = None, internal_score = None, **fields):
 
         self.id = id
         self.payload = payload
+
+        if internal_score is not None:
+            self.internal_score = internal_score
+            
         for k, v in fields.iteritems():
             setattr(self, k, v)
 

@@ -28,6 +28,7 @@ class Query(object):
         self._slop = -1
         self._in_order = False
         self._return_fields = []
+        self._with_scores = False
 
 
     def query_string(self):
@@ -111,6 +112,9 @@ class Query(object):
             args.append(len(self._return_fields))
             args += self._return_fields
 
+        if self._with_scores:
+            args.append('WITHSCORES')
+
         args += ["LIMIT", self._offset, self._num]
         
         return args
@@ -176,6 +180,13 @@ class Query(object):
         self._filters.append(flt)
         return self
 
+    def with_scores(self):
+        """
+        If set, we also return the relative internal score of each document. 
+        This can be used to merge results from multiple instances
+        """
+        self._with_scores = True
+        return self
 
 
 class Filter(object):
