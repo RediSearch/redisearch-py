@@ -11,6 +11,9 @@ import csv
 
 from redisearch import *
 
+WILL_PLAY_TEXT = os.path.abspath(os.path.dirname(__file__) + '/will_play_text.csv.bz2')
+TITLES_CSV = os.path.abspath(os.path.dirname(__file__) + '/titles.csv')
+
 class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
     def createIndex(self, client, num_docs = 100):
@@ -28,7 +31,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
         chapters = {}
         
-        with bz2.BZ2File('will_play_text.csv.bz2') as fp:
+        with bz2.BZ2File(WILL_PLAY_TEXT) as fp:
             
             r = csv.reader(fp, delimiter=';')
             for n, line in enumerate(r):
@@ -209,7 +212,10 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         with conn as r:
             # Creating a client with a given index name
             client = Client('idx', port=conn.port)
-            client.drop_index()
+            try:
+                client.drop_index()
+            except:
+                pass
             client.create_index((TextField('txt'),), stopwords = ['foo', 'bar', 'baz'])
             client.add_document('doc1', txt = 'foo bar')
             client.add_document('doc2', txt = 'hello world')
@@ -292,7 +298,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             
             ac = AutoCompleter('ac', conn=r)
             n = 0
-            with open('titles.csv') as f:
+            with open(TITLES_CSV) as f:
                 cr = csv.reader(f)
 
                 for row in cr:
