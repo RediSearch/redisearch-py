@@ -4,14 +4,50 @@ class Suggestion(object):
     """
     Represents a single suggestion being sent or returned from the auto complete server
     """
-    def __init__(self, string, score=1.0):
+    def __init__(self, string, score=1.0, payload=None):
 
         self.string = string
         self.score = score
+        self.payload = payload
     
     def __repr__(self):
 
         return self.string
+
+
+class SuggestionParser(object):
+    """
+    Internal class used to parse results from the `SUGGET` command.
+    This needs to consume either 1, 2, or 3 values at a time from
+    the return value depending on what objects were requested
+    """
+    def __init__(self, with_scores, with_payloads, ret):
+        self.with_scores = with_scores
+        self.with_payloads = with_payloads
+
+        if with_scores and with_payloads:
+            self.sugsize = 3
+            self._scoreidx = 1
+            self._payloadidx = 2
+        elif with_scores:
+            self.sugsize = 2
+            self._scoreidx = 1
+        elif with_payloads:
+            self.sugsize = 2
+            self._payloadidx = 1
+        else:
+            self.sugsize = 1
+            self._scoreidx = -1
+
+        self._sugs = ret
+
+    def __iter__(self):
+        for i in xrange(0, len(self._sugs), self.sugsize):
+            ss = self._sugs[i]
+            score = float(self._sugs[i + self._scoreidx]) if self.with_scores else 1.0
+            payload = self._sugs[i + self._payloadidx] if self.with_payloads else None
+            yield Suggestion(ss, score, payload)
+
 
 class AutoCompleter(object):
     """
@@ -19,7 +55,7 @@ class AutoCompleter(object):
 
     It provides prefix searches with optionally fuzzy matching of prefixes    
     """
-        
+
     SUGADD_COMMAND = "FT.SUGADD"
     SUGDEL_COMMAND = "FT.SUGDEL"
     SUGLEN_COMMAND = "FT.SUGLEN"
@@ -28,6 +64,7 @@ class AutoCompleter(object):
     INCR = 'INCR'
     WITHSCORES = 'WITHSCORES'
     FUZZY = 'FUZZY'
+    WITHPAYLOADS = 'WITHPAYLOADS'
 
     def __init__(self, key, host='localhost', port=6379, conn = None):
         """
@@ -44,14 +81,17 @@ class AutoCompleter(object):
         """
         Add suggestion terms to the AutoCompleter engine. Each suggestion has a score and string.
 
-        If kwargs['increment'] is true and the terms are already in the server's dictionary, we increment their scores 
+        If kwargs['increment'] is true and the terms are already in the server's dictionary, we increment their scores
         """
         pipe = self.redis.pipeline()
         for sug in suggestions:
             args = [AutoCompleter.SUGADD_COMMAND, self.key, sug.string, sug.score]
             if kwargs.get('increment'):
                 args.append(AutoCompleter.INCR)
-            
+            if sug.payload:
+                args.append('PAYLOAD')
+                args.append(sug.payload)
+
             pipe.execute_command(*args)
 
         return pipe.execute()[-1]
@@ -71,7 +111,7 @@ class AutoCompleter(object):
         """
         return self.redis.execute_command(AutoCompleter.SUGDEL_COMMAND, self.key, string)
 
-    def get_suggestions(self, prefix, fuzzy = False, num = 10, with_scores = False):
+    def get_suggestions(self, prefix, fuzzy = False, num = 10, with_scores = False, with_payloads=False):
         """
         Get a list of suggestions from the AutoCompleter, for a given prefix
 
@@ -81,6 +121,7 @@ class AutoCompleter(object):
             **NOTE**: Running fuzzy searches on short (<3 letters) prefixes can be very slow, and even scan the entire index.
         - **with_scores**: if set to true, we also return the (refactored) score of each suggestion. 
           This is normally not needed, and is NOT the original score inserted into the index
+        - **with_payloads**: Return suggestion payloads
         - **num**: The maximum number of results we return. Note that we might return less. The algorithm trims irrelevant suggestions.
         
         Returns a list of Suggestion objects. If with_scores was False, the score of all suggestions is 1.
@@ -91,19 +132,13 @@ class AutoCompleter(object):
             args.append(AutoCompleter.FUZZY)
         if with_scores:
             args.append(AutoCompleter.WITHSCORES)
-        
+        if with_payloads:
+            args.append(AutoCompleter.WITHPAYLOADS)
+
         ret = self.redis.execute_command(*args)
         results = []
         if not ret:
             return results
 
-        if with_scores:
-            # return suggestiongs with scores
-            return [Suggestion(ret[i], float(ret[i+1])) for i in xrange(0, len(ret), 2)]
-        
-        # return suggestions without scores
-        return [Suggestion(s) for s in ret]
-
-        
-
-        
+        parser = SuggestionParser(with_scores, with_payloads, ret)
+        return [s for s in parser]

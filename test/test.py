@@ -11,6 +11,9 @@ import csv
 
 from redisearch import *
 
+WILL_PLAY_TEXT = os.path.abspath(os.path.dirname(__file__) + '/will_play_text.csv.bz2')
+TITLES_CSV = os.path.abspath(os.path.dirname(__file__) + '/titles.csv')
+
 class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
     def createIndex(self, client, num_docs = 100):
@@ -28,7 +31,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
         chapters = {}
         
-        with bz2.BZ2File('will_play_text.csv.bz2') as fp:
+        with bz2.BZ2File(WILL_PLAY_TEXT) as fp:
             
             r = csv.reader(fp, delimiter=';')
             for n, line in enumerate(r):
@@ -129,7 +132,11 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                 self.assertEqual(len(subset), docs.total)
                 ids = [x.id for x in docs.docs]
                 self.assertEqual(set(ids), set(subset))
-                
+
+                for doc in client.search(Query('henry king').return_fields('play', 'nonexist')).docs:
+                    self.assertFalse(doc.nonexist)
+                    self.assertTrue(doc.play.startswith('Henry'))
+
                 # test slop and in order
                 self.assertEqual(193, client.search(Query('henry king')).total)
                 self.assertEqual(3,client.search(Query('henry king').slop(0).in_order()).total)
@@ -209,7 +216,10 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         with conn as r:
             # Creating a client with a given index name
             client = Client('idx', port=conn.port)
-            client.drop_index()
+            try:
+                client.drop_index()
+            except:
+                pass
             client.create_index((TextField('txt'),), stopwords = ['foo', 'bar', 'baz'])
             client.add_document('doc1', txt = 'foo bar')
             client.add_document('doc2', txt = 'hello world')
@@ -292,7 +302,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             
             ac = AutoCompleter('ac', conn=r)
             n = 0
-            with open('titles.csv') as f:
+            with open(TITLES_CSV) as f:
                 cr = csv.reader(f)
 
                 for row in cr:
@@ -330,6 +340,18 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             ret2 = ac.get_suggestions('bad', fuzzy=True, num=10)
             for sug in ret2:
                 self.assertNotIn(sug.string, strs)
+
+            # Test with payload
+            ac.add_suggestions(Suggestion('pay1', payload='pl1'))
+            ac.add_suggestions(Suggestion('pay2', payload='pl2'))
+            ac.add_suggestions(Suggestion('pay3', payload='pl3'))
+
+            sugs = ac.get_suggestions('pay', with_payloads=True, with_scores=True)
+            self.assertEqual(3, len(sugs))
+            for sug in sugs:
+                self.assertTrue(sug.payload)
+                self.assertTrue(sug.payload.startswith('pl'))
+
 
 
                 
