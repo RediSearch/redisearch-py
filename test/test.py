@@ -341,6 +341,18 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             for sug in ret2:
                 self.assertNotIn(sug.string, strs)
 
+            # Test with payload
+            ac.add_suggestions(Suggestion('pay1', payload='pl1'))
+            ac.add_suggestions(Suggestion('pay2', payload='pl2'))
+            ac.add_suggestions(Suggestion('pay3', payload='pl3'))
+
+            sugs = ac.get_suggestions('pay', with_payloads=True, with_scores=True)
+            self.assertEqual(3, len(sugs))
+            for sug in sugs:
+                self.assertTrue(sug.payload)
+                self.assertTrue(sug.payload.startswith('pl'))
+
+
 
                 
                 
