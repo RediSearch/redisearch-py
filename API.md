@@ -99,7 +99,7 @@ def add_suggestions(self, *suggestions, **kwargs)
 
 Add suggestion terms to the AutoCompleter engine. Each suggestion has a score and string.
 
-If kwargs['increment'] is true and the terms are already in the server's dictionary, we increment their scores 
+If kwargs['increment'] is true and the terms are already in the server's dictionary, we increment their scores
 
 
 ### delete
@@ -118,7 +118,7 @@ Returns 1 if the string was found and deleted, 0 otherwise
 ### get\_suggestions
 ```py
 
-def get_suggestions(self, prefix, fuzzy=False, num=10, with_scores=False)
+def get_suggestions(self, prefix, fuzzy=False, num=10, with_scores=False, with_payloads=False)
 
 ```
 
@@ -132,6 +132,7 @@ Get a list of suggestions from the AutoCompleter, for a given prefix
     **NOTE**: Running fuzzy searches on short (<3 letters) prefixes can be very slow, and even scan the entire index.
 - **with_scores**: if set to true, we also return the (refactored) score of each suggestion. 
   This is normally not needed, and is NOT the original score inserted into the index
+- **with_payloads**: Return suggestion payloads
 - **num**: The maximum number of results we return. Note that we might return less. The algorithm trims irrelevant suggestions.
 
 Returns a list of Suggestion objects. If with_scores was False, the score of all suggestions is 1.
@@ -205,7 +206,7 @@ Create a new batch indexer from the client with a given chunk size
 ### create\_index
 ```py
 
-def create_index(self, fields, no_term_offsets=False, no_field_flags=False, no_score_indexes=False)
+def create_index(self, fields, no_term_offsets=False, no_field_flags=False, no_score_indexes=False, stopwords=None)
 
 ```
 
@@ -219,6 +220,20 @@ Create the search index. Creating an existing index juts updates its properties
 - **no_term_offsets**: If true, we will not save term offsets in the index
 - **no_field_flags**: If true, we will not save field flags that allow searching in specific fields
 - **no_score_indexes**: If true, we will not save optimized top score indexes for single word queries
+- **stopwords**: If not None, we create the index with this custom stopword list. The list can be empty
+
+
+### delete\_document
+```py
+
+def delete_document(self, doc_id, conn=None)
+
+```
+
+
+
+Delete a document from index
+Returns 1 if the document was deleted, 0 if not
 
 
 ### drop\_index
@@ -382,7 +397,7 @@ NumericField is used to define a numeric field in a schema defintion
 ### \_\_init\_\_
 ```py
 
-def __init__(self, name)
+def __init__(self, name, sortable=False)
 
 ```
 
@@ -550,6 +565,18 @@ def query_string(self)
 Return the query string of this query only
 
 
+### return\_fields
+```py
+
+def return_fields(self, *fields)
+
+```
+
+
+
+Only return values from these fields
+
+
 ### slop
 ```py
 
@@ -609,7 +636,7 @@ Represents a single suggestion being sent or returned from the auto complete ser
 ### \_\_init\_\_
 ```py
 
-def __init__(self, string, score=1.0)
+def __init__(self, string, score=1.0, payload=None)
 
 ```
 
@@ -622,7 +649,7 @@ TextField is used to define a text field in a schema definition
 ### \_\_init\_\_
 ```py
 
-def __init__(self, name, weight=1.0)
+def __init__(self, name, weight=1.0, sortable=False)
 
 ```
 
