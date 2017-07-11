@@ -27,6 +27,7 @@ class Query(object):
         self._ids = None
         self._slop = -1
         self._in_order = False
+        self._return_fields = []
 
 
     def query_string(self):
@@ -40,6 +41,13 @@ class Query(object):
         Limit the results to a specific set of pre-known document ids of any length
         """
         self._ids = ids
+        return self
+
+    def return_fields(self, *fields):
+        """
+        Only return values from these fields
+        """
+        self._return_fields = fields
         return self
 
     def slop(self, slop):
@@ -97,6 +105,11 @@ class Query(object):
 
         if self._in_order:
             args.append('INORDER')
+
+        if self._return_fields:
+            args.append('RETURN')
+            args.append(len(self._return_fields))
+            args += self._return_fields
 
         args += ["LIMIT", self._offset, self._num]
         
