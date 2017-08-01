@@ -262,7 +262,8 @@ class Client(object):
         st = time.time()
         res = self.redis.execute_command(self.SEARCH_CMD, *args)
 
-        return Result(res, not query._no_content, query_text=query_text,
+        return Result(res, not query._no_content, query._with_scores, 
+                      query_text=query_text,
                       snippets=snippet_sizes, duration=(
                           time.time() - st) * 1000.0,
                       has_payload=query._with_payloads)
