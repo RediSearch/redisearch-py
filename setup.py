@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='redisearch',
-    version='0.6.2',
+    version='0.6.3',
 
     description='RedisSearch Python Client',
     url='http://github.com/RedisLabs/redisearch-py',

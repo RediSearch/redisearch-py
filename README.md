@@ -56,7 +56,7 @@ print res.docs[0].title
 
 ## Installing
 
-1. Install redis 4.0 RC2 or above
+1. Install Redis 4.0 or above
 
 2. [Install RediSearch] (http://redisearch.io/Quick_Start/#building-and-running)
 
