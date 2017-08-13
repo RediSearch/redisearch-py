@@ -182,13 +182,14 @@ class Query(object):
         self._filters.append(flt)
         return self
 
-    def sortby(self, sortfld):
+    def sort_by(self, field, asc=True):
         """
         Add a sortby field to the query
 
-        - **sortfld** - a SortField object, used for sorting
+        - **field** - the name of the field to sort by
+        - **asc** - when `True`, sorting will be done in asceding order
         """
-        self._sortby = sortfld
+        self._sortby = SortbyField(field, asc)
         return self
 
 
