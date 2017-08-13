@@ -27,6 +27,7 @@ class Query(object):
         self._ids = None
         self._slop = -1
         self._in_order = False
+        self._sortby = None
         self._return_fields = []
 
 
@@ -111,6 +112,11 @@ class Query(object):
             args.append(len(self._return_fields))
             args += self._return_fields
 
+        if self._sortby:
+            assert isinstance(self._sortby, SortbyField)
+            args.append('SORTBY')
+            args += self._sortby.args
+
         args += ["LIMIT", self._offset, self._num]
         
         return args
@@ -176,6 +182,15 @@ class Query(object):
         self._filters.append(flt)
         return self
 
+    def sort_by(self, field, asc=True):
+        """
+        Add a sortby field to the query
+
+        - **field** - the name of the field to sort by
+        - **asc** - when `True`, sorting will be done in asceding order
+        """
+        self._sortby = SortbyField(field, asc)
+        return self
 
 
 class Filter(object):
@@ -209,3 +224,8 @@ class GeoFilter(Filter):
 
         Filter.__init__(self, 'GEOFILTER', field, lon, lat, radius, unit)
 
+class SortbyField(object):
+
+    def __init__(self, field, asc=True):
+
+        self.args = [field, 'ASC' if asc else 'DESC']

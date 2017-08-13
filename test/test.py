@@ -71,10 +71,11 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             for _ in r.retry_with_rdb_reload():
                 #verify info
                 info = client.info()
-                for k in ['inverted_cap_ovh', 'num_docs', 'offsets_per_term_avg', 'fields', 'index_name', 
-                            'inverted_cap_mb', 'skip_index_size_mb', 'bytes_per_record_avg', 'inverted_sz_mb', 
-                            'num_terms', 'offset_vectors_sz_mb', 'records_per_doc_avg', 'num_records', 
-                            'offset_bits_per_record_avg', 'score_index_size_mb']:
+                for k in [  'index_name', 'index_options', 'fields', 'num_docs',
+                            'max_doc_id', 'num_terms', 'num_records', 'inverted_sz_mb',
+                            'offset_vectors_sz_mb', 'doc_table_size_mb', 'key_table_size_mb',
+                            'records_per_doc_avg', 'bytes_per_record_avg', 'offsets_per_term_avg',
+                            'offset_bits_per_record_avg' ]:
                     self.assertIn(k, info)
 
                 self.assertEqual(client.index_name, info['index_name'])
@@ -245,7 +246,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             client.add_document('doc2', txt = 'foo baz', num = 2, loc = '-0.1,51.2')
 
             for i in r.retry_with_rdb_reload():
-                
+
                 # Test numerical filter
                 q1 = Query("foo").add_filter(NumericFilter('num', 0, 2)).no_content()
                 q2 = Query("foo").add_filter(NumericFilter('num', 2, NumericFilter.INF, minExclusive=True)).no_content()
@@ -267,7 +268,34 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                 self.assertEqual('doc2', res2.docs[0].id)
                 self.assertEqual('doc1', res2.docs[1].id)
 
-                #print res1, res2
+    def testSortby(self):
+
+        conn = self.redis()
+
+        with conn as r:
+            # Creating a client with a given index name
+            client = Client('idx', port=conn.port)
+            client.redis.flushdb()
+            
+            client.create_index((TextField('txt'), NumericField('num', sortable=True)))
+
+            client.add_document('doc1', txt = 'foo bar', num = 1)
+            client.add_document('doc2', txt = 'foo baz', num = 2)
+            client.add_document('doc3', txt = 'foo qux', num = 3)
+
+            # Test sort
+            q1 = Query("foo").sort_by('num', asc=True).no_content()
+            q2 = Query("foo").sort_by('num', asc=False).no_content()
+            res1, res2 = client.search(q1), client.search(q2)
+            
+            self.assertEqual(3, res1.total)
+            self.assertEqual('doc1', res1.docs[0].id)
+            self.assertEqual('doc2', res1.docs[1].id)
+            self.assertEqual('doc3', res1.docs[2].id)
+            self.assertEqual(3, res2.total)
+            self.assertEqual('doc1', res2.docs[2].id)
+            self.assertEqual('doc2', res2.docs[1].id)
+            self.assertEqual('doc3', res2.docs[0].id)
 
     def testExample(self):
 
@@ -351,12 +379,6 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             for sug in sugs:
                 self.assertTrue(sug.payload)
                 self.assertTrue(sug.payload.startswith('pl'))
-
-
-
-                
-                
-
 
 
 if __name__ == '__main__':
