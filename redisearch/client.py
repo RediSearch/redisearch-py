@@ -27,11 +27,14 @@ class TextField(Field):
     """
     TextField is used to define a text field in a schema definition
     """
+    NOSTEM = 'NOSTEM'
 
-    def __init__(self, name, weight=1.0, sortable = False):
+    def __init__(self, name, weight=1.0, sortable=False, no_stem=False):
         args = [Field.TEXT, Field.WEIGHT, weight]
         if sortable:
             args.append(Field.SORTABLE)
+        if no_stem:
+            args.append(self.NOSTEM)
 
         Field.__init__(self, name, *args)
 
