@@ -396,7 +396,7 @@ NumericField is used to define a numeric field in a schema defintion
 ### \_\_init\_\_
 ```py
 
-def __init__(self, name, sortable=False)
+def __init__(self, name, sortable=False, no_index=False)
 
 ```
 
@@ -588,6 +588,21 @@ def slop(self, slop)
 Allow a masimum of N intervening non matched terms between phrase terms (0 means exact phrase)
 
 
+### sort\_by
+```py
+
+def sort_by(self, field, asc=True)
+
+```
+
+
+
+Add a sortby field to the query
+
+- **field** - the name of the field to sort by
+- **asc** - when `True`, sorting will be done in asceding order
+
+
 ### verbatim
 ```py
 
@@ -630,6 +645,19 @@ def __init__(self, res, hascontent, query_text, duration=0, snippets=None, has_p
 
 
 
+## Class SortbyField
+None
+### \_\_init\_\_
+```py
+
+def __init__(self, field, asc=True)
+
+```
+
+
+
+
+
 ## Class Suggestion
 Represents a single suggestion being sent or returned from the auto complete server
 ### \_\_init\_\_
@@ -648,7 +676,7 @@ TextField is used to define a text field in a schema definition
 ### \_\_init\_\_
 ```py
 
-def __init__(self, name, weight=1.0, sortable=False)
+def __init__(self, name, weight=1.0, sortable=False, no_stem=False, no_index=False)
 
 ```
 

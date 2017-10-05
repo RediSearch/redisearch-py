@@ -13,13 +13,13 @@ class Field(object):
     WEIGHT = 'WEIGHT'
     GEO = 'GEO'
     SORTABLE = 'SORTABLE'
+    NOINDEX = 'NOINDEX'
 
     def __init__(self, name, *args):
         self.name = name
         self.args = args
     
     def redis_args(self):
-
         return [self.name] + list(self.args)
 
 
@@ -29,13 +29,18 @@ class TextField(Field):
     """
     NOSTEM = 'NOSTEM'
 
-    def __init__(self, name, weight=1.0, sortable=False, no_stem=False):
+    def __init__(self, name, weight=1.0, sortable=False, no_stem=False,
+                 no_index=False):
         args = [Field.TEXT, Field.WEIGHT, weight]
         if sortable:
             args.append(Field.SORTABLE)
         if no_stem:
             args.append(self.NOSTEM)
+        if no_index:
+            args.append(self.NOINDEX)
 
+        if no_index and not sortable:
+            raise ValueError('Non-Sortable non-Indexable fields are ignored')
         Field.__init__(self, name, *args)
 
 
@@ -44,11 +49,17 @@ class NumericField(Field):
     NumericField is used to define a numeric field in a schema defintion
     """
 
-    def __init__(self, name, sortable = False):
+    def __init__(self, name, sortable=False, no_index=False):
+        args = [Field.NUMERIC]
         if sortable:
-            Field.__init__(self, name, Field.NUMERIC, Field.SORTABLE)
-        else:
-            Field.__init__(self, name, Field.NUMERIC)
+            args.append(Field.SORTABLE)
+        if no_index:
+            args.append(Field.NOINDEX)
+
+        if no_index and not sortable:
+            raise ValueError('Non-Sortable non-Indexable fields are ignored')
+
+        super(NumericField, self).__init__(name, *args)
 
 
 class GeoField(Field):
