@@ -160,7 +160,19 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                 self.assertEqual(1, res.total)
                 client.delete_document('doc-5ghs2')
 
-            
+    def getCleanClient(self, name):
+        """
+        Gets a client client attached to an index name which is ready to be
+        created
+        """
+        client = Client(name, port=self.server.port)
+        try:
+            client.drop_index()
+        except:
+            pass
+
+        return client
+
     def testPayloads(self):
         
         conn = self.redis()
@@ -409,6 +421,25 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         # Ensure exception is raised for non-indexable, non-sortable fields
         self.assertRaises(Exception, TextField,
                           'name', no_index=True, sortable=False)
+
+    def testPartial(self):
+        client = self.getCleanClient('idx')
+        client.create_index((TextField('f1'), TextField('f2'), TextField('f3')))
+
+        client.add_document('doc1', f1='f1_val', f2='f2_val')
+        client.add_document('doc2', f1='f1_val', f2='f2_val')
+
+        client.add_document('doc1', f3='f3_val', partial=True)
+        client.add_document('doc2', f3='f3_val', replace=True)
+
+        # Search for f3 value. All documents should have it
+        res = client.search('@f3:f3_val')
+        self.assertEqual(2, res.total)
+
+        # Only the document updated with PARTIAL should still have the f1 and f2
+        # values
+        res = client.search('@f3:f3_val @f2:f2_val @f1:f1_val')
+        self.assertEqual(1, res.total)
 
 if __name__ == '__main__':
 

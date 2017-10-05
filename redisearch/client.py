@@ -108,12 +108,14 @@ class Client(object):
             if self.current_chunk:
                 self.commit()
 
-        def add_document(self, doc_id, nosave=False, score=1.0, payload=None, replace=False, **fields):
+        def add_document(self, doc_id, nosave=False, score=1.0, payload=None,
+                         replace=False, partial=False, **fields):
             """
             Add a document to the batch query
             """
             self.client._add_document(doc_id, conn=self.pipeline, nosave=nosave, score=score,
-                                      payload=payload, replace=replace, **fields)
+                                      payload=payload, replace=replace,
+                                      partial=partial, **fields)
             self.current_chunk += 1
             self.total += 1
             if self.current_chunk >= self.chunk_size:
@@ -180,12 +182,15 @@ class Client(object):
         return self.redis.execute_command(self.DROP_CMD, self.index_name)
         
     def _add_document(self, doc_id, conn=None, nosave=False, score=1.0, payload=None,
-                      replace=False, **fields):
+                      replace=False, partial=False, **fields):
         """ 
         Internal add_document used for both batch and single doc indexing 
         """
         if conn is None:
             conn = self.redis
+
+        if partial:
+            replace = True
 
         args = [self.ADD_CMD, self.index_name, doc_id, score]
         if nosave:
@@ -195,11 +200,14 @@ class Client(object):
             args.append(payload)
         if replace:
             args.append('REPLACE')
+            if partial:
+                args.append('PARTIAL')
         args.append('FIELDS')
         args += list(itertools.chain(*fields.items()))
         return conn.execute_command(*args)
 
-    def add_document(self, doc_id, nosave=False, score=1.0, payload=None, replace=False, **fields):
+    def add_document(self, doc_id, nosave=False, score=1.0, payload=None,
+                     replace=False, partial=False, **fields):
         """
         Add a single document to the index.
 
@@ -210,11 +218,15 @@ class Client(object):
         - **score**: the document ranking, between 0.0 and 1.0 
         - **payload**: optional inner-index payload we can save for fast access in scoring functions
         - **replace**: if True, and the document already is in the index, we perform an update and reindex the document
+        - **partial**: if True, the fields specified will be added to the existing document.
+                       This has the added benefit that any fields specified with `no_index`
+                       will not be reindexed again. Implies `replace`
         - **fields** kwargs dictionary of the document fields to be saved and/or indexed. 
                      NOTE: Geo points shoule be encoded as strings of "lon,lat"
         """
         return self._add_document(doc_id, conn=None, nosave=nosave, score=score, 
-                                  payload=payload, replace=replace, **fields)
+                                  payload=payload, replace=replace,
+                                  partial=partial, **fields)
 
     def delete_document(self, doc_id, conn=None):
         """
