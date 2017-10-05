@@ -259,17 +259,7 @@ class Client(object):
 
         return {res[i]: res[i + 1] for i in range(0, len(res), 2)}
 
-    def search(self, query, snippet_sizes=None):
-        """
-        Search the index for a given query, and return a result of documents
-
-        ### Parameters
-
-        - **query**: the search query. Either a text for simple queries with default parameters, or a Query object for complex queries.
-                     See RediSearch's documentation on query format
-        - **snippet_sizes**: A dictionary of {field: snippet_size} used to trim and format the result. e.g.e {'body': 500}
-        """
-
+    def _mk_query_args(self, query):
         args = [self.index_name]
 
         if isinstance(query, (str, unicode)):
@@ -280,7 +270,21 @@ class Client(object):
 
         args += query.get_args()
         query_text = query.query_string()
+        return args, query_text
 
+
+
+    def search(self, query, snippet_sizes=None):
+        """
+        Search the index for a given query, and return a result of documents
+
+        ### Parameters
+
+        - **query**: the search query. Either a text for simple queries with default parameters, or a Query object for complex queries.
+                     See RediSearch's documentation on query format
+        - **snippet_sizes**: A dictionary of {field: snippet_size} used to trim and format the result. e.g.e {'body': 500}
+        """
+        args, query_text = self._mk_query_args(query)
         st = time.time()
         res = self.redis.execute_command(self.SEARCH_CMD, *args)
 
@@ -288,3 +292,7 @@ class Client(object):
                       snippets=snippet_sizes, duration=(
                           time.time() - st) * 1000.0,
                       has_payload=query._with_payloads)
+
+    def explain(self, query):
+        args, query_text = self._mk_query_args(query)
+        return self.redis.execute_command(self.EXPLAIN_CMD, *args)

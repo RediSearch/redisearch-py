@@ -441,6 +441,13 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         res = client.search('@f3:f3_val @f2:f2_val @f1:f1_val')
         self.assertEqual(1, res.total)
 
+    def testExplain(self):
+        client = self.getCleanClient('idx')
+        client.create_index((TextField('f1'), TextField('f2'), TextField('f3')))
+        res = client.explain('@f3:f3_val @f2:f2_val @f1:f1_val')
+        self.assertTrue(res)
+
+
 if __name__ == '__main__':
 
     unittest.main()
