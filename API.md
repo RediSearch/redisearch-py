@@ -206,7 +206,7 @@ Create a new batch indexer from the client with a given chunk size
 ### create\_index
 ```py
 
-def create_index(self, fields, no_term_offsets=False, no_field_flags=False, no_score_indexes=False, stopwords=None)
+def create_index(self, fields, no_term_offsets=False, no_field_flags=False, stopwords=None)
 
 ```
 
@@ -219,7 +219,6 @@ Create the search index. Creating an existing index juts updates its properties
 - **fields**: a list of TextField or NumericField objects
 - **no_term_offsets**: If true, we will not save term offsets in the index
 - **no_field_flags**: If true, we will not save field flags that allow searching in specific fields
-- **no_score_indexes**: If true, we will not save optimized top score indexes for single word queries
 - **stopwords**: If not None, we create the index with this custom stopword list. The list can be empty
 
 

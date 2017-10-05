@@ -77,7 +77,6 @@ class Client(object):
 
     NOOFFSETS = 'NOOFFSETS'
     NOFIELDS = 'NOFIELDS'
-    NOSCOREIDX = 'NOSCOREIDX'
     STOPWORDS = 'STOPWORDS'
 
     class BatchIndexer(object):
@@ -135,7 +134,7 @@ class Client(object):
         return Client.BatchIndexer(self, chunk_size=chunk_size)
 
     def create_index(self, fields, no_term_offsets=False,
-                     no_field_flags=False, no_score_indexes=False, stopwords = None):
+                     no_field_flags=False, stopwords = None):
         """
         Create the search index. Creating an existing index juts updates its properties
 
@@ -144,7 +143,6 @@ class Client(object):
         - **fields**: a list of TextField or NumericField objects
         - **no_term_offsets**: If true, we will not save term offsets in the index
         - **no_field_flags**: If true, we will not save field flags that allow searching in specific fields
-        - **no_score_indexes**: If true, we will not save optimized top score indexes for single word queries
         - **stopwords**: If not None, we create the index with this custom stopword list. The list can be empty
         """
 
@@ -153,8 +151,6 @@ class Client(object):
             args.append(self.NOOFFSETS)
         if no_field_flags:
             args.append(self.NOFIELDS)
-        if no_score_indexes:
-            args.append(self.NOSCOREIDX)
         if stopwords is not None and isinstance(stopwords, (list, tuple, set)):
             args += [self.STOPWORDS, len(stopwords)]
             if len(stopwords) > 0:
