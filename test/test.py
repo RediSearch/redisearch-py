@@ -160,7 +160,19 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                 self.assertEqual(1, res.total)
                 client.delete_document('doc-5ghs2')
 
-            
+    def getCleanClient(self, name):
+        """
+        Gets a client client attached to an index name which is ready to be
+        created
+        """
+        client = Client(name, port=self.server.port)
+        try:
+            client.drop_index()
+        except:
+            pass
+
+        return client
+
     def testPayloads(self):
         
         conn = self.redis()
@@ -379,6 +391,61 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             for sug in sugs:
                 self.assertTrue(sug.payload)
                 self.assertTrue(sug.payload.startswith('pl'))
+
+    def testNoIndex(self):
+        client = Client('idx', port=self.server.port)
+        try:
+            client.drop_index()
+        except:
+            pass
+
+        client.create_index(
+            (TextField('f1', no_index=True, sortable=True), TextField('f2')))
+
+        client.add_document('doc1', f1='MarkZZ', f2='MarkZZ')
+        client.add_document('doc2', f1='MarkAA', f2='MarkAA')
+
+        res = client.search(Query('@f1:Mark*'))
+        self.assertEqual(0, res.total)
+
+        res = client.search(Query('@f2:Mark*'))
+        self.assertEqual(2, res.total)
+
+        res = client.search(Query('@f2:Mark*').sort_by('f1', asc=False))
+        self.assertEqual(2, res.total)
+        self.assertEqual('doc1', res.docs[0].id)
+
+        res = client.search(Query('@f2:Mark*').sort_by('f1', asc=True))
+        self.assertEqual('doc2', res.docs[0].id)
+
+        # Ensure exception is raised for non-indexable, non-sortable fields
+        self.assertRaises(Exception, TextField,
+                          'name', no_index=True, sortable=False)
+
+    def testPartial(self):
+        client = self.getCleanClient('idx')
+        client.create_index((TextField('f1'), TextField('f2'), TextField('f3')))
+
+        client.add_document('doc1', f1='f1_val', f2='f2_val')
+        client.add_document('doc2', f1='f1_val', f2='f2_val')
+
+        client.add_document('doc1', f3='f3_val', partial=True)
+        client.add_document('doc2', f3='f3_val', replace=True)
+
+        # Search for f3 value. All documents should have it
+        res = client.search('@f3:f3_val')
+        self.assertEqual(2, res.total)
+
+        # Only the document updated with PARTIAL should still have the f1 and f2
+        # values
+        res = client.search('@f3:f3_val @f2:f2_val @f1:f1_val')
+        self.assertEqual(1, res.total)
+
+    def testExplain(self):
+        client = self.getCleanClient('idx')
+        client.create_index((TextField('f1'), TextField('f2'), TextField('f3')))
+        res = client.explain('@f3:f3_val @f2:f2_val @f1:f1_val')
+        self.assertTrue(res)
 
 
 if __name__ == '__main__':

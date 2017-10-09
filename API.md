@@ -206,7 +206,7 @@ Create a new batch indexer from the client with a given chunk size
 ### create\_index
 ```py
 
-def create_index(self, fields, no_term_offsets=False, no_field_flags=False, no_score_indexes=False, stopwords=None)
+def create_index(self, fields, no_term_offsets=False, no_field_flags=False, stopwords=None)
 
 ```
 
@@ -219,7 +219,6 @@ Create the search index. Creating an existing index juts updates its properties
 - **fields**: a list of TextField or NumericField objects
 - **no_term_offsets**: If true, we will not save term offsets in the index
 - **no_field_flags**: If true, we will not save field flags that allow searching in specific fields
-- **no_score_indexes**: If true, we will not save optimized top score indexes for single word queries
 - **stopwords**: If not None, we create the index with this custom stopword list. The list can be empty
 
 
@@ -397,7 +396,7 @@ NumericField is used to define a numeric field in a schema defintion
 ### \_\_init\_\_
 ```py
 
-def __init__(self, name, sortable=False)
+def __init__(self, name, sortable=False, no_index=False)
 
 ```
 
@@ -589,6 +588,21 @@ def slop(self, slop)
 Allow a masimum of N intervening non matched terms between phrase terms (0 means exact phrase)
 
 
+### sort\_by
+```py
+
+def sort_by(self, field, asc=True)
+
+```
+
+
+
+Add a sortby field to the query
+
+- **field** - the name of the field to sort by
+- **asc** - when `True`, sorting will be done in asceding order
+
+
 ### verbatim
 ```py
 
@@ -631,6 +645,19 @@ def __init__(self, res, hascontent, query_text, duration=0, snippets=None, has_p
 
 
 
+## Class SortbyField
+None
+### \_\_init\_\_
+```py
+
+def __init__(self, field, asc=True)
+
+```
+
+
+
+
+
 ## Class Suggestion
 Represents a single suggestion being sent or returned from the auto complete server
 ### \_\_init\_\_
@@ -649,7 +676,7 @@ TextField is used to define a text field in a schema definition
 ### \_\_init\_\_
 ```py
 
-def __init__(self, name, weight=1.0, sortable=False)
+def __init__(self, name, weight=1.0, sortable=False, no_stem=False, no_index=False)
 
 ```
 
