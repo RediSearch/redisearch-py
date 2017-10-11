@@ -272,9 +272,7 @@ class Client(object):
         query_text = query.query_string()
         return args, query_text
 
-
-
-    def search(self, query, snippet_sizes=None):
+    def search(self, query):
         """
         Search the index for a given query, and return a result of documents
 
@@ -284,13 +282,13 @@ class Client(object):
                      See RediSearch's documentation on query format
         - **snippet_sizes**: A dictionary of {field: snippet_size} used to trim and format the result. e.g.e {'body': 500}
         """
-        args, query_text = self._mk_query_args(query)
+        args, _ = self._mk_query_args(query)
         st = time.time()
         res = self.redis.execute_command(self.SEARCH_CMD, *args)
 
-        return Result(res, not query._no_content, query_text=query_text,
-                      snippets=snippet_sizes, duration=(
-                          time.time() - st) * 1000.0,
+        return Result(res,
+                      not query._no_content,
+                      duration=(time.time() - st) * 1000.0,
                       has_payload=query._with_payloads)
 
     def explain(self, query):

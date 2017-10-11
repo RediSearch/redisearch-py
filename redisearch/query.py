@@ -11,7 +11,6 @@ class Query(object):
     def __init__(self, query_string):
         """
         Create a new query object. 
-        
         The query string is set in the constructor, and other options have setter functions.
         """
 
@@ -29,7 +28,8 @@ class Query(object):
         self._in_order = False
         self._sortby = None
         self._return_fields = []
-
+        self._summarize_fields = []
+        self._highlight_fields = []
 
     def query_string(self):
         """
@@ -49,6 +49,48 @@ class Query(object):
         Only return values from these fields
         """
         self._return_fields = fields
+        return self
+
+    def summarize(self, *fields, **options):
+        """
+        Return an abridged format of the field, containing only the segments of
+        the field which contain the matching term(s).
+
+        If `fields` is specified, then only the mentioned fields are
+        summarized; otherwise all results are summarized.
+
+        Options are `context_len`, `num_frags`, and `sep`
+
+        You can use `hlsum` or `highlight` if you wish to also format the match
+        itself distinctly.
+        """
+        args = ['SUMMARIZE']
+        if fields:
+            args += ['FIELDS', str(len(fields))]
+            args.append(*fields)
+
+        if 'context_len' in options:
+            args += ['LEN', str(options['context_len'])]
+        if 'num_frags' in options:
+            args += ['FRAGS', str(options['num_frags'])]
+        if 'sep' in options:
+            args += ['SEPARATOR', options['sep']]
+
+        self._summarize_fields = args
+        return self
+
+    def highlight(self, *fields, **options):
+        """
+        Apply specified markup to matched term(s) within the returned field(s)
+
+        """
+        args = ['HIGHLIGHT']
+        if fields:
+            args += ['FIELDS', str(len(fields))] + list(fields)
+        if 'tags' in options:
+            args += ['TAGS', options['tags'][0], options['tags'][1]]
+
+        self._highlight_fields = args
         return self
 
     def slop(self, slop):
@@ -117,11 +159,12 @@ class Query(object):
             args.append('SORTBY')
             args += self._sortby.args
 
+        args += self._summarize_fields + self._highlight_fields
         args += ["LIMIT", self._offset, self._num]
-        
+        print args
+
         return args
 
-        
     def paging(self, offset, num):
         """
         Set the paging for the query (defaults to 0..10).
