@@ -324,9 +324,6 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             # Indexing a document
             client.add_document('doc1', title = 'RediSearch', body = 'Redisearch impements a search engine on top of redis')
 
-            # Searching with snippet sizes
-            res = client.search("search engine", snippet_sizes = {'body': 50})
-
             # Searching with complext parameters:
             q = Query("search engine").verbatim().no_content().paging(0,5)
 
@@ -447,6 +444,24 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         res = client.explain('@f3:f3_val @f2:f2_val @f1:f1_val')
         self.assertTrue(res)
 
+    def testSummarize(self):
+        client = self.getCleanClient('idx')
+        self.createIndex(client)
+        q = Query('king henry').paging(0, 1)
+        q.highlight(fields=('play', 'txt'), tags=('<b>', '</b>'))
+        q.summarize('txt')
+
+        res = client.search(q)
+        doc = res.docs[0]
+        self.assertEqual('<b>Henry</b> IV', doc.play)
+        self.assertEqual('ACT I SCENE I. London. The palace. Enter <b>KING</b> <b>HENRY</b>, LORD JOHN OF LANCASTER, the EARL of WESTMORELAND, SIR... ',
+                         doc.txt)
+
+        q = Query('king henry').paging(0, 1).summarize().highlight()
+        doc = client.search(q).docs[0]
+        self.assertEqual('<b>Henry</b> ... ', doc.play)
+        self.assertEqual('ACT I SCENE I. London. The palace. Enter <b>KING</b> <b>HENRY</b>, LORD JOHN OF LANCASTER, the EARL of WESTMORELAND, SIR... ',
+                         doc.txt)
 
 if __name__ == '__main__':
 

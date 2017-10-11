@@ -11,7 +11,6 @@ class Query(object):
     def __init__(self, query_string):
         """
         Create a new query object. 
-        
         The query string is set in the constructor, and other options have setter functions.
         """
 
@@ -29,7 +28,8 @@ class Query(object):
         self._in_order = False
         self._sortby = None
         self._return_fields = []
-
+        self._summarize_fields = []
+        self._highlight_fields = []
 
     def query_string(self):
         """
@@ -49,6 +49,58 @@ class Query(object):
         Only return values from these fields
         """
         self._return_fields = fields
+        return self
+
+    def _mk_field_list(self, fields):
+        if not fields:
+            return []
+        return [fields] if isinstance(fields, basestring) else list(fields)
+
+    def summarize(self, fields=None, context_len=None, num_frags=None, sep=None):
+        """
+        Return an abridged format of the field, containing only the segments of
+        the field which contain the matching term(s).
+
+        If `fields` is specified, then only the mentioned fields are
+        summarized; otherwise all results are summarized.
+
+        Server side defaults are used for each option (except `fields`) if not specified
+
+        - **fields** List of fields to summarize. All fields are summarized if not specified
+        - **context_len** Amount of context to include with each fragment
+        - **num_frags** Number of fragments per document
+        - **sep** Separator string to separate fragments
+        """
+        args = ['SUMMARIZE']
+        fields = self._mk_field_list(fields)
+        if fields:
+            args += ['FIELDS', str(len(fields))] + fields
+
+        if context_len is not None:
+            args += ['LEN', str(context_len)]
+        if num_frags is not None:
+            args += ['FRAGS', str(num_frags)]
+        if sep is not None:
+            args += ['SEPARATOR', sep]
+
+        self._summarize_fields = args
+        return self
+
+    def highlight(self, fields=None, tags=None):
+        """
+        Apply specified markup to matched term(s) within the returned field(s)
+
+        - **fields** If specified then only those mentioned fields are highlighted, otherwise all fields are highlighted
+        - **tags** A list of two strings to surround the match.
+        """
+        args = ['HIGHLIGHT']
+        fields = self._mk_field_list(fields)
+        if fields:
+            args += ['FIELDS', str(len(fields))] + fields
+        if tags:
+            args += ['TAGS'] + list(tags)
+
+        self._highlight_fields = args
         return self
 
     def slop(self, slop):
@@ -117,11 +169,10 @@ class Query(object):
             args.append('SORTBY')
             args += self._sortby.args
 
+        args += self._summarize_fields + self._highlight_fields
         args += ["LIMIT", self._offset, self._num]
-        
         return args
 
-        
     def paging(self, offset, num):
         """
         Set the paging for the query (defaults to 0..10).
