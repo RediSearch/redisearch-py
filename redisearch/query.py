@@ -161,8 +161,6 @@ class Query(object):
 
         args += self._summarize_fields + self._highlight_fields
         args += ["LIMIT", self._offset, self._num]
-        print args
-
         return args
 
     def paging(self, offset, num):
