@@ -172,7 +172,7 @@ If conn is not None, we employ an already existing redis connection
 ### add\_document
 ```py
 
-def add_document(self, doc_id, nosave=False, score=1.0, payload=None, replace=False, **fields)
+def add_document(self, doc_id, nosave=False, score=1.0, payload=None, replace=False, partial=False, **fields)
 
 ```
 
@@ -187,6 +187,9 @@ Add a single document to the index.
 - **score**: the document ranking, between 0.0 and 1.0 
 - **payload**: optional inner-index payload we can save for fast access in scoring functions
 - **replace**: if True, and the document already is in the index, we perform an update and reindex the document
+- **partial**: if True, the fields specified will be added to the existing document.
+               This has the added benefit that any fields specified with `no_index`
+               will not be reindexed again. Implies `replace`
 - **fields** kwargs dictionary of the document fields to be saved and/or indexed. 
              NOTE: Geo points shoule be encoded as strings of "lon,lat"
 
@@ -247,6 +250,15 @@ def drop_index(self)
 Drop the index if it exists
 
 
+### explain
+```py
+
+def explain(self, query)
+
+```
+
+
+
 ### info
 ```py
 
@@ -274,7 +286,7 @@ Load a single document by id
 ### search
 ```py
 
-def search(self, query, snippet_sizes=None)
+def search(self, query)
 
 ```
 
@@ -304,7 +316,7 @@ def __init__(self, client, chunk_size=1000)
 ### add\_document
 ```py
 
-def add_document(self, doc_id, nosave=False, score=1.0, payload=None, replace=False, **fields)
+def add_document(self, doc_id, nosave=False, score=1.0, payload=None, replace=False, partial=False, **fields)
 
 ```
 
@@ -338,20 +350,6 @@ def __init__(self, id, payload=None, **fields)
 
 ```
 
-
-
-### snippetize
-```py
-
-def snippetize(self, field, size=500, bold_tokens=())
-
-```
-
-
-
-Create a shortened snippet from the document's content 
-:param size: the szie of the snippet in characters. It might be a bit longer or shorter
-:param boldTokens: a list of tokens we want to make bold (basically the query terms)
 
 
 
@@ -442,7 +440,6 @@ def __init__(self, query_string)
 
 
 Create a new query object. 
-
 The query string is set in the constructor, and other options have setter functions.
 
 
@@ -471,6 +468,21 @@ def get_args(self)
 
 
 Format the redis arguments for this query and return them
+
+
+### highlight
+```py
+
+def highlight(self, fields=None, tags=None)
+
+```
+
+
+
+Apply specified markup to matched term(s) within the returned field(s)
+
+- **fields** If specified then only those mentioned fields are highlighted, otherwise all fields are highlighted
+- **tags** A list of two strings to surround the match.
 
 
 ### in\_order
@@ -603,6 +615,29 @@ Add a sortby field to the query
 - **asc** - when `True`, sorting will be done in asceding order
 
 
+### summarize
+```py
+
+def summarize(self, fields=None, context_len=None, num_frags=None, sep=None)
+
+```
+
+
+
+Return an abridged format of the field, containing only the segments of
+the field which contain the matching term(s).
+
+If `fields` is specified, then only the mentioned fields are
+summarized; otherwise all results are summarized.
+
+Server side defaults are used for each option (except `fields`) if not specified
+
+- **fields** List of fields to summarize. All fields are summarized if not specified
+- **context_len** Amount of context to include with each fragment
+- **num_frags** Number of fragments per document
+- **sep** Separator string to separate fragments
+
+
 ### verbatim
 ```py
 
@@ -634,7 +669,7 @@ Represents the result of a search query, and has an array of Document objects
 ### \_\_init\_\_
 ```py
 
-def __init__(self, res, hascontent, query_text, duration=0, snippets=None, has_payload=False)
+def __init__(self, res, hascontent, duration=0, has_payload=False)
 
 ```
 
