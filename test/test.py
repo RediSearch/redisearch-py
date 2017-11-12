@@ -11,8 +11,9 @@ import csv
 
 from redisearch import *
 
-WILL_PLAY_TEXT = os.path.abspath(os.path.dirname(__file__) + '/will_play_text.csv.bz2')
-TITLES_CSV = os.path.abspath(os.path.dirname(__file__) + '/titles.csv')
+WILL_PLAY_TEXT = os.path.abspath(os.path.dirname(__file__)) + '/will_play_text.csv.bz2'
+
+TITLES_CSV = os.path.abspath(os.path.dirname(__file__)) + '/titles.csv'
 
 class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
@@ -429,14 +430,15 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         client.add_document('doc1', f3='f3_val', partial=True)
         client.add_document('doc2', f3='f3_val', replace=True)
 
-        # Search for f3 value. All documents should have it
-        res = client.search('@f3:f3_val')
-        self.assertEqual(2, res.total)
+        for i in self.retry_with_reload():
+            # Search for f3 value. All documents should have it
+            res = client.search('@f3:f3_val')
+            self.assertEqual(2, res.total)
 
-        # Only the document updated with PARTIAL should still have the f1 and f2
-        # values
-        res = client.search('@f3:f3_val @f2:f2_val @f1:f1_val')
-        self.assertEqual(1, res.total)
+            # Only the document updated with PARTIAL should still have the f1 and f2
+            # values
+            res = client.search('@f3:f3_val @f2:f2_val @f1:f1_val')
+            self.assertEqual(1, res.total)
 
     def testExplain(self):
         client = self.getCleanClient('idx')
@@ -447,21 +449,53 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
     def testSummarize(self):
         client = self.getCleanClient('idx')
         self.createIndex(client)
-        q = Query('king henry').paging(0, 1)
-        q.highlight(fields=('play', 'txt'), tags=('<b>', '</b>'))
-        q.summarize('txt')
 
-        res = client.search(q)
-        doc = res.docs[0]
-        self.assertEqual('<b>Henry</b> IV', doc.play)
-        self.assertEqual('ACT I SCENE I. London. The palace. Enter <b>KING</b> <b>HENRY</b>, LORD JOHN OF LANCASTER, the EARL of WESTMORELAND, SIR... ',
-                         doc.txt)
+        for i in self.retry_with_reload():
+            q = Query('king henry').paging(0, 1)
+            q.highlight(fields=('play', 'txt'), tags=('<b>', '</b>'))
+            q.summarize('txt')
 
-        q = Query('king henry').paging(0, 1).summarize().highlight()
-        doc = client.search(q).docs[0]
-        self.assertEqual('<b>Henry</b> ... ', doc.play)
-        self.assertEqual('ACT I SCENE I. London. The palace. Enter <b>KING</b> <b>HENRY</b>, LORD JOHN OF LANCASTER, the EARL of WESTMORELAND, SIR... ',
-                         doc.txt)
+            res = client.search(q)
+            doc = res.docs[0]
+            self.assertEqual('<b>Henry</b> IV', doc.play)
+            self.assertEqual('ACT I SCENE I. London. The palace. Enter <b>KING</b> <b>HENRY</b>, LORD JOHN OF LANCASTER, the EARL of WESTMORELAND, SIR... ',
+                            doc.txt)
+
+            q = Query('king henry').paging(0, 1).summarize().highlight()
+            doc = client.search(q).docs[0]
+            self.assertEqual('<b>Henry</b> ... ', doc.play)
+            self.assertEqual('ACT I SCENE I. London. The palace. Enter <b>KING</b> <b>HENRY</b>, LORD JOHN OF LANCASTER, the EARL of WESTMORELAND, SIR... ',
+                            doc.txt)
+
+    def testTags(self):
+        conn = self.redis()
+
+        with conn as r:
+            # Creating a client with a given index name
+            client = Client('idx', port=conn.port)
+            client.redis.flushdb()
+            
+            client.create_index((TextField('txt'), TagField('tags')))
+
+            client.add_document('doc1', txt = 'fooz barz', tags = 'foo,foo bar,hello;world')
+            
+            for i in r.retry_with_rdb_reload():
+
+                q = Query("@tags:{foo}")
+                res = client.search(q)
+                self.assertEqual(1, res.total)
+
+                q = Query("@tags:{foo bar}")
+                res = client.search(q)
+                self.assertEqual(1, res.total)
+
+                q = Query("@tags:{foo\\ bar}")
+                res = client.search(q)
+                self.assertEqual(1, res.total)
+
+                q = Query("@tags:{hello\\;world}")
+                res = client.search(q)
+                self.assertEqual(1, res.total)
 
 if __name__ == '__main__':
 

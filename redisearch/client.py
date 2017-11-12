@@ -12,8 +12,10 @@ class Field(object):
     TEXT = 'TEXT'
     WEIGHT = 'WEIGHT'
     GEO = 'GEO'
+    TAG = 'TAG'
     SORTABLE = 'SORTABLE'
     NOINDEX = 'NOINDEX'
+    SEPARATOR = 'SEPARATOR'
 
     def __init__(self, name, *args):
         self.name = name
@@ -71,6 +73,21 @@ class GeoField(Field):
         Field.__init__(self, name, Field.GEO)
 
 
+class TagField(Field):
+    """
+    TagField is a tag-indexing field with simpler compression and tokenization. 
+    See http://redisearch.io/Tags/
+    """
+    def __init__(self, name, separator = ',', no_index=False):
+        Field.__init__(self, name, Field.TAG)
+        if separator != ',':
+            args.append(Field.SEPARATOR)
+            args.append(separator)
+
+        if no_index:
+            args.append(Field.NOINDEX)
+    
+
 class Client(object):
     """
     A client for the RediSearch module. 
@@ -85,6 +102,7 @@ class Client(object):
     DROP_CMD = 'FT.DROP'
     EXPLAIN_CMD = 'FT.EXPLAIN'
     DEL_CMD = 'FT.DEL'
+
 
     NOOFFSETS = 'NOOFFSETS'
     NOFIELDS = 'NOFIELDS'
