@@ -30,6 +30,7 @@ class Query(object):
         self._return_fields = []
         self._summarize_fields = []
         self._highlight_fields = []
+        self._language = None
 
     def query_string(self):
         """
@@ -103,6 +104,14 @@ class Query(object):
         self._highlight_fields = args
         return self
 
+    def language(self, language):
+        """
+        Analyze the query as being in the specified language
+        :param language: The language (e.g. `chinese` or `english`)
+        """
+        self._language = language
+        return self
+
     def slop(self, slop):
         """
         Allow a masimum of N intervening non matched terms between phrase terms (0 means exact phrase)
@@ -168,6 +177,9 @@ class Query(object):
             assert isinstance(self._sortby, SortbyField)
             args.append('SORTBY')
             args += self._sortby.args
+
+        if self._language:
+            args += ['LANGUAGE', self._language]
 
         args += self._summarize_fields + self._highlight_fields
         args += ["LIMIT", self._offset, self._num]

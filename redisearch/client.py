@@ -200,7 +200,7 @@ class Client(object):
         return self.redis.execute_command(self.DROP_CMD, self.index_name)
         
     def _add_document(self, doc_id, conn=None, nosave=False, score=1.0, payload=None,
-                      replace=False, partial=False, **fields):
+                      replace=False, partial=False, language=None, **fields):
         """ 
         Internal add_document used for both batch and single doc indexing 
         """
@@ -220,12 +220,14 @@ class Client(object):
             args.append('REPLACE')
             if partial:
                 args.append('PARTIAL')
+        if language:
+            args += ['LANGUAGE', language]
         args.append('FIELDS')
         args += list(itertools.chain(*fields.items()))
         return conn.execute_command(*args)
 
     def add_document(self, doc_id, nosave=False, score=1.0, payload=None,
-                     replace=False, partial=False, **fields):
+                     replace=False, partial=False, language=None, **fields):
         """
         Add a single document to the index.
 
@@ -239,12 +241,13 @@ class Client(object):
         - **partial**: if True, the fields specified will be added to the existing document.
                        This has the added benefit that any fields specified with `no_index`
                        will not be reindexed again. Implies `replace`
+        - **language**: Specify the language used for document tokenization.
         - **fields** kwargs dictionary of the document fields to be saved and/or indexed. 
                      NOTE: Geo points shoule be encoded as strings of "lon,lat"
         """
         return self._add_document(doc_id, conn=None, nosave=nosave, score=score, 
                                   payload=payload, replace=replace,
-                                  partial=partial, **fields)
+                                  partial=partial, language=language, **fields)
 
     def delete_document(self, doc_id, conn=None):
         """
