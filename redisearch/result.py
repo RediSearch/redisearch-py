@@ -22,15 +22,15 @@ class Result(object):
             # we can't have nocontent and payloads in the same response
             has_payload = False
 
-        for i in xrange(1, len(res), step):
-            id = res[i]
+        for i in range(1, len(res), step):
+            id = res[i].decode('utf-8')
             payload = res[i+1] if has_payload else None
             fields_offset = 2 if has_payload else 1
-            
-            fields = {} 
+
+            fields = {}
             if hascontent:
-                fields = dict(
-                    dict(itertools.izip(res[i + fields_offset][::2], res[i + fields_offset][1::2]))) if hascontent else {}
+                fields = {k.decode('utf-8'):v.decode('utf-8') \
+                        for k,v in zip(res[i + fields_offset][::2], res[i + fields_offset][1::2])} if hascontent else {}
             try:
                 del fields['id']
             except KeyError:

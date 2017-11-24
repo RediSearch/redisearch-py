@@ -283,9 +283,13 @@ class Client(object):
     def _mk_query_args(self, query):
         args = [self.index_name]
 
-        if isinstance(query, (str, unicode)):
+        if isinstance(query, str):
+            query = query.encode('utf-8')
             # convert the query from a text to a query object
+
+        if isinstance(query, bytes):
             query = Query(query)
+
         if not isinstance(query, Query):
             raise ValueError("Bad query type %s" % type(query))
 
