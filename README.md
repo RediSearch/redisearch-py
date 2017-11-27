@@ -6,7 +6,7 @@ It is the "official" client of redisearch, and should be regarded as its canonic
 
 ## Features
 
-RediSearch is an open-source (AGPL), high performance search engine implemented as a [Redis Module](https://github.com/antirez/redis/blob/unstable/src/modules/INTRO.md). 
+RediSearch is an open-source (AGPL), high performance search engine implemented as a [Redis Module](https://redis.io/topics/modules-intro). 
 It uses custom data types to allow fast, stable and feature rich full-text search inside redis.
 
 This client is a wrapper around the RediSearch API protocol, that allows you to utilize its features easily. 
@@ -58,7 +58,7 @@ print res.docs[0].title
 
 1. Install Redis 4.0 or above
 
-2. [Install RediSearch] (http://redisearch.io/Quick_Start/#building-and-running)
+2. [Install RediSearch](http://redisearch.io/Quick_Start/#building-and-running)
 
 3. Install the python client
 
