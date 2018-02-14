@@ -167,7 +167,7 @@ class Client(object):
     def create_index(self, fields, no_term_offsets=False,
                      no_field_flags=False, stopwords = None):
         """
-        Create the search index. Creating an existing index juts updates its properties
+        Create the search index. The index must not already exist.
 
         ### Parameters:
 

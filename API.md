@@ -172,7 +172,7 @@ If conn is not None, we employ an already existing redis connection
 ### add\_document
 ```py
 
-def add_document(self, doc_id, nosave=False, score=1.0, payload=None, replace=False, partial=False, **fields)
+def add_document(self, doc_id, nosave=False, score=1.0, payload=None, replace=False, partial=False, language=None, **fields)
 
 ```
 
@@ -190,6 +190,7 @@ Add a single document to the index.
 - **partial**: if True, the fields specified will be added to the existing document.
                This has the added benefit that any fields specified with `no_index`
                will not be reindexed again. Implies `replace`
+- **language**: Specify the language used for document tokenization.
 - **fields** kwargs dictionary of the document fields to be saved and/or indexed. 
              NOTE: Geo points shoule be encoded as strings of "lon,lat"
 
@@ -215,7 +216,7 @@ def create_index(self, fields, no_term_offsets=False, no_field_flags=False, stop
 
 
 
-Create the search index. Creating an existing index juts updates its properties
+Create the search index. The index must not already exist.
 
 ### Parameters:
 
@@ -498,6 +499,19 @@ Match only documents where the query terms appear in the same order in the docum
 i.e. for the query 'hello world', we do not match 'world hello'
 
 
+### language
+```py
+
+def language(self, language)
+
+```
+
+
+
+Analyze the query as being in the specified language
+:param language: The language (e.g. `chinese` or `english`)
+
+
 ### limit\_fields
 ```py
 
@@ -699,6 +713,29 @@ Represents a single suggestion being sent or returned from the auto complete ser
 ```py
 
 def __init__(self, string, score=1.0, payload=None)
+
+```
+
+
+
+
+
+## Class TagField
+TagField is a tag-indexing field with simpler compression and tokenization. 
+See http://redisearch.io/Tags/
+### \_\_init\_\_
+```py
+
+def __init__(self, name, separator=',', no_index=False)
+
+```
+
+
+
+### redis\_args
+```py
+
+def redis_args(self)
 
 ```
 
