@@ -8,7 +8,9 @@ def tags(*t):
 
     - **t**: Tags to search for
     """
-    return '{' + ','.join(t) + '}'
+    if not t:
+        raise ValueError('At least one tag must be specified')
+    return TagValue(*t)
 
 
 def between(a, b, inclusive_min=True, inclusive_max=True):
@@ -83,19 +85,19 @@ class RangeValue(Value):
     combinable = False
 
     def __init__(self, a, b, inclusive_min=False, inclusive_max=False):
-        self.range = [a,b]
+        if a is None:
+            a = '-inf'
+        if b is None:
+            b = 'inf'
+        self.range = [str(a), str(b)]
         self.inclusive_min = inclusive_min
         self.inclusive_max = inclusive_max
 
     def to_string(self):
         a, b = self.range
-        a = a if a is not None else '-inf'
-        b = b if b is not None else 'inf'
-        if not self.inclusive_min:
-            a = '(' + a
-        if not self.inclusive_max:
-            b = '(' + b
-        return '[{} {}]'.format(a, b)
+        return '[{1}{0[0]} {2}{0[1]}]'.format(self.range,
+                                    '(' if not self.inclusive_min else '',
+                                    '(' if not self.inclusive_max else '',)
 
 
 class ScalarValue(Value):
@@ -115,7 +117,7 @@ class TagValue(Value):
         self.tags = tags
 
     def to_string(self):
-        return '{' + ','.join(self.tags) + '}'
+        return '{' + ' | '.join(str(t) for t in self.tags) + '}'
 
 
 class GeoValue(Value):
