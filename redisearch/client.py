@@ -4,6 +4,7 @@ import time
 from .document import Document
 from .result import Result
 from .query import Query, Filter
+from .aggregate_request import AggregateRequest
 
 
 class Field(object):
@@ -102,6 +103,7 @@ class Client(object):
     DROP_CMD = 'FT.DROP'
     EXPLAIN_CMD = 'FT.EXPLAIN'
     DEL_CMD = 'FT.DEL'
+    AGGREGATE_CMD = 'FT.AGGREGATE'
 
 
     NOOFFSETS = 'NOOFFSETS'
@@ -314,3 +316,7 @@ class Client(object):
     def explain(self, query):
         args, query_text = self._mk_query_args(query)
         return self.redis.execute_command(self.EXPLAIN_CMD, *args)
+
+    def aggregate(self, query):
+        cmd = [self.AGGREGATE_CMD, self.index_name] + query.build_args()
+        return self.redis.execute_command(*cmd)
