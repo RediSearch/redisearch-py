@@ -55,7 +55,7 @@ class Query(object):
     def _mk_field_list(self, fields):
         if not fields:
             return []
-        return [fields] if isinstance(fields, basestring) else list(fields)
+        return [fields] if isinstance(fields, str) else list(fields)
 
     def summarize(self, fields=None, context_len=None, num_frags=None, sep=None):
         """
