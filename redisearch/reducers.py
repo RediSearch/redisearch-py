@@ -103,7 +103,7 @@ class first_value(Reducer):
     """
     Selects the first value within the group according to sorting parameters
     """
-    NAME = 'first_value'
+    NAME = 'FIRST_VALUE'
 
     def __init__(self, field, *byfields):
         """

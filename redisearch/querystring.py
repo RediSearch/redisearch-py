@@ -80,6 +80,12 @@ class Value(object):
             return v
         return ScalarValue(v)
 
+    def to_string(self):
+        raise NotImplemented()
+
+    def __str__(self):
+        return self.to_string()
+
 
 class RangeValue(Value):
     combinable = False

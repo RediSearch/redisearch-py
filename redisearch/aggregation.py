@@ -1,6 +1,18 @@
 FIELDNAME = object()
 
 
+class Limit(object):
+    def __init__(self, offset=0, count=0):
+        self.offset = offset
+        self.count = count
+
+    def build_args(self):
+        if self.count:
+            return ['LIMIT', str(self.offset), str(self.count)]
+        else:
+            return []
+
+
 class Reducer(object):
     """
     Base reducer object for all reducers.
@@ -71,22 +83,20 @@ class Group(object):
     """
     This object automatically created in the `AggregateRequest.group_by()`
     """
-    def __init__(self, *fields):
-        self.fields = fields
-        self.reducers = []
-        self.limit = [0, 0]
-
-    def add_reducer(self, reducer):
-        self.reducers.append(reducer)
-
-    def validate(self):
-        if not self.reducers:
+    def __init__(self, fields, reducers):
+        if not fields:
+            raise ValueError('need at least one field')
+        if not reducers:
             raise ValueError('Need at least one reducer')
 
+        fields = [fields] if isinstance(fields, basestring) else fields
+        reducers = [reducers] if isinstance(reducers, Reducer) else reducers
+
+        self.fields = fields
+        self.reducers = reducers
+        self.limit = Limit()
+
     def build_args(self):
-        self.validate()
-        if not self.fields:
-            raise Exception('No fields to group by')
         ret = [str(len(self.fields))]
         ret.extend(self.fields)
         for reducer in self.reducers:
@@ -118,7 +128,7 @@ class AggregateRequest(object):
         self._groups = []
         self._projections = []
         self._loadfields = []
-        self._limit = []
+        self._limit = Limit()
         self._sortby = []
         self._max = 0
 
@@ -146,16 +156,7 @@ class AggregateRequest(object):
         - **reducers**: One or more reducers. Reducers may be found in the
             `aggregation` module.
         """
-        if isinstance(fields, basestring):
-            fields = [fields]
-        group = Group(*fields)
-
-        if not reducers:
-            raise ValueError("Must pass at least one reducer")
-
-        for reducer in reducers:
-            group.add_reducer(reducer)
-
+        group = Group(fields, reducers)
         self._groups.append(group)
 
         return self
@@ -217,13 +218,14 @@ class AggregateRequest(object):
         `sort_by()` instead.
 
         """
+        limit = Limit(offset, num)
         if self._groups:
-            self._groups[-1].limit = [offset, num]
+            self._groups[-1].limit = limit
         else:
-            self._limit = [offset, num]
+            self._limit = limit
         return self
 
-    def sort_by(self, fields, max=0):
+    def sort_by(self, *fields, **kwargs):
         """
         Indicate how the results should be sorted. This can also be used for
         *top-N* style queries
@@ -251,7 +253,7 @@ class AggregateRequest(object):
             .sort_by(Desc('@paid'), max=10)
         ```
         """
-        self._max = max
+        self._max = kwargs.get('max', 0)
         if isinstance(fields, (basestring, SortDirection)):
             fields = [fields]
         for f in fields:
@@ -261,12 +263,13 @@ class AggregateRequest(object):
                 self._sortby.append(f)
         return self
 
-    def validate(self):
-        if not self._groups:
-            raise ValueError('Request requires at least one group')
+    def _limit_2_args(self, limit):
+        if limit[1]:
+            return ['LIMIT'] + [str(x) for x in limit]
+        else:
+            return []
 
     def build_args(self):
-        self.validate()
         # @foo:bar ...
         ret = [self._query]
         if self._loadfields:
@@ -274,10 +277,7 @@ class AggregateRequest(object):
             ret.append(str(len(self._loadfields)))
             ret.extend(self._loadfields)
         for group in self._groups:
-            ret += ['GROUPBY']
-            ret.extend(group.build_args())
-            if group.limit:
-                ret += ['LIMIT'] + [str(x) for x in group.limit]
+            ret += ['GROUPBY'] + group.build_args() + group.limit.build_args()
         for alias, projector in self._projections:
             ret += ['APPLY', projector]
             if alias:
@@ -289,8 +289,7 @@ class AggregateRequest(object):
             if self._max:
                 ret += ['MAX', str(self._max)]
 
-        if self._limit:
-            ret += ['LIMIT'] + [str(x) for x in self._limit]
+        ret += self._limit.build_args()
 
         return ret
 
