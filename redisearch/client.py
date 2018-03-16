@@ -1,9 +1,13 @@
 from redis import Redis, RedisError, ConnectionPool
 import itertools
 import time
+import six
+from six.moves import zip
+
 from .document import Document
 from .result import Result
 from .query import Query, Filter
+from _util import to_string
 
 
 class Field(object):
@@ -264,6 +268,10 @@ class Client(object):
         Load a single document by id
         """
         fields = self.redis.hgetall(id)
+        if six.PY3:
+            f2 = {to_string(k): to_string(v) for k, v in fields.items()}
+            fields = f2
+
         try:
             del fields['id']
         except KeyError:
@@ -277,13 +285,13 @@ class Client(object):
         """
 
         res = self.redis.execute_command('FT.INFO', self.index_name)
-
-        return {res[i]: res[i + 1] for i in range(0, len(res), 2)}
+        it = six.moves.map(to_string, res)
+        return dict(six.moves.zip(it, it))
 
     def _mk_query_args(self, query):
         args = [self.index_name]
 
-        if isinstance(query, (str, unicode)):
+        if isinstance(query, six.string_types):
             # convert the query from a text to a query object
             query = Query(query)
         if not isinstance(query, Query):

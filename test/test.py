@@ -4,10 +4,11 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from rmtest import ModuleTestCase
 import redis
 import unittest
-import random
-import time
 import bz2
 import csv
+from io import TextIOWrapper
+
+import six
 
 from redisearch import *
 
@@ -31,30 +32,29 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             return self.createIndex(client, num_docs=num_docs)
 
         chapters = {}
-        
-        with bz2.BZ2File(WILL_PLAY_TEXT) as fp:
-            
-            r = csv.reader(fp, delimiter=';')
-            for n, line in enumerate(r):
-                #['62816', 'Merchant of Venice', '9', '3.2.74', 'PORTIA', "I'll begin it,--Ding, dong, bell."]
+        bzfp = bz2.BZ2File(WILL_PLAY_TEXT)
+        if six.PY3:
+            bzfp = TextIOWrapper(bz2.BZ2File(WILL_PLAY_TEXT), encoding='utf8')
 
-                play, chapter, character, text = line[1], line[2], line[4], line[5]
+        r = csv.reader(bzfp, delimiter=';')
+        for n, line in enumerate(r):
+            #['62816', 'Merchant of Venice', '9', '3.2.74', 'PORTIA', "I'll begin it,--Ding, dong, bell."]
 
-                key = '{}:{}'.format(play, chapter).lower()
-                d = chapters.setdefault(key, {})
-                d['play'] = play
-                d['txt'] = d.get('txt', '') + ' ' + text
-                d['chapter'] = int(chapter or 0)
+            play, chapter, character, text = line[1], line[2], line[4], line[5]
 
-                if len(chapters) == num_docs:
-                    break
-                
+            key = '{}:{}'.format(play, chapter).lower()
+            d = chapters.setdefault(key, {})
+            d['play'] = play
+            d['txt'] = d.get('txt', '') + ' ' + text
+            d['chapter'] = int(chapter or 0)
+            if len(chapters) == num_docs:
+                break
+
         indexer = client.batch_indexer(chunk_size=50)
         self.assertIsInstance(indexer, Client.BatchIndexer)
         self.assertEqual(50, indexer.chunk_size)
 
-        for key, doc in chapters.iteritems():
-            
+        for key, doc in six.iteritems(chapters):
             indexer.add_document(key, **doc)
         indexer.commit()
 
@@ -354,7 +354,6 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             strs = []
             for _ in r.retry_with_rdb_reload():
                 ret = ac.get_suggestions('bad', with_scores = True)
-
                 self.assertEqual(2, len(ret))
                 self.assertEqual('badger', ret[0].string)
                 self.assertIsInstance(ret[0].score, float)

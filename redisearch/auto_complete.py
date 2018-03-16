@@ -1,17 +1,18 @@
 from redis import Redis, ConnectionPool
+from six.moves import xrange
+
+from _util import to_string
 
 class Suggestion(object):
     """
     Represents a single suggestion being sent or returned from the auto complete server
     """
     def __init__(self, string, score=1.0, payload=None):
-
-        self.string = string
+        self.string = to_string(string)
+        self.payload = to_string(payload)
         self.score = score
-        self.payload = payload
-    
-    def __repr__(self):
 
+    def __repr__(self):
         return self.string
 
 
