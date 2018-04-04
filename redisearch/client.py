@@ -7,7 +7,7 @@ from six.moves import zip
 from .document import Document
 from .result import Result
 from .query import Query, Filter
-from _util import to_string
+from ._util import to_string
 
 
 class Field(object):

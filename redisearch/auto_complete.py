@@ -1,7 +1,7 @@
 from redis import Redis, ConnectionPool
 from six.moves import xrange
 
-from _util import to_string
+from ._util import to_string
 
 class Suggestion(object):
     """
