@@ -86,11 +86,11 @@ class TagField(Field):
     def __init__(self, name, separator = ',', no_index=False):
         Field.__init__(self, name, Field.TAG)
         if separator != ',':
-            args.append(Field.SEPARATOR)
-            args.append(separator)
+            self.args.append(Field.SEPARATOR)
+            self.args.append(separator)
 
         if no_index:
-            args.append(Field.NOINDEX)
+            self.args.append(Field.NOINDEX)
     
 
 class Client(object):
