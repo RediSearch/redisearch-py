@@ -88,3 +88,21 @@ class QueryBuilderTest(TestCase):
         req = a.AggregateRequest().group_by('@foo', r.count()).sort_by(a.Desc('@date'), a.Asc('@time'), max=10)
         self.assertEqual(['*', 'GROUPBY', '1', '@foo', 'REDUCE', 'COUNT', '0', 'SORTBY', '4', '@date', 'DESC', '@time', 'ASC', 'MAX', '10'],
                          req.build_args())
+
+    def test_reducers(self):
+        self.assertEqual((), r.count().args)
+        self.assertEqual(('f1',), r.sum('f1').args)
+        self.assertEqual(('f1',), r.min('f1').args)
+        self.assertEqual(('f1',), r.max('f1').args)
+        self.assertEqual(('f1',), r.avg('f1').args)
+        self.assertEqual(('f1',), r.tolist('f1').args)
+        self.assertEqual(('f1',), r.count_distinct('f1').args)
+        self.assertEqual(('f1',), r.count_distinctish('f1').args)
+        self.assertEqual(('f1', '0.95'), r.quantile('f1', 0.95).args)
+        self.assertEqual(('f1',), r.stddev('f1').args)
+
+        self.assertEqual(('f1',), r.first_value('f1').args)
+        self.assertEqual(('f1', 'BY', 'f2', 'ASC'), r.first_value('f1', a.Asc('f2')).args)
+        self.assertEqual(('f1', 'BY', 'f1', 'ASC'), r.first_value('f1', a.Asc).args)
+
+        self.assertEqual(('f1', '50'), r.random_sample('f1', 50).args)

@@ -56,6 +56,14 @@ class avg(FieldOnlyReducer):
     def __init__(self, field):
         super(avg, self).__init__(field)
 
+class tolist(FieldOnlyReducer):
+    """
+    Returns all the matched properties in a list
+    """
+    NAME = 'TOLIST'
+
+    def __init__(self, field):
+        super(tolist, self).__init__(field)
 
 class count_distinct(FieldOnlyReducer):
     """
@@ -85,7 +93,7 @@ class quantile(Reducer):
     NAME = 'QUANTILE'
 
     def __init__(self, field, pct):
-        super(quantile, self).__init__(field, pct)
+        super(quantile, self).__init__(field, str(pct))
         self._field = field
 
 
@@ -131,4 +139,22 @@ class first_value(Reducer):
         if fieldstrs:
             args += ['BY'] + fieldstrs
         super(first_value, self).__init__(*args)
+        self._field = field
+
+
+class random_sample(Reducer):
+    """
+    Returns a random sample of items from the dataset, from the given property
+    """
+    NAME = 'RANDOM_SAMPLE'
+
+    def __init__(self, field, size):
+        """
+        ### Parameter
+
+        **field**: Field to sample from
+        **size**: Return this many items (can be less)
+        """
+        args = [field, str(size)]
+        super(random_sample, self).__init__(*args)
         self._field = field
