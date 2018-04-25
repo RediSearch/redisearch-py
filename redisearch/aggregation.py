@@ -131,6 +131,9 @@ class AggregateRequest(object):
         self._limit = Limit()
         self._sortby = []
         self._max = 0
+        self._with_schema = False
+        self._verbatim = False
+        self._cursor = []
 
     def load(self, *fields):
         """
@@ -263,6 +266,27 @@ class AggregateRequest(object):
                 self._sortby.append(f)
         return self
 
+    def with_schema(self):
+        """
+        If set, the `schema` property will contain a list of `[field, type]`
+        entries in the result object.
+        """
+        self._with_schema = True
+        return self
+
+    def verbatim(self):
+        self._verbatim = True
+        return self
+
+    def cursor(self, count=0, max_idle=0.0):
+        args = ['WITHCURSOR']
+        if count:
+            args += ['COUNT', str(count)]
+        if max_idle:
+            args += ['MAXIDLE', str(max_idle * 1000)]
+        self._cursor = args
+        return self
+
     def _limit_2_args(self, limit):
         if limit[1]:
             return ['LIMIT'] + [str(x) for x in limit]
@@ -272,6 +296,16 @@ class AggregateRequest(object):
     def build_args(self):
         # @foo:bar ...
         ret = [self._query]
+
+        if self._with_schema:
+            ret.append('WITHSCHEMA')
+
+        if self._verbatim:
+            ret.append('VERBATIM')
+
+        if self._cursor:
+            ret += self._cursor
+
         if self._loadfields:
             ret.append('LOAD')
             ret.append(str(len(self._loadfields)))
@@ -294,3 +328,30 @@ class AggregateRequest(object):
         return ret
 
 
+class Cursor(object):
+    def __init__(self, cid):
+        self.cid = cid
+        self.max_idle = 0
+        self.count = 0
+
+    def build_args(self):
+        args = [str(self.cid)]
+        if self.max_idle:
+            args += ['MAXIDLE', str(self.max_idle)]
+        if self.count:
+            args += ['COUNT', str(self.count)]
+        return args
+
+
+class AggregateResult(object):
+    def __init__(self, rows, cursor, schema):
+        self.rows = rows
+        self.cursor = cursor
+        self.schema = schema
+
+    def __repr__(self):
+        return "<{} at 0x{:x} Rows={}, Cursor={}>".format(
+            self.__class__.__name__,
+            id(self),
+            len(self.rows),
+            self.cursor.cid if self.cursor else -1)
