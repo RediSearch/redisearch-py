@@ -1,4 +1,4 @@
-
+from six import string_types, integer_types
 
 def tags(*t):
     """
@@ -183,7 +183,7 @@ class Node(object):
         kvparams = {}
         for k, v in kwparams.items():
             curvals = kvparams.setdefault(k, [])
-            if isinstance(v, (basestring, int, long, float)):
+            if isinstance(v, (string_types, integer_types, float)):
                 curvals.append(Value.make_value(v))
             elif isinstance(v, Value):
                 curvals.append(v)
