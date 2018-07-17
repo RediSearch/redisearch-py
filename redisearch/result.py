@@ -18,23 +18,28 @@ class Result(object):
         self.docs = []
 
         step = 1
-        if hascontent:
-            step = 3 if has_payload else 2
-        else:
-            # we can't have nocontent and payloads in the same response
-            has_payload = False
+        fields_offset = 0
+        if hascontent and has_payload:
+            step = 3
+            fields_offset = 2
+        elif hascontent and not has_payload:
+            step = 2
+            fields_offset = 1
+        elif not hascontent and has_payload:
+            step = 2
+            fields_offset = 0
 
         for i in xrange(1, len(res), step):
             id = to_string(res[i])
             payload = to_string(res[i+1]) if has_payload else None
-            fields_offset = 2 if has_payload else 1
 
-            fields = {} 
-            if hascontent:
+            fields = {}
+            if fields_offset > 0:
                 fields = dict(
                     dict(izip(map(to_string, res[i + fields_offset][::2]),
                               map(to_string, res[i + fields_offset][1::2])))
-                ) if hascontent else {}
+                )
+
             try:
                 del fields['id']
             except KeyError:

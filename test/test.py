@@ -24,8 +24,8 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         #conn.flushdb()
         #client = Client('test', port=conn.port)
         try:
-            client.create_index((TextField('play', weight=5.0), 
-                                TextField('txt'), 
+            client.create_index((TextField('play', weight=5.0),
+                                TextField('txt'),
                                 NumericField('chapter')))
         except redis.ResponseError:
             client.drop_index()
@@ -61,7 +61,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
     def testClient(self):
 
         conn = self.redis()
-        
+
         with conn as r:
             num_docs = 500
             r.flushdb()
@@ -95,7 +95,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                     self.assertTrue(doc.id)
                     self.assertEqual(doc.play, 'Henry IV')
                     self.assertTrue(len(doc.txt) > 0)
-                    
+
                 # test no content
                 res = client.search(Query('king').no_content())
                 self.assertEqual(194, res.total)
@@ -103,11 +103,11 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                 for doc in res.docs:
                     self.assertNotIn('txt', doc.__dict__)
                     self.assertNotIn('play', doc.__dict__)
-                
+
                 #test verbatim vs no verbatim
                 total = client.search(Query('kings').no_content()).total
                 vtotal = client.search(Query('kings').no_content().verbatim()).total
-                self.assertGreater(total, vtotal)  
+                self.assertGreater(total, vtotal)
 
                 # test in fields
                 txt_total =  client.search(Query('henry').no_content().limit_fields('txt')).total
@@ -124,7 +124,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                 self.assertEqual(doc.play, 'Henry VI Part 3')
                 self.assertTrue(len(doc.txt) > 0)
 
-                
+
 
                 # test inkeys
                 ids = [x.id for x in client.search(Query('henry')).docs]
@@ -145,12 +145,12 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                 self.assertEqual(52,client.search(Query('king henry').slop(0).in_order()).total)
                 self.assertEqual(53,client.search(Query('henry king').slop(0)).total)
                 self.assertEqual(167,client.search(Query('henry king').slop(100)).total)
-            
+
                 # test delete document
                 client.add_document('doc-5ghs2', play = 'Death of a Salesman')
                 res = client.search(Query('death of a salesman'))
                 self.assertEqual(1, res.total)
-                
+
                 self.assertEqual(1, client.delete_document('doc-5ghs2'))
                 res = client.search(Query('death of a salesman'))
                 self.assertEqual(0, res.total)
@@ -175,7 +175,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         return client
 
     def testPayloads(self):
-        
+
         conn = self.redis()
 
         with conn as r:
@@ -191,13 +191,36 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             res = client.search(q)
             self.assertEqual(2, res.total)
             self.assertEqual('doc2', res.docs[0].id)
-            
+
             self.assertEqual('doc1', res.docs[1].id)
             self.assertEqual('foo baz', res.docs[1].payload)
             self.assertIsNone(res.docs[0].payload)
 
+    def testPayloadsWithNoContent(self):
+
+        conn = self.redis()
+
+        with conn as r:
+            # Creating a client with a given index name
+            client = Client('idx', port=conn.port)
+            client.redis.flushdb()
+            client.create_index((TextField('txt'),))
+
+            client.add_document('doc1', payload = 'foo baz', txt = 'foo bar')
+            client.add_document('doc2', payload = 'foo baz2', txt = 'foo bar')
+
+            q = Query("foo bar").with_payloads().no_content()
+            res = client.search(q)
+
+            self.assertEqual(2, len(res.docs))
+            self.assertEqual('doc2', res.docs[0].id)
+            self.assertEqual('foo baz2', res.docs[0].payload)
+
+            self.assertEqual('doc1', res.docs[1].id)
+            self.assertEqual('foo baz', res.docs[1].payload)
+
     def testReplace(self):
-        
+
         conn = self.redis()
 
         with conn as r:
@@ -212,19 +235,19 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             res = client.search("foo bar")
             self.assertEqual(2, res.total)
             client.add_document('doc1', replace = True, txt = 'this is a replaced doc')
-            
-            
+
+
             res = client.search("foo bar")
             self.assertEqual(1, res.total)
             self.assertEqual('doc2', res.docs[0].id)
 
-            
+
             res = client.search("replaced doc")
             self.assertEqual(1, res.total)
             self.assertEqual('doc1', res.docs[0].id)
 
 
-    def testStopwords(self): 
+    def testStopwords(self):
         conn = self.redis()
 
         with conn as r:
@@ -237,7 +260,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             client.create_index((TextField('txt'),), stopwords = ['foo', 'bar', 'baz'])
             client.add_document('doc1', txt = 'foo bar')
             client.add_document('doc2', txt = 'hello world')
-            
+
             q1 = Query("foo bar").no_content()
             q2 = Query("foo bar hello world").no_content()
             res1, res2 =  client.search(q1), client.search(q2)
@@ -252,7 +275,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             # Creating a client with a given index name
             client = Client('idx', port=conn.port)
             client.redis.flushdb()
-            
+
             client.create_index((TextField('txt'), NumericField('num'), GeoField('loc')))
 
             client.add_document('doc1', txt = 'foo bar', num = 3.141, loc = '-0.441,51.458')
@@ -274,7 +297,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                 q1 = Query("foo").add_filter(GeoFilter('loc', -0.44, 51.45, 10)).no_content()
                 q2 = Query("foo").add_filter(GeoFilter('loc', -0.44, 51.45, 100)).no_content()
                 res1, res2 =  client.search(q1), client.search(q2)
-                
+
                 self.assertEqual(1, res1.total)
                 self.assertEqual(2, res2.total)
                 self.assertEqual('doc1', res1.docs[0].id)
@@ -289,7 +312,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             # Creating a client with a given index name
             client = Client('idx', port=conn.port)
             client.redis.flushdb()
-            
+
             client.create_index((TextField('txt'), NumericField('num', sortable=True)))
 
             client.add_document('doc1', txt = 'foo bar', num = 1)
@@ -300,7 +323,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             q1 = Query("foo").sort_by('num', asc=True).no_content()
             q2 = Query("foo").sort_by('num', asc=False).no_content()
             res1, res2 = client.search(q1), client.search(q2)
-            
+
             self.assertEqual(3, res1.total)
             self.assertEqual('doc1', res1.docs[0].id)
             self.assertEqual('doc2', res1.docs[1].id)
@@ -318,7 +341,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             # Creating a client with a given index name
             client = Client('myIndex', port=conn.port)
             client.redis.flushdb()
-            
+
             # Creating the index definition and schema
             client.create_index((TextField('title', weight=5.0), TextField('body')))
 
@@ -329,15 +352,15 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             q = Query("search engine").verbatim().no_content().paging(0,5)
 
             res = client.search(q)
-            
 
-            
+
+
         self.assertTrue(True)
 
     def testAutoComplete(self):
         with self.redis() as r:
             self.assertTrue(True)
-            
+
             ac = AutoCompleter('ac', conn=r)
             n = 0
             with open(TITLES_CSV) as f:
@@ -349,7 +372,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                     #print term, score
                     self.assertEqual(n,ac.add_suggestions(Suggestion(term,score=score)))
 
-            
+
             self.assertEqual(n, ac.len())
             strs = []
             for _ in r.retry_with_rdb_reload():
@@ -372,7 +395,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             # make sure a second delete returns 0
             for sug in strs:
                 self.assertEqual(0, ac.delete(sug))
-            
+
             # make sure they were actually deleted
             ret2 = ac.get_suggestions('bad', fuzzy=True, num=10)
             for sug in ret2:
@@ -473,11 +496,11 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             # Creating a client with a given index name
             client = Client('idx', port=conn.port)
             client.redis.flushdb()
-            
+
             client.create_index((TextField('txt'), TagField('tags')))
 
             client.add_document('doc1', txt = 'fooz barz', tags = 'foo,foo bar,hello;world')
-            
+
             for i in r.retry_with_rdb_reload():
 
                 q = Query("@tags:{foo}")

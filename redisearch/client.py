@@ -25,7 +25,7 @@ class Field(object):
     def __init__(self, name, *args):
         self.name = name
         self.args = args
-    
+
     def redis_args(self):
         return [self.name] + list(self.args)
 
@@ -80,7 +80,7 @@ class GeoField(Field):
 
 class TagField(Field):
     """
-    TagField is a tag-indexing field with simpler compression and tokenization. 
+    TagField is a tag-indexing field with simpler compression and tokenization.
     See http://redisearch.io/Tags/
     """
     def __init__(self, name, separator = ',', no_index=False):
@@ -91,12 +91,12 @@ class TagField(Field):
 
         if no_index:
             self.args.append(Field.NOINDEX)
-    
+
 
 class Client(object):
     """
-    A client for the RediSearch module. 
-    It abstracts the API of the module and lets you just use the engine 
+    A client for the RediSearch module.
+    It abstracts the API of the module and lets you just use the engine
     """
 
     NUMERIC = 'NUMERIC'
@@ -117,8 +117,8 @@ class Client(object):
 
     class BatchIndexer(object):
         """
-        A batch indexer allows you to automatically batch 
-        document indexeing in pipelines, flushing it every N documents. 
+        A batch indexer allows you to automatically batch
+        document indexeing in pipelines, flushing it every N documents.
         """
 
         def __init__(self, client, chunk_size=1000):
@@ -193,7 +193,7 @@ class Client(object):
             args += [self.STOPWORDS, len(stopwords)]
             if len(stopwords) > 0:
                 args += list(stopwords)
-    
+
         args.append('SCHEMA')
 
         args += list(itertools.chain(*(f.redis_args() for f in fields)))
@@ -205,11 +205,11 @@ class Client(object):
         Drop the index if it exists
         """
         return self.redis.execute_command(self.DROP_CMD, self.index_name)
-        
+
     def _add_document(self, doc_id, conn=None, nosave=False, score=1.0, payload=None,
                       replace=False, partial=False, language=None, **fields):
-        """ 
-        Internal add_document used for both batch and single doc indexing 
+        """
+        Internal add_document used for both batch and single doc indexing
         """
         if conn is None:
             conn = self.redis
@@ -242,17 +242,17 @@ class Client(object):
 
         - **doc_id**: the id of the saved document.
         - **nosave**: if set to true, we just index the document, and don't save a copy of it. This means that searches will just return ids.
-        - **score**: the document ranking, between 0.0 and 1.0 
+        - **score**: the document ranking, between 0.0 and 1.0
         - **payload**: optional inner-index payload we can save for fast access in scoring functions
         - **replace**: if True, and the document already is in the index, we perform an update and reindex the document
         - **partial**: if True, the fields specified will be added to the existing document.
                        This has the added benefit that any fields specified with `no_index`
                        will not be reindexed again. Implies `replace`
         - **language**: Specify the language used for document tokenization.
-        - **fields** kwargs dictionary of the document fields to be saved and/or indexed. 
+        - **fields** kwargs dictionary of the document fields to be saved and/or indexed.
                      NOTE: Geo points shoule be encoded as strings of "lon,lat"
         """
-        return self._add_document(doc_id, conn=None, nosave=nosave, score=score, 
+        return self._add_document(doc_id, conn=None, nosave=nosave, score=score,
                                   payload=payload, replace=replace,
                                   partial=partial, language=language, **fields)
 
