@@ -1,3 +1,5 @@
+[![PyPI version](https://badge.fury.io/py/redisearch.svg)](https://badge.fury.io/py/redisearch)
+
 # RediSearch Python Client
 
 This is a python search engine library that utilizes the [RediSearch Redis Module](http://redisearch.io) API.
