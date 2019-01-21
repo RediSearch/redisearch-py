@@ -10,7 +10,8 @@ setup(
     description='RedisSearch Python Client',
     url='http://github.com/RedisLabs/redisearch-py',
     packages=find_packages(),
-    install_requires=['redis', 'hiredis', 'rmtest'],
+    install_requires=['redis', 'hiredis'],
+    test_require=['rmtest'],
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
