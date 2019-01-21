@@ -2,9 +2,6 @@
 #!/usr/bin/env python
 from setuptools import setup, find_packages
 
-install_require = ['redis', 'hiredis']
-
-test_require = ['rmtest']
 
 setup(
     name='redisearch',
@@ -13,8 +10,8 @@ setup(
     description='RedisSearch Python Client',
     url='http://github.com/RedisLabs/redisearch-py',
     packages=find_packages(),
-    install_requires=install_requires,
-    test_require=test_require,
+    install_requires=['redis', 'hiredis'],
+    test_require=['rmtest'],
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
