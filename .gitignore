@@ -8,4 +8,5 @@ dist
 !**/*.py
 !**/*.csv
 !**/*.md
-!.cirecleci/config.yml
+!.circleci/config.yml
+
