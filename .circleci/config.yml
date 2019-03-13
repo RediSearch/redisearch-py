@@ -8,15 +8,14 @@ jobs:
   build:
     docker:
       - image: circleci/python:2.7.15
-      - image: redislabs/redisearch:edge
+      - image: redislabs/redisearch:latest
 
     working_directory: ~/repo
 
     steps:
       - checkout
 
-      # Download and cache dependencies
-      - restore_cache:
+      - restore_cache: # Download and cache dependencies
           keys:
           - v1-dependencies-{{ checksum "requirements.txt" }}
           # fallback to using the latest cache if no exact match is found
@@ -44,6 +43,42 @@ jobs:
           path: test-reports
           destination: test-reports
 
+  build_nightly:
+    docker:
+      - image: circleci/python:2.7.15
+      - image: redislabs/redisearch:edge
+
+    working_directory: ~/repo
+
+    steps:
+      - checkout
+
+      - restore_cache: # Download and cache dependencies
+          keys:
+          - v1-dependencies-{{ checksum "requirements.txt" }}
+          # fallback to using the latest cache if no exact match is found
+          - v1-dependencies-
+
+      - run:
+          name: install dependencies
+          command: |
+            virtualenv venv
+            . venv/bin/activate
+            pip install -r requirements.txt
+            
+      - save_cache:
+          paths:
+            - ./venv
+          key: v1-dependencies-{{ checksum "requirements.txt" }}
+
+      - run:
+          name: run tests
+          command: |
+            . venv/bin/activate
+            REDIS_PORT=6379 python test/test.py 
+
+      # no need for store_artifacts on nightly builds 
+
 workflows:
   version: 2
   commit:
@@ -58,4 +93,4 @@ workflows:
               only:
                 - master
     jobs:
-      - build
+      - build_nightly
