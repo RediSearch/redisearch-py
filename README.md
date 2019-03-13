@@ -1,3 +1,9 @@
+[![license](https://img.shields.io/github/license/RediSearch/redisearch-py.svg)](https://github.com/RediSearch/redisearch-py-go)
+[![PyPI version](https://badge.fury.io/py/redisearch.svg)](https://badge.fury.io/py/redisearch)
+[![CircleCI](https://circleci.com/gh/RediSearch/redisearch-py/tree/master.svg?style=svg)](https://circleci.com/gh/RediSearch/redisearch-py/tree/master)
+[![GitHub issues](https://img.shields.io/github/release/RediSearch/redisearch-py.svg)](https://github.com/RediSearch/redisearch-py/releases/latest)
+
+
 # RediSearch Python Client
 
 This is a python search engine library that utilizes the [RediSearch Redis Module](http://redisearch.io) API.
