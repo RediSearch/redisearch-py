@@ -135,9 +135,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                 ids = [x.id for x in docs.docs]
                 self.assertEqual(set(ids), set(subset))
 
-                for doc in client.search(Query('henry king').return_fields('play', 'nonexist')).docs:
-                    self.assertFalse(doc.nonexist)
-                    self.assertTrue(doc.play.startswith('Henry'))
+                self.assertRaises(redis.ResponseError, client.search, Query('henry king').return_fields('play', 'nonexist'))
 
                 # test slop and in order
                 self.assertEqual(193, client.search(Query('henry king')).total)
