@@ -27,6 +27,7 @@ jobs:
             virtualenv venv
             . venv/bin/activate
             pip install -r requirements.txt
+            pip install codecov
             
       - save_cache:
           paths:
@@ -37,7 +38,8 @@ jobs:
           name: run tests
           command: |
             . venv/bin/activate
-            REDIS_PORT=6379 python test/test.py 
+            REDIS_PORT=6379 coverage run test/tests.py
+            codecov
             
       - store_artifacts:
           path: test-reports
