@@ -84,13 +84,12 @@ class TagField(Field):
     See http://redisearch.io/Tags/
     """
     def __init__(self, name, separator = ',', no_index=False):
-        Field.__init__(self, name, Field.TAG)
-        if separator != ',':
-            self.args.append(Field.SEPARATOR)
-            self.args.append(separator)
+        args = [Field.TAG, Field.SEPARATOR, separator]
 
         if no_index:
-            self.args.append(Field.NOINDEX)
+            args.append(Field.NOINDEX)
+
+        Field.__init__(self, name, *args)
     
 
 class Client(object):
