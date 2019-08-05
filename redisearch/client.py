@@ -102,6 +102,7 @@ class Client(object):
     NUMERIC = 'NUMERIC'
 
     CREATE_CMD = 'FT.CREATE'
+    ALTER_CMD = 'FT.ALTER'
     SEARCH_CMD = 'FT.SEARCH'
     ADD_CMD = 'FT.ADD'
     DROP_CMD = 'FT.DROP'
@@ -195,6 +196,21 @@ class Client(object):
                 args += list(stopwords)
     
         args.append('SCHEMA')
+
+        args += list(itertools.chain(*(f.redis_args() for f in fields)))
+
+        return self.redis.execute_command(*args)
+
+    def alter_schema_add(self, fields):
+        """
+        Alter the existing search index by adding new fields. The index must already exist.
+
+        ### Parameters:
+
+        - **fields**: a list of Field objects to add for the index
+        """
+
+        args = [self.ALTER_CMD, self.index_name, 'SCHEMA', 'ADD']
 
         args += list(itertools.chain(*(f.redis_args() for f in fields)))
 
