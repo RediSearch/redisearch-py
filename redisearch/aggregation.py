@@ -113,14 +113,14 @@ class Projection(object):
     This object automatically created in the `AggregateRequest.apply()`
     """
 
-    def __init__(self, alias, projector):
+    def __init__(self, projector, alias=None ):
 
         self.alias = alias
         self.projector = projector
 
     def build_args(self):
         ret = ['APPLY', self.projector]
-        if self.alias:
+        if self.alias is not None:
             ret += ['AS', self.alias]
 
         return ret
@@ -130,7 +130,7 @@ class SortBy(object):
     This object automatically created in the `AggregateRequest.sort_by()`
     """
 
-    def __init__(self, fields, max):
+    def __init__(self, fields, max=0):
         self.fields = fields
         self.max = max
 
