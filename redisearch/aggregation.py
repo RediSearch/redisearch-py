@@ -104,7 +104,7 @@ class Group(object):
         for reducer in self.reducers:
             ret += ['REDUCE', reducer.NAME, str(len(reducer.args))]
             ret.extend(reducer.args)
-            if reducer._alias:
+            if reducer._alias is not None:
                 ret += ['AS', reducer._alias]
         return ret
 
@@ -172,6 +172,7 @@ class AggregateRequest(object):
         self._query = query
         self._aggregateplan = []
         self._loadfields = []
+        self._filters = []
         self._limit = Limit()
         self._max = 0
         self._with_schema = False
@@ -218,7 +219,7 @@ class AggregateRequest(object):
             expression itself, for example `apply(square_root="sqrt(@foo)")`
         """
         for alias, expr in kwexpr.items():
-            projection = Projection(alias, expr)
+            projection = Projection(expr, alias )
             self._aggregateplan.extend(projection.build_args())
 
         return self
@@ -306,6 +307,22 @@ class AggregateRequest(object):
         self._aggregateplan.extend(sortby.build_args())
         return self
 
+    def filter(self, expressions):
+        """
+        Specify filter for post-query results using predicates relating to values in the result set.
+
+        ### Parameters
+
+        - **fields**: Fields to group by. This can either be a single string,
+            or a list of strings.
+        """
+        if isinstance(expressions, (string_types)):
+            expressions = [expressions]
+
+        self._filters.extend(expressions)
+
+        return self
+
     def with_schema(self):
         """
         If set, the `schema` property will contain a list of `[field, type]`
@@ -352,6 +369,10 @@ class AggregateRequest(object):
             ret.extend(self._loadfields)
 
         ret.extend(self._aggregateplan)
+
+        for expr in self._filters:
+            ret.append('FILTER')
+            ret.append(expr)
 
         ret += self._limit.build_args()
 

@@ -62,6 +62,10 @@ class QueryBuilderTest(unittest.TestCase):
         req = a.AggregateRequest().group_by('@foo', r.count())
         self.assertEqual(['*', 'GROUPBY', '1', '@foo', 'REDUCE', 'COUNT', '0'], req.build_args())
 
+        # Test with group_by and alias on reducer
+        req = a.AggregateRequest().group_by('@foo', r.count().alias('foo_count'))
+        self.assertEqual(['*', 'GROUPBY', '1', '@foo', 'REDUCE', 'COUNT', '0', 'AS', 'foo_count'], req.build_args())
+
         # Test with limit
         req = a.AggregateRequest(). \
             group_by('@foo', r.count()). \
@@ -76,6 +80,10 @@ class QueryBuilderTest(unittest.TestCase):
 
         self.assertEqual(['*', 'APPLY', '@bar / 2', 'AS', 'foo', 'GROUPBY', '1', '@foo', 'REDUCE', 'COUNT', '0'],
                          req.build_args())
+
+        # Test with filter
+        req = a.AggregateRequest().group_by('@foo', r.count()).filter( "@foo=='bar'")
+        self.assertEqual(['*', 'GROUPBY', '1', '@foo', 'REDUCE', 'COUNT', '0', 'FILTER', "@foo=='bar'" ], req.build_args())
 
         # Test with sort_by
         req = a.AggregateRequest().group_by('@foo', r.count()).sort_by('@date')
