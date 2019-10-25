@@ -39,10 +39,10 @@ class TextField(Field):
     def __init__(self, name, weight=1.0, sortable=False, no_stem=False,
                  no_index=False):
         args = [Field.TEXT, Field.WEIGHT, weight]
-        if sortable:
-            args.append(Field.SORTABLE)
         if no_stem:
             args.append(self.NOSTEM)
+        if sortable:
+            args.append(Field.SORTABLE)
         if no_index:
             args.append(self.NOINDEX)
 
