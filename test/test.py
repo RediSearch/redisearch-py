@@ -494,6 +494,46 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                 res = client.search(q)
                 self.assertEqual(1, res.total)
 
+    def testTextFieldSortableNostem(self):
+        conn = self.redis()
+
+        with conn as r:
+            # Creating a client with a given index name
+            client = Client('sortableNostem', port=conn.port)
+            client.redis.flushdb()
+
+            # Creating the index definition with sortable and no_stem
+            client.create_index((TextField('txt', sortable=True, no_stem=True),))
+
+            # Now get the index info to confirm its contents
+            response = client.info()
+            self.assertIn(b'SORTABLE', response['fields'][0])
+            self.assertIn(b'NOSTEM', response['fields'][0])
+
+    def testAlterSchemaAdd(self):
+        conn = self.redis()
+
+        with conn as r:
+            # Creating a client with a given index name
+            client = Client('alterIdx', port=conn.port)
+            client.redis.flushdb()
+
+            # Creating the index definition and schema
+            client.create_index((TextField('title'),))
+
+            # Using alter to add a field
+            client.alter_schema_add((TextField('body'),))
+
+            # Indexing a document
+            client.add_document('doc1', title = 'MyTitle', body = 'Some content only in the body')
+
+            # Searching with parameter only in the body (the added field)
+            q = Query("only in the body")
+
+            # Ensure we find the result searching on the added body field
+            res = client.search(q)
+            self.assertEqual(1, res.total)
+
 if __name__ == '__main__':
 
     unittest.main()
