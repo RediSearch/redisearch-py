@@ -172,7 +172,6 @@ class AggregateRequest(object):
         self._query = query
         self._aggregateplan = []
         self._loadfields = []
-        self._filters = []
         self._limit = Limit()
         self._max = 0
         self._with_schema = False
@@ -319,9 +318,12 @@ class AggregateRequest(object):
         if isinstance(expressions, (string_types)):
             expressions = [expressions]
 
-        self._filters.extend(expressions)
+        for expression in expressions:
+            self._aggregateplan.extend(['FILTER', expression])
 
         return self
+
+
 
     def with_schema(self):
         """
@@ -369,10 +371,6 @@ class AggregateRequest(object):
             ret.extend(self._loadfields)
 
         ret.extend(self._aggregateplan)
-
-        for expr in self._filters:
-            ret.append('FILTER')
-            ret.append(expr)
 
         ret += self._limit.build_args()
 

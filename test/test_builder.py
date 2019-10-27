@@ -85,6 +85,15 @@ class QueryBuilderTest(unittest.TestCase):
         req = a.AggregateRequest().group_by('@foo', r.count()).filter( "@foo=='bar'")
         self.assertEqual(['*', 'GROUPBY', '1', '@foo', 'REDUCE', 'COUNT', '0', 'FILTER', "@foo=='bar'" ], req.build_args())
 
+        # Test with filter on different state of the pipeline
+        req = a.AggregateRequest().filter("@foo=='bar'").group_by('@foo', r.count())
+        self.assertEqual(['*', 'FILTER', "@foo=='bar'", 'GROUPBY', '1', '@foo','REDUCE', 'COUNT', '0' ], req.build_args())
+
+        # Test with filter on different state of the pipeline
+        req = a.AggregateRequest().filter(["@foo=='bar'","@foo2=='bar2'"]).group_by('@foo', r.count())
+        self.assertEqual(['*', 'FILTER', "@foo=='bar'", 'FILTER', "@foo2=='bar2'", 'GROUPBY', '1', '@foo', 'REDUCE', 'COUNT', '0'],
+                         req.build_args())
+
         # Test with sort_by
         req = a.AggregateRequest().group_by('@foo', r.count()).sort_by('@date')
         # print req.build_args()
