@@ -195,6 +195,41 @@ Add a single document to the index.
              NOTE: Geo points shoule be encoded as strings of "lon,lat"
 
 
+### aggregate
+```py
+
+def aggregate(self, query)
+
+```
+
+
+
+Issue an aggregation query
+
+### Parameters
+
+**query**: This can be either an `AggeregateRequest`, or a `Cursor`
+
+An `AggregateResult` object is returned. You can access the rows from its
+`rows` property, which will always yield the rows of the result
+
+
+### alter\_schema\_add
+```py
+
+def alter_schema_add(self, fields)
+
+```
+
+
+
+Alter the existing search index by adding new fields. The index must already exist.
+
+### Parameters:
+
+- **fields**: a list of Field objects to add for the index
+
+
 ### batch\_indexer
 ```py
 
