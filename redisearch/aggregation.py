@@ -99,13 +99,56 @@ class Group(object):
         self.limit = Limit()
 
     def build_args(self):
-        ret = [str(len(self.fields))]
+        ret = ['GROUPBY', str(len(self.fields))]
         ret.extend(self.fields)
         for reducer in self.reducers:
             ret += ['REDUCE', reducer.NAME, str(len(reducer.args))]
             ret.extend(reducer.args)
-            if reducer._alias:
+            if reducer._alias is not None:
                 ret += ['AS', reducer._alias]
+        return ret
+
+class Projection(object):
+    """
+    This object automatically created in the `AggregateRequest.apply()`
+    """
+
+    def __init__(self, projector, alias=None ):
+
+        self.alias = alias
+        self.projector = projector
+
+    def build_args(self):
+        ret = ['APPLY', self.projector]
+        if self.alias is not None:
+            ret += ['AS', self.alias]
+
+        return ret
+
+class SortBy(object):
+    """
+    This object automatically created in the `AggregateRequest.sort_by()`
+    """
+
+    def __init__(self, fields, max=0):
+        self.fields = fields
+        self.max = max
+
+
+
+    def build_args(self):
+        fields_args = []
+        for f in self.fields:
+            if isinstance(f, SortDirection):
+                fields_args += [f.field, f.DIRSTRING]
+            else:
+                fields_args += [f]
+
+        ret = ['SORTBY', str(len(fields_args))]
+        ret.extend(fields_args)
+        if self.max > 0:
+            ret += ['MAX', str(self.max)]
+
         return ret
 
 
@@ -127,11 +170,9 @@ class AggregateRequest(object):
         return the object itself, making them useful for chaining.
         """
         self._query = query
-        self._groups = []
-        self._projections = []
+        self._aggregateplan = []
         self._loadfields = []
         self._limit = Limit()
-        self._sortby = []
         self._max = 0
         self._with_schema = False
         self._verbatim = False
@@ -162,7 +203,7 @@ class AggregateRequest(object):
             `aggregation` module.
         """
         group = Group(fields, reducers)
-        self._groups.append(group)
+        self._aggregateplan.extend(group.build_args())
 
         return self
 
@@ -177,7 +218,8 @@ class AggregateRequest(object):
             expression itself, for example `apply(square_root="sqrt(@foo)")`
         """
         for alias, expr in kwexpr.items():
-            self._projections.append([alias, expr])
+            projection = Projection(expr, alias )
+            self._aggregateplan.extend(projection.build_args())
 
         return self
 
@@ -224,10 +266,7 @@ class AggregateRequest(object):
 
         """
         limit = Limit(offset, num)
-        if self._groups:
-            self._groups[-1].limit = limit
-        else:
-            self._limit = limit
+        self._limit = limit
         return self
 
     def sort_by(self, *fields, **kwargs):
@@ -258,15 +297,33 @@ class AggregateRequest(object):
             .sort_by(Desc('@paid'), max=10)
         ```
         """
-        self._max = kwargs.get('max', 0)
         if isinstance(fields, (string_types, SortDirection)):
             fields = [fields]
-        for f in fields:
-            if isinstance(f, SortDirection):
-                self._sortby += [f.field, f.DIRSTRING]
-            else:
-                self._sortby.append(f)
+
+        max = kwargs.get('max', 0)
+        sortby = SortBy(fields, max)
+
+        self._aggregateplan.extend(sortby.build_args())
         return self
+
+    def filter(self, expressions):
+        """
+        Specify filter for post-query results using predicates relating to values in the result set.
+
+        ### Parameters
+
+        - **fields**: Fields to group by. This can either be a single string,
+            or a list of strings.
+        """
+        if isinstance(expressions, (string_types)):
+            expressions = [expressions]
+
+        for expression in expressions:
+            self._aggregateplan.extend(['FILTER', expression])
+
+        return self
+
+
 
     def with_schema(self):
         """
@@ -312,18 +369,8 @@ class AggregateRequest(object):
             ret.append('LOAD')
             ret.append(str(len(self._loadfields)))
             ret.extend(self._loadfields)
-        for group in self._groups:
-            ret += ['GROUPBY'] + group.build_args() + group.limit.build_args()
-        for alias, projector in self._projections:
-            ret += ['APPLY', projector]
-            if alias:
-                ret += ['AS', alias]
 
-        if self._sortby:
-            ret += ['SORTBY', str(len(self._sortby))]
-            ret += self._sortby
-            if self._max:
-                ret += ['MAX', str(self._max)]
+        ret.extend(self._aggregateplan)
 
         ret += self._limit.build_args()
 
