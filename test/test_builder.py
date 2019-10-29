@@ -1,3 +1,6 @@
+import os, sys
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
 import unittest
 import redisearch.aggregation as a
 import redisearch.querystring as q
