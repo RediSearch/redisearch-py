@@ -17,7 +17,7 @@ setup(
     long_description_content_type='text/markdown',
     url='http://github.com/RedisLabs/redisearch-py',
     packages=find_packages(),
-    install_requires=['redis', 'hiredis', 'rmtest'],
+    install_requires=requirements,
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
