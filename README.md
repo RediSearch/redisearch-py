@@ -37,6 +37,8 @@ For more details, visit [http://redisearch.io](http://redisearch.io)
 ## Example: Using the Python Client
 
 ```py
+from redisearch import Client, TextField
+
 # Creating a client with a given index name
 client = Client('myIndex')
 
