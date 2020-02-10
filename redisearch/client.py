@@ -138,7 +138,7 @@ class Client(object):
                 self.commit()
 
         def add_document(self, doc_id, nosave=False, score=1.0, payload=None,
-                         replace=False, partial=False, no_create=False **fields):
+                         replace=False, partial=False, no_create=False, **fields):
             """
             Add a document to the batch query
             """
