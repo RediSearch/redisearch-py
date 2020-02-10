@@ -534,6 +534,41 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             res = client.search(q)
             self.assertEqual(1, res.total)
 
+    def testSpellCheck(self):
+        client = self.getCleanClient('idx')
+        client.create_index((TextField('f1'), TextField('f2')))
+
+        client.add_document('doc1', f1='some valid content', f2='this is sample text')
+        client.add_document('doc2', f1='very important', f2='lorem ipsum')
+
+        for i in self.retry_with_reload():
+            res = client.spellcheck('impornant')
+            self.assertEqual('important', res['impornant'][0]['suggestion'])
+
+            res = client.spellcheck('contnt')
+            self.assertEqual('content', res['contnt'][0]['suggestion'])
+
+    def testDictOps(self):
+        client = self.getCleanClient('idx')
+        client.create_index((TextField('f1'), TextField('f2')))
+
+        for i in self.retry_with_reload():
+            # Add three items
+            res = client.dict_add('custom_dict', 'item1', 'item2', 'item3')
+            self.assertEqual(3, res)
+
+            # Remove one item
+            res = client.dict_del('custom_dict', 'item2')
+            self.assertEqual(1, res)
+
+            # Dump dict and inspect content
+            res = client.dict_dump('custom_dict')
+            self.assertEqual(['item1', 'item3'], res)
+
+            # Remove rest of the items before reload
+            client.dict_del('custom_dict', *res)
+
+
 if __name__ == '__main__':
 
     unittest.main()

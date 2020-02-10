@@ -109,6 +109,10 @@ class Client(object):
     DEL_CMD = 'FT.DEL'
     AGGREGATE_CMD = 'FT.AGGREGATE'
     CURSOR_CMD = 'FT.CURSOR'
+    SPELLCHECK_CMD = 'FT.SPELLCHECK'
+    DICT_ADD_CMD = 'FT.DICTADD'
+    DICT_DEL_CMD = 'FT.DICTDEL'
+    DICT_DUMP_CMD = 'FT.DICTDUMP'
 
 
     NOOFFSETS = 'NOOFFSETS'
@@ -383,3 +387,100 @@ class Client(object):
 
         res = AggregateResult(rows, cursor, schema)
         return res
+
+    def spellcheck(self, query, distance=None, include=None, exclude=None):
+        """
+        Issue a spellcheck query
+
+        ### Parameters
+
+        **query**: search query.
+        **distance***: the maximal Levenshtein distance for spelling suggestions (default: 1, max: 4).
+        **include**: specifies an inclusion custom dictionary.
+        **exclude**: specifies an exclusion custom dictionary.
+        """
+        cmd = [self.SPELLCHECK_CMD, self.index_name, query]
+        if distance:
+            cmd.extend(['DISTANCE', distance])
+
+        if include:
+            cmd.extend(['TERMS', 'INCLUDE', include])
+
+        if exclude:
+            cmd.extend(['TERMS', 'EXCLUDE', exclude])
+
+        raw = self.redis.execute_command(*cmd)
+
+        corrections = {}
+        if raw == 0:
+            return corrections
+
+        for _correction in raw:
+            if isinstance(_correction, long) and _correction == 0:
+                continue
+
+            if len(_correction) != 3:
+                continue
+            if not _correction[2]:
+                continue
+            if not _correction[2][0]:
+                continue
+
+            # For spellcheck output
+            # 1)  1) "TERM"
+            #     2) "{term1}"
+            #     3)  1)  1)  "{score1}"
+            #             2)  "{suggestion1}"
+            #         2)  1)  "{score2}"
+            #             2)  "{suggestion2}"
+            #
+            # Following dictionary will be made
+            # corrections = {
+            #     '{term1}': [
+            #         {'score': '{score1}', 'suggestion': '{suggestion1}'},
+            #         {'score': '{score2}', 'suggestion': '{suggestion2}'}
+            #     ]
+            # }
+            corrections[_correction[1]] = [
+                {'score': _item[0], 'suggestion':_item[1]}
+                for _item in _correction[2]
+            ]
+
+        return corrections
+
+    def dict_add(self, name, *terms):
+        """Adds terms to a dictionary.
+
+        ### Parameters
+
+        - **name**: Dictionary name.
+        - **terms**: List of items for adding to the dictionary.
+        """
+        cmd = [self.DICT_ADD_CMD, name]
+        cmd.extend(terms)
+        raw = self.redis.execute_command(*cmd)
+        return raw
+
+    def dict_del(self, name, *terms):
+        """Deletes terms from a dictionary.
+
+        ### Parameters
+
+        - **name**: Dictionary name.
+        - **terms**: List of items for removing from the dictionary.
+        """
+        cmd = [self.DICT_DEL_CMD, name]
+        cmd.extend(terms)
+        raw = self.redis.execute_command(*cmd)
+        return raw
+
+    def dict_dump(self, name):
+        """Dumps all terms in the given dictionary.
+
+        ### Parameters
+
+        - **name**: Dictionary name.
+        """
+        cmd = [self.DICT_DUMP_CMD, name]
+        raw = self.redis.execute_command(*cmd)
+        return raw
