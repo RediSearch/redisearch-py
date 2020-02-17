@@ -144,13 +144,13 @@ class Client(object):
                 self.commit()
 
         def add_document(self, doc_id, nosave=False, score=1.0, payload=None,
-                         replace=False, partial=False, **fields):
+                         replace=False, partial=False, no_create=False, **fields):
             """
             Add a document to the batch query
             """
             self.client._add_document(doc_id, conn=self.pipeline, nosave=nosave, score=score,
                                       payload=payload, replace=replace,
-                                      partial=partial, **fields)
+                                      partial=partial, no_create=no_create, **fields)
             self.current_chunk += 1
             self.total += 1
             if self.current_chunk >= self.chunk_size:
@@ -232,14 +232,14 @@ class Client(object):
         return self.redis.execute_command(self.DROP_CMD, self.index_name)
         
     def _add_document(self, doc_id, conn=None, nosave=False, score=1.0, payload=None,
-                      replace=False, partial=False, language=None, **fields):
+                      replace=False, partial=False, language=None, no_create=False, **fields):
         """ 
         Internal add_document used for both batch and single doc indexing 
         """
         if conn is None:
             conn = self.redis
 
-        if partial:
+        if partial or no_create:
             replace = True
 
         args = [self.ADD_CMD, self.index_name, doc_id, score]
@@ -252,6 +252,8 @@ class Client(object):
             args.append('REPLACE')
             if partial:
                 args.append('PARTIAL')
+            if no_create:
+                args.append('NOCREATE')
         if language:
             args += ['LANGUAGE', language]
         args.append('FIELDS')
@@ -259,7 +261,7 @@ class Client(object):
         return conn.execute_command(*args)
 
     def add_document(self, doc_id, nosave=False, score=1.0, payload=None,
-                     replace=False, partial=False, language=None, **fields):
+                     replace=False, partial=False, language=None, no_create=False, **fields):
         """
         Add a single document to the index.
 
@@ -274,12 +276,15 @@ class Client(object):
                        This has the added benefit that any fields specified with `no_index`
                        will not be reindexed again. Implies `replace`
         - **language**: Specify the language used for document tokenization.
+        - **no_create**: if True, the document is only updated and reindexed if it already exists. 
+                         If the document does not exist, an error will be returned. Implies `replace`
         - **fields** kwargs dictionary of the document fields to be saved and/or indexed. 
                      NOTE: Geo points shoule be encoded as strings of "lon,lat"
         """
         return self._add_document(doc_id, conn=None, nosave=nosave, score=score, 
                                   payload=payload, replace=replace,
-                                  partial=partial, language=language, **fields)
+                                  partial=partial, language=language, 
+                                  no_create=no_create,**fields)
 
     def delete_document(self, doc_id, conn=None):
         """

@@ -436,6 +436,30 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             # values
             res = client.search('@f3:f3_val @f2:f2_val @f1:f1_val')
             self.assertEqual(1, res.total)
+            
+            
+    def testNoCreate(self):
+        client = self.getCleanClient('idx')
+        client.create_index((TextField('f1'), TextField('f2'), TextField('f3')))
+
+        client.add_document('doc1', f1='f1_val', f2='f2_val')
+        client.add_document('doc2', f1='f1_val', f2='f2_val')
+
+        client.add_document('doc1', f3='f3_val', no_create=True)
+        client.add_document('doc2', f3='f3_val', no_create=True, partial=True)
+
+        for i in self.retry_with_reload():
+            # Search for f3 value. All documents should have it
+            res = client.search('@f3:f3_val')
+            self.assertEqual(2, res.total)
+
+            # Only the document updated with PARTIAL should still have the f1 and f2
+            # values
+            res = client.search('@f3:f3_val @f2:f2_val @f1:f1_val')
+            self.assertEqual(1, res.total)            
+            
+        with self.assertRaises(redis.ResponseError) as error:
+            client.add_document('doc3', f2='f2_val', f3='f3_val', no_create=True)       
 
     def testExplain(self):
         client = self.getCleanClient('idx')
