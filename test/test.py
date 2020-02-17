@@ -592,6 +592,19 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             # Remove rest of the items before reload
             client.dict_del('custom_dict', *res)
 
+    def testGet(self):
+        client = self.getCleanClient('idx')
+        client.create_index((TextField('f1'), TextField('f2')))
+
+        self.assertEqual([None], client.get('doc1'))
+        self.assertEqual([None, None], client.get('doc2', 'doc1'))
+        
+        client.add_document('doc1', f1='some valid content dd1', f2='this is sample text ff1')
+        client.add_document('doc2', f1='some valid content dd2', f2='this is sample text ff2')
+        
+        self.assertEqual([['f1', 'some valid content dd2', 'f2', 'this is sample text ff2']], client.get('doc2'))
+        self.assertEqual([['f1', 'some valid content dd1', 'f2', 'this is sample text ff1'], ['f1', 'some valid content dd2', 'f2', 'this is sample text ff2']], client.get('doc1', 'doc2'))
+
 
 if __name__ == '__main__':
 
