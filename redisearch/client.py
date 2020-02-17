@@ -21,6 +21,7 @@ class Field(object):
     SORTABLE = 'SORTABLE'
     NOINDEX = 'NOINDEX'
     SEPARATOR = 'SEPARATOR'
+    PHONETIC = 'PHONETIC'
 
     def __init__(self, name, *args):
         self.name = name
@@ -37,7 +38,7 @@ class TextField(Field):
     NOSTEM = 'NOSTEM'
 
     def __init__(self, name, weight=1.0, sortable=False, no_stem=False,
-                 no_index=False):
+                 no_index=False, phonetic_matcher=None):
         args = [Field.TEXT, Field.WEIGHT, weight]
         if no_stem:
             args.append(self.NOSTEM)
@@ -45,6 +46,9 @@ class TextField(Field):
             args.append(Field.SORTABLE)
         if no_index:
             args.append(self.NOINDEX)
+        if phonetic_matcher and phonetic_matcher in ['dm:en', 'dm:fr', 'dm:pt', 'dm:es']:
+            args.append(self.PHONETIC)
+            args.append(phonetic_matcher)
 
         if no_index and not sortable:
             raise ValueError('Non-Sortable non-Indexable fields are ignored')
