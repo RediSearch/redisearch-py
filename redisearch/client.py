@@ -117,6 +117,8 @@ class Client(object):
     DICT_ADD_CMD = 'FT.DICTADD'
     DICT_DEL_CMD = 'FT.DICTDEL'
     DICT_DUMP_CMD = 'FT.DICTDUMP'
+    GET_CMD = 'FT.GET'
+    MGET_CMD = 'FT.MGET'
 
 
     NOOFFSETS = 'NOOFFSETS'
@@ -304,6 +306,17 @@ class Client(object):
             pass
 
         return Document(id=id, **fields)
+
+    def get(self, *ids):
+        """
+        Returns the full contents of multiple documents.
+         
+        ### Parameters
+        
+        - **ids**: the ids of the saved documents.
+        """
+        
+        return self.redis.execute_command('FT.MGET', self.index_name, *ids)
 
     def info(self):
         """
