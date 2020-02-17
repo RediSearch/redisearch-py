@@ -568,6 +568,35 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             # Remove rest of the items before reload
             client.dict_del('custom_dict', *res)
 
+    def testPhoneticMatcher(self):
+        conn = self.redis()
+
+        with conn as r:
+            # Creating a client with a given index name
+            client = Client('myIndex', port=conn.port)
+            client.redis.flushdb()
+
+            client.create_index((TextField('name'),))
+
+            client.add_document('doc1', name='Jon')
+            client.add_document('doc2', name='John')
+
+            res = client.search(Query("Jon"))
+            self.assertEqual(1, len(res.docs))
+            self.assertEqual('Jon', res.docs[0].name)
+
+            # Drop and create index with phonetic matcher
+            client.redis.flushdb()
+
+            client.create_index((TextField('name', phonetic_matcher='dm:en'),))
+
+            client.add_document('doc1', name='Jon')
+            client.add_document('doc2', name='John')
+
+            res = client.search(Query("Jon"))
+            self.assertEqual(2, len(res.docs))
+            self.assertEqual(['John', 'Jon'], sorted([d.name for d in res.docs]))
+            
     def testGet(self):
         client = self.getCleanClient('idx')
         client.create_index((TextField('f1'), TextField('f2')))
