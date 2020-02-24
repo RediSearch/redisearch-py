@@ -194,6 +194,30 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             self.assertEqual('foo baz', res.docs[1].payload)
             self.assertIsNone(res.docs[0].payload)
 
+    def testScores(self):
+        
+        conn = self.redis()
+
+        with conn as r:
+            # Creating a client with a given index name
+            client = Client('idx', port=conn.port)
+            client.redis.flushdb()
+            client.create_index((TextField('txt'),))
+
+            client.add_document('doc1', txt = 'foo baz')
+            client.add_document('doc2', txt = 'foo bar')
+
+            q = Query("foo ~bar").with_scores()
+            res = client.search(q)
+            print("RES", res)
+            self.assertEqual(2, res.total)
+            
+            self.assertEqual('doc2', res.docs[0].id)
+            self.assertEqual(3.0, res.docs[0].score)
+
+            self.assertEqual('doc1', res.docs[1].id)
+            self.assertEqual(0.2, res.docs[1].score)
+
     def testReplace(self):
         
         conn = self.redis()

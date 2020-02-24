@@ -23,6 +23,7 @@ class Query(object):
         self._fields = None
         self._verbatim = False
         self._with_payloads = False
+        self._with_scores = False
         self._filters = list()
         self._ids = None
         self._slop = -1
@@ -157,6 +158,9 @@ class Query(object):
 
         if self._with_payloads:
             args.append('WITHPAYLOADS')
+
+        if self._with_scores:
+            args.append('WITHSCORES')
         
         if self._ids:
             args.append('INKEYS')
@@ -224,6 +228,13 @@ class Query(object):
         Ask the engine to return document payloads
         """
         self._with_payloads = True
+        return self
+
+    def with_scores(self):
+        """
+        Ask the engine to return document search scores
+        """
+        self._with_scores = True
         return self
     
     def limit_fields(self, *fields):

@@ -55,7 +55,7 @@ res = client.search("search engine")
 res = client.search("search engine", snippet_sizes = {'body': 50})
 
 # Searching with complext parameters:
-q = Query("search engine").verbatim().no_content().paging(0,5)
+q = Query("search engine").verbatim().no_content().with_scores().paging(0,5)
 res = client.search(q)
 
 
