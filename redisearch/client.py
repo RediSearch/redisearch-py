@@ -163,7 +163,7 @@ class Client(object):
             self.pipeline.execute()
             self.current_chunk = 0
 
-    def __init__(self, index_name, host='localhost', port=6379, conn=None):
+    def __init__(self, index_name, host='localhost', port=6379, conn=None, password=None):
         """
         Create a new Client for the given index_name, and optional host and port
 
@@ -173,7 +173,7 @@ class Client(object):
         self.index_name = index_name
 
         self.redis = conn if conn is not None else Redis(
-            connection_pool=ConnectionPool(host=host, port=port))
+            connection_pool=ConnectionPool(host=host, port=port, password=password))
 
     def batch_indexer(self, chunk_size=100):
         """
