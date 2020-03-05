@@ -361,7 +361,8 @@ class Client(object):
         return Result(res,
                       not query._no_content,
                       duration=(time.time() - st) * 1000.0,
-                      has_payload=query._with_payloads)
+                      has_payload=query._with_payloads,
+                      with_scores=query._with_scores)
 
     def explain(self, query):
         args, query_text = self._mk_query_args(query)
