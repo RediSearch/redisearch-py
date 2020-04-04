@@ -658,6 +658,10 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         self.assertEqual([['f1', 'some valid content dd2', 'f2', 'this is sample text ff2']], client.get('doc2'))
         self.assertEqual([['f1', 'some valid content dd1', 'f2', 'this is sample text ff1'], ['f1', 'some valid content dd2', 'f2', 'this is sample text ff2']], client.get('doc1', 'doc2'))
 
+    def testConfig(self):
+        client = self.getCleanClient('idx')
+        self.assertTrue(client.set_config('TIMEOUT', '100'))
+        self.assertEqual('100', client.get_config('TIMEOUT'))
 
 if __name__ == '__main__':
 
