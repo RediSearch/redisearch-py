@@ -532,4 +532,3 @@ class Client(object):
         raw = self.redis.execute_command(*cmd)
         if raw:
             return raw[0][1]
-        return None
