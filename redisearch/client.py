@@ -529,6 +529,9 @@ class Client(object):
         - **option**: the name of the configuration option.
         """
         cmd = [self.CONFIG_CMD, 'GET', option]
+        res = {}
         raw = self.redis.execute_command(*cmd)
         if raw:
-            return raw[0][1]
+            for kvs in raw:
+                res[kvs[0]] = kvs[1]
+        return res

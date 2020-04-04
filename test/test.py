@@ -661,7 +661,10 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
     def testConfig(self):
         client = self.getCleanClient('idx')
         self.assertTrue(client.set_config('TIMEOUT', '100'))
-        self.assertEqual('100', client.get_config('TIMEOUT'))
+        res = client.get_config('*')
+        self.assertEqual('100', res['TIMEOUT'])
+        res = client.get_config('TIMEOUT')
+        self.assertEqual('100', res['TIMEOUT'])
 
 if __name__ == '__main__':
 
