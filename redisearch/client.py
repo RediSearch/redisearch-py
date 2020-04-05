@@ -509,7 +509,7 @@ class Client(object):
         raw = self.redis.execute_command(*cmd)
         return raw
 
-    def set_config(self, option, value):
+    def config_set(self, option, value):
         """Set runtime configuration option.
 
         ### Parameters
@@ -521,7 +521,7 @@ class Client(object):
         raw = self.redis.execute_command(*cmd)
         return raw == 'OK'
 
-    def get_config(self, option):
+    def config_get(self, option):
         """Get runtime configuration option value.
 
         ### Parameters
