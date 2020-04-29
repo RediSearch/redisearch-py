@@ -1,4 +1,5 @@
 from redis import Redis, RedisError, ConnectionPool
+from redis._compat import long
 import itertools
 import time
 import six
