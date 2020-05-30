@@ -453,7 +453,7 @@ class Client(object):
         else:
             cursor = None
 
-        if query._with_schema:
+        if isinstance(query, AggregateRequest) and query._with_schema:
             schema = raw[0]
             rows = raw[2:]
         else:
