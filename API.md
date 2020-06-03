@@ -283,7 +283,7 @@ Create the search index. The index must not already exist.
 ### delete\_document
 ```py
 
-def delete_document(self, doc_id, conn=None)
+def delete_document(self, doc_id, conn=None, delete_actual_document=False)
 
 ```
 
@@ -292,6 +292,9 @@ def delete_document(self, doc_id, conn=None)
 Delete a document from index
 Returns 1 if the document was deleted, 0 if not
 
+### Parameters
+
+- **delete_actual_document**: if set to True, RediSearch also delete the actual document if it is in the index
 
 ### drop\_index
 ```py

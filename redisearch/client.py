@@ -337,15 +337,22 @@ class Client(object):
             doc_id, conn=None, score=score, language=language, replace=replace,
         )
 
-    def delete_document(self, doc_id, conn=None):
+    def delete_document(self, doc_id, conn=None, delete_actual_document=False):
         """
         Delete a document from index
         Returns 1 if the document was deleted, 0 if not
+
+        ### Parameters
+
+        - **delete_actual_document**: if set to True, RediSearch also delete the actual document if it is in the index
         """
+        args = [self.DEL_CMD, self.index_name, doc_id]
         if conn is None:
             conn = self.redis
+        if delete_actual_document:
+            args.append('DD')
 
-        return conn.execute_command(self.DEL_CMD, self.index_name, doc_id)
+        return conn.execute_command(*args)
 
     def load_document(self, id):
         """
