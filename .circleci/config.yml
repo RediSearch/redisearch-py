@@ -43,13 +43,8 @@ jobs:
           command: |
             . venv/bin/activate
             REDIS_PORT=6379 coverage run test/test.py
+            REDIS_PORT=6379 coverage run -a test/test_builder.py
             codecov
-
-      - run:
-          name: run query builder tests
-          command: |
-            . venv/bin/activate
-            REDIS_PORT=6379 python test/test_builder.py
             
       - store_artifacts:
           path: test-reports
