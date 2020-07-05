@@ -40,7 +40,11 @@ class QueryBuilderTest(unittest.TestCase):
         # Check the group class on its own
         self.assertRaises(ValueError, a.Group, [], [])
         self.assertRaises(ValueError, a.Group, ['foo'], [])
-        self.assertRaises(ValueError, a.Group, [], r.count())
+
+        # Zero fields, single reducer
+        g = a.Group([], r.count())
+        ret = g.build_args()
+        self.assertEqual(['GROUPBY', '0', 'REDUCE', 'COUNT', '0'], ret)
 
         # Single field, single reducer
         g = a.Group('foo', r.count())
