@@ -56,6 +56,7 @@ class avg(FieldOnlyReducer):
     def __init__(self, field):
         super(avg, self).__init__(field)
 
+
 class tolist(FieldOnlyReducer):
     """
     Returns all the matched properties in a list
@@ -64,6 +65,7 @@ class tolist(FieldOnlyReducer):
 
     def __init__(self, field):
         super(tolist, self).__init__(field)
+
 
 class count_distinct(FieldOnlyReducer):
     """
@@ -82,7 +84,7 @@ class count_distinctish(FieldOnlyReducer):
     group for the given field. This uses a faster algorithm than
     `count_distinct` but is less accurate
     """
-    name = 'COUNT_DISTINCTISH'
+    NAME = 'COUNT_DISTINCTISH'
 
 
 class quantile(Reducer):
@@ -101,7 +103,7 @@ class stddev(FieldOnlyReducer):
     """
     Return the standard deviation for the values within the group
     """
-    name = 'STDDEV'
+    NAME = 'STDDEV'
 
     def __init__(self, field):
         super(stddev, self).__init__(field)
