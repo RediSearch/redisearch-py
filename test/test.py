@@ -209,7 +209,6 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
             q = Query("foo ~bar").with_scores()
             res = client.search(q)
-            print("RES", res)
             self.assertEqual(2, res.total)
             
             self.assertEqual('doc2', res.docs[0].id)
@@ -302,6 +301,23 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                 self.assertEqual('doc1', res1.docs[0].id)
                 self.assertEqual('doc2', res2.docs[0].id)
                 self.assertEqual('doc1', res2.docs[1].id)
+
+    def testPayloadsWithNoContent(self):
+        conn = self.redis()
+
+        with conn as r:
+            # Creating a client with a given index name
+            client = Client('idx', port=conn.port)
+            client.redis.flushdb()
+            client.create_index((TextField('txt'),))
+
+            client.add_document('doc1', payload = 'foo baz', txt = 'foo bar')
+            client.add_document('doc2', payload = 'foo baz2', txt = 'foo bar')
+
+            q = Query("foo bar").with_payloads().no_content()
+            res = client.search(q)
+
+            self.assertEqual(2, len(res.docs))
 
     def testSortby(self):
 
