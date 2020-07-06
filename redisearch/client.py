@@ -26,7 +26,7 @@ class Field(object):
     def __init__(self, name, *args):
         self.name = name
         self.args = args
-    
+
     def redis_args(self):
         return [self.name] + list(self.args)
 
@@ -87,14 +87,15 @@ class TagField(Field):
     TagField is a tag-indexing field with simpler compression and tokenization. 
     See http://redisearch.io/Tags/
     """
-    def __init__(self, name, separator = ',', no_index=False):
+
+    def __init__(self, name, separator=',', no_index=False):
         args = [Field.TAG, Field.SEPARATOR, separator]
 
         if no_index:
             args.append(Field.NOINDEX)
 
         Field.__init__(self, name, *args)
-    
+
 
 class Client(object):
     """
@@ -108,6 +109,7 @@ class Client(object):
     ALTER_CMD = 'FT.ALTER'
     SEARCH_CMD = 'FT.SEARCH'
     ADD_CMD = 'FT.ADD'
+    ADDHASH_CMD = "FT.ADDHASH"
     DROP_CMD = 'FT.DROP'
     EXPLAIN_CMD = 'FT.EXPLAIN'
     DEL_CMD = 'FT.DEL'
@@ -119,7 +121,6 @@ class Client(object):
     DICT_DUMP_CMD = 'FT.DICTDUMP'
     GET_CMD = 'FT.GET'
     MGET_CMD = 'FT.MGET'
-
 
     NOOFFSETS = 'NOOFFSETS'
     NOFIELDS = 'NOFIELDS'
@@ -156,6 +157,20 @@ class Client(object):
             if self.current_chunk >= self.chunk_size:
                 self.commit()
 
+        def add_document_hash(
+            self, doc_id, score=1.0, replace=False,
+        ):
+            """
+            Add a hash to the batch query
+            """
+            self.client._add_document_hash(
+                doc_id, conn=self.pipeline, score=score, replace=replace,
+            )
+            self.current_chunk += 1
+            self.total += 1
+            if self.current_chunk >= self.chunk_size:
+                self.commit()
+
         def commit(self):
             """
             Manually commit and flush the batch indexing query
@@ -182,7 +197,7 @@ class Client(object):
         return Client.BatchIndexer(self, chunk_size=chunk_size)
 
     def create_index(self, fields, no_term_offsets=False,
-                     no_field_flags=False, stopwords = None):
+                     no_field_flags=False, stopwords=None):
         """
         Create the search index. The index must not already exist.
 
@@ -203,7 +218,7 @@ class Client(object):
             args += [self.STOPWORDS, len(stopwords)]
             if len(stopwords) > 0:
                 args += list(stopwords)
-    
+
         args.append('SCHEMA')
 
         args += list(itertools.chain(*(f.redis_args() for f in fields)))
@@ -230,7 +245,7 @@ class Client(object):
         Drop the index if it exists
         """
         return self.redis.execute_command(self.DROP_CMD, self.index_name)
-        
+
     def _add_document(self, doc_id, conn=None, nosave=False, score=1.0, payload=None,
                       replace=False, partial=False, language=None, no_create=False, **fields):
         """ 
@@ -260,6 +275,25 @@ class Client(object):
         args += list(itertools.chain(*fields.items()))
         return conn.execute_command(*args)
 
+    def _add_document_hash(
+        self, doc_id, conn=None, score=1.0, language=None, replace=False,
+    ):
+        """ 
+        Internal add_document_hash used for both batch and single doc indexing 
+        """
+        if conn is None:
+            conn = self.redis
+
+        args = [self.ADDHASH_CMD, self.index_name, doc_id, score]
+
+        if replace:
+            args.append("REPLACE")
+
+        if language:
+            args += ["LANGUAGE", language]
+
+        return conn.execute_command(*args)
+
     def add_document(self, doc_id, nosave=False, score=1.0, payload=None,
                      replace=False, partial=False, language=None, no_create=False, **fields):
         """
@@ -281,20 +315,44 @@ class Client(object):
         - **fields** kwargs dictionary of the document fields to be saved and/or indexed. 
                      NOTE: Geo points shoule be encoded as strings of "lon,lat"
         """
-        return self._add_document(doc_id, conn=None, nosave=nosave, score=score, 
+        return self._add_document(doc_id, conn=None, nosave=nosave, score=score,
                                   payload=payload, replace=replace,
-                                  partial=partial, language=language, 
-                                  no_create=no_create,**fields)
+                                  partial=partial, language=language,
+                                  no_create=no_create, **fields)
 
-    def delete_document(self, doc_id, conn=None):
+    def add_document_hash(
+        self, doc_id, score=1.0, language=None, replace=False,
+    ):
+        """
+        Add a hash document to the index.
+
+        ### Parameters
+
+        - **doc_id**: the document's id. This has to be an existing HASH key in Redis that will hold the fields the index needs.
+        - **score**: the document ranking, between 0.0 and 1.0 
+        - **replace**: if True, and the document already is in the index, we perform an update and reindex the document
+        - **language**: Specify the language used for document tokenization.
+        """
+        return self._add_document_hash(
+            doc_id, conn=None, score=score, language=language, replace=replace,
+        )
+
+    def delete_document(self, doc_id, conn=None, delete_actual_document=False):
         """
         Delete a document from index
         Returns 1 if the document was deleted, 0 if not
+
+        ### Parameters
+
+        - **delete_actual_document**: if set to True, RediSearch also delete the actual document if it is in the index
         """
+        args = [self.DEL_CMD, self.index_name, doc_id]
         if conn is None:
             conn = self.redis
+        if delete_actual_document:
+            args.append('DD')
 
-        return conn.execute_command(self.DEL_CMD, self.index_name, doc_id)
+        return conn.execute_command(*args)
 
     def load_document(self, id):
         """
@@ -315,12 +373,12 @@ class Client(object):
     def get(self, *ids):
         """
         Returns the full contents of multiple documents.
-         
+
         ### Parameters
-        
+
         - **ids**: the ids of the saved documents.
         """
-        
+
         return self.redis.execute_command('FT.MGET', self.index_name, *ids)
 
     def info(self):
@@ -386,7 +444,8 @@ class Client(object):
         elif isinstance(query, Cursor):
             has_schema = False
             has_cursor = True
-            cmd = [self.CURSOR_CMD, 'READ', self.index_name] + query.build_args()
+            cmd = [self.CURSOR_CMD, 'READ',
+                   self.index_name] + query.build_args()
         else:
             raise ValueError('Bad query', query)
 
@@ -401,7 +460,7 @@ class Client(object):
         else:
             cursor = None
 
-        if query._with_schema:
+        if isinstance(query, AggregateRequest) and query._with_schema:
             schema = raw[0]
             rows = raw[2:]
         else:
