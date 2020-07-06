@@ -195,6 +195,25 @@ Add a single document to the index.
              NOTE: Geo points shoule be encoded as strings of "lon,lat"
 
 
+### add\_document\_hash
+```py
+
+def add_document_hash(self, doc_id, score=1.0, language=None, replace=False)
+
+```
+
+
+
+Add a hash document to the index.
+
+### Parameters
+
+- **doc_id**: the document's id. This has to be an existing HASH key in Redis that will hold the fields the index needs.
+- **score**: the document ranking, between 0.0 and 1.0 
+- **replace**: if True, and the document already is in the index, we perform an update and reindex the document
+- **language**: Specify the language used for document tokenization.
+
+
 ### aggregate
 ```py
 
@@ -264,7 +283,7 @@ Create the search index. The index must not already exist.
 ### delete\_document
 ```py
 
-def delete_document(self, doc_id, conn=None)
+def delete_document(self, doc_id, conn=None, delete_actual_document=False)
 
 ```
 
@@ -273,6 +292,9 @@ def delete_document(self, doc_id, conn=None)
 Delete a document from index
 Returns 1 if the document was deleted, 0 if not
 
+### Parameters
+
+- **delete_actual_document**: if set to True, RediSearch also delete the actual document if it is in the index
 
 ### drop\_index
 ```py
@@ -359,6 +381,18 @@ def add_document(self, doc_id, nosave=False, score=1.0, payload=None, replace=Fa
 
 
 Add a document to the batch query
+
+
+### add\_document\_hash
+```py
+
+def add_document_hash(self, doc_id, score=1.0, language=None, replace=False)
+
+```
+
+
+
+Add a hash document to the batch query
 
 
 ### commit
