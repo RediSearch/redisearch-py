@@ -11,6 +11,8 @@ from io import TextIOWrapper
 import six
 
 from redisearch import *
+import redisearch.aggregation as aggregations
+import redisearch.reducers as reducers
 
 WILL_PLAY_TEXT = os.path.abspath(os.path.dirname(__file__)) + '/will_play_text.csv.bz2'
 
@@ -171,6 +173,34 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             pass
 
         return client
+    
+    def testAddHash(self):
+        conn = self.redis()
+        
+        with conn as r:
+            # Creating a client with a given index name
+            client = Client('idx', port=conn.port)
+
+            client.redis.flushdb()
+            # Creating the index definition and schema
+            client.create_index((TextField('title',
+                                        weight=5.0), TextField('body')))
+            
+            client.redis.hset(
+                'doc1',
+                mapping={
+                    'title': 'RediSearch',
+                    'body': 'Redisearch impements a search engine on top of redis'
+                })
+            # Indexing the hash
+            client.add_document_hash('doc1')
+
+            # Searching with complext parameters:
+            q = Query("search engine").verbatim().no_content().paging(0, 5)
+
+            res = client.search(q)
+
+            self.assertEqual('doc1', res.docs[0].id)
 
     def testPayloads(self):
         
@@ -209,7 +239,6 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
             q = Query("foo ~bar").with_scores()
             res = client.search(q)
-            print("RES", res)
             self.assertEqual(2, res.total)
             
             self.assertEqual('doc2', res.docs[0].id)
@@ -302,6 +331,23 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                 self.assertEqual('doc1', res1.docs[0].id)
                 self.assertEqual('doc2', res2.docs[0].id)
                 self.assertEqual('doc1', res2.docs[1].id)
+
+    def testPayloadsWithNoContent(self):
+        conn = self.redis()
+
+        with conn as r:
+            # Creating a client with a given index name
+            client = Client('idx', port=conn.port)
+            client.redis.flushdb()
+            client.create_index((TextField('txt'),))
+
+            client.add_document('doc1', payload = 'foo baz', txt = 'foo bar')
+            client.add_document('doc2', payload = 'foo baz2', txt = 'foo bar')
+
+            q = Query("foo bar").with_payloads().no_content()
+            res = client.search(q)
+
+            self.assertEqual(2, len(res.docs))
 
     def testSortby(self):
 
@@ -666,6 +712,74 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         self.assertEqual('100', res['TIMEOUT'])
         res = client.config_get('TIMEOUT')
         self.assertEqual('100', res['TIMEOUT'])
+
+    def testAggregations(self):
+        conn = self.redis()
+        
+        with conn as r:
+            client = Client('myIndex', port=conn.port)
+            client.redis.flushdb()
+
+            # Creating the index definition and schema
+            client.create_index((NumericField('random_num'), TextField('title'),
+                                TextField('body'), TextField('parent')))
+
+            # Indexing a document
+            client.add_document(
+                'search',
+                title='RediSearch',
+                body='Redisearch impements a search engine on top of redis',
+                parent='redis',
+                random_num=10)
+            client.add_document(
+                'ai',
+                title='RedisAI',
+                body=
+                'RedisAI executes Deep Learning/Machine Learning models and managing their data.',
+                parent='redis',
+                random_num=3)
+            client.add_document(
+                'json',
+                title='RedisJson',
+                body=
+                'RedisJSON implements ECMA-404 The JSON Data Interchange Standard as a native data type.',
+                parent='redis',
+                random_num=8)
+
+            req = aggregations.AggregateRequest('redis').group_by(
+                "@parent",
+                reducers.count(),
+                reducers.count_distinct('@title'),
+                reducers.count_distinctish('@title'),
+                reducers.sum("@random_num"),
+                reducers.min("@random_num"),
+                reducers.max("@random_num"),
+                reducers.avg("@random_num"),
+                reducers.stddev("random_num"),
+                reducers.quantile("@random_num", 0.5),
+                reducers.tolist("@title"),
+                reducers.first_value("@title"),
+                reducers.random_sample("@title", 2),
+            )
+
+            res = client.aggregate(req)
+
+            res = res.rows[0]
+
+            self.assertEqual(len(res), 26)
+            self.assertEqual(b'redis', res[1])
+            self.assertEqual(b'3', res[3])
+            self.assertEqual(b'3', res[5])
+            self.assertEqual(b'3', res[7])
+            self.assertEqual(b'21', res[9])
+            self.assertEqual(b'3', res[11])
+            self.assertEqual(b'10', res[13])
+            self.assertEqual(b'7', res[15])
+            self.assertEqual(b'3.60555127546', res[17])
+            self.assertEqual(b'10', res[19])
+            self.assertEqual([b'RediSearch', b'RedisAI', b'RedisJson'], res[21])
+            self.assertEqual(b'RediSearch', res[23])
+            self.assertEqual(2, len(res[25]))
 
 if __name__ == '__main__':
 

@@ -86,8 +86,6 @@ class Group(object):
     This object automatically created in the `AggregateRequest.group_by()`
     """
     def __init__(self, fields, reducers):
-        if not fields:
-            raise ValueError('need at least one field')
         if not reducers:
             raise ValueError('Need at least one reducer')
 

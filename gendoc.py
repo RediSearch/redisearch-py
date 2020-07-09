@@ -71,5 +71,4 @@ def generatedocs(module):
         print("Error while trying to import " + module)
 
 if __name__ == '__main__':
-
-    print generatedocs(sys.argv[1])
+    print(generatedocs(sys.argv[1]))

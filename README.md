@@ -6,7 +6,7 @@
 [![Known Vulnerabilities](https://snyk.io/test/github/RediSearch/redisearch-py/badge.svg?targetFile=requirements.txt)](https://snyk.io/test/github/RediSearch/redisearch-py?targetFile=requirements.txt)
 
 # RediSearch Python Client
-[![Mailing List](https://img.shields.io/badge/Mailing%20List-RediSearch-blue)](https://groups.google.com/forum/#!forum/redisearch)
+[![Forum](https://img.shields.io/badge/Forum-RediSearch-blue)](https://forum.redislabs.com/c/modules/redisearch/)
 [![Gitter](https://badges.gitter.im/RedisLabs/RediSearch.svg)](https://gitter.im/RedisLabs/RediSearch?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 This is a python search engine library that utilizes the [RediSearch Redis Module](http://redisearch.io) API.
@@ -40,29 +40,32 @@ For more details, visit [http://redisearch.io](http://redisearch.io)
 from redisearch import Client, TextField
 
 # Creating a client with a given index name
-client = Client('myIndex')
+client = Client("myIndex")
 
 # Creating the index definition and schema
-client.create_index((TextField('title', weight=5.0), TextField('body')))
+client.create_index((TextField("title", weight=5.0), TextField("body")))
 
 # Indexing a document
-client.add_document('doc1', title = 'RediSearch', body = 'Redisearch impements a search engine on top of redis')
+client.add_document(
+    "doc1",
+    title="RediSearch",
+    body="Redisearch implements a search engine on top of redis",
+)
 
 # Simple search
 res = client.search("search engine")
 
 # Searching with snippets
-res = client.search("search engine", snippet_sizes = {'body': 50})
+res = client.search("search engine", snippet_sizes={"body": 50})
 
-# Searching with complext parameters:
-q = Query("search engine").verbatim().no_content().with_scores().paging(0,5)
+# Searching with complex parameters:
+q = Query("search engine").verbatim().no_content().with_scores().paging(0, 5)
 res = client.search(q)
 
 
-# the result has the total number of results, and a list of documents
-print res.total # "1"
-print res.docs[0].title 
-
+# The result has the total number of results, and a list of documents
+print(res.total)  # "1"
+print(res.docs[0].title)
 ```
 
 ## Installing
