@@ -499,7 +499,7 @@ class Client(object):
             return corrections
 
         for _correction in raw:
-            if isinstance(_correction, long) and _correction == 0:
+            if isinstance(_correction, six.integer_types) and _correction == 0:
                 continue
 
             if len(_correction) != 3:
