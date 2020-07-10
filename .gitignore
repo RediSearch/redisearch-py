@@ -9,4 +9,5 @@ dist
 !**/*.csv
 !**/*.md
 !.circleci/config.yml
+venv/
 

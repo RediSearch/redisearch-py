@@ -109,7 +109,6 @@ class Client(object):
     ALTER_CMD = 'FT.ALTER'
     SEARCH_CMD = 'FT.SEARCH'
     ADD_CMD = 'FT.ADD'
-    ADDHASH_CMD = "FT.ADDHASH"
     DROP_CMD = 'FT.DROP'
     EXPLAIN_CMD = 'FT.EXPLAIN'
     DEL_CMD = 'FT.DEL'
@@ -210,7 +209,7 @@ class Client(object):
         - **stopwords**: If not None, we create the index with this custom stopword list. The list can be empty
         """
 
-        args = [self.CREATE_CMD, self.index_name]
+        args = [self.CREATE_CMD, self.index_name, 'ON', 'HASH']
         if no_term_offsets:
             args.append(self.NOOFFSETS)
         if no_field_flags:
@@ -274,25 +273,6 @@ class Client(object):
             args += ['LANGUAGE', language]
         args.append('FIELDS')
         args += list(itertools.chain(*fields.items()))
-        return conn.execute_command(*args)
-
-    def _add_document_hash(
-        self, doc_id, conn=None, score=1.0, language=None, replace=False,
-    ):
-        """ 
-        Internal add_document_hash used for both batch and single doc indexing 
-        """
-        if conn is None:
-            conn = self.redis
-
-        args = [self.ADDHASH_CMD, self.index_name, doc_id, score]
-
-        if replace:
-            args.append("REPLACE")
-
-        if language:
-            args += ["LANGUAGE", language]
-
         return conn.execute_command(*args)
 
     def add_document(self, doc_id, nosave=False, score=1.0, payload=None,
