@@ -704,6 +704,15 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         self.assertEqual([['f1', 'some valid content dd2', 'f2', 'this is sample text ff2']], client.get('doc2'))
         self.assertEqual([['f1', 'some valid content dd1', 'f2', 'this is sample text ff1'], ['f1', 'some valid content dd2', 'f2', 'this is sample text ff2']], client.get('doc1', 'doc2'))
 
+    def testConfig(self):
+        client = self.getCleanClient('idx')
+        self.assertTrue(client.config_set('TIMEOUT', '100'))
+        self.assertFalse(client.config_set('TIMEOUT', "null"))
+        res = client.config_get('*')
+        self.assertEqual('100', res['TIMEOUT'])
+        res = client.config_get('TIMEOUT')
+        self.assertEqual('100', res['TIMEOUT'])
+
     def testAggregations(self):
         conn = self.redis()
         
@@ -771,7 +780,6 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             self.assertEqual([b'RediSearch', b'RedisAI', b'RedisJson'], res[21])
             self.assertEqual(b'RediSearch', res[23])
             self.assertEqual(2, len(res[25]))
-
 
 if __name__ == '__main__':
 

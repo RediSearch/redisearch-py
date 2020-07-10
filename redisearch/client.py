@@ -121,6 +121,7 @@ class Client(object):
     DICT_DUMP_CMD = 'FT.DICTDUMP'
     GET_CMD = 'FT.GET'
     MGET_CMD = 'FT.MGET'
+    CONFIG_CMD = 'FT.CONFIG'
 
     NOOFFSETS = 'NOOFFSETS'
     NOFIELDS = 'NOFIELDS'
@@ -566,3 +567,30 @@ class Client(object):
         cmd = [self.DICT_DUMP_CMD, name]
         raw = self.redis.execute_command(*cmd)
         return raw
+
+    def config_set(self, option, value):
+        """Set runtime configuration option.
+
+        ### Parameters
+
+        - **option**: the name of the configuration option.
+        - **value**: a value for the configuration option.
+        """
+        cmd = [self.CONFIG_CMD, 'SET', option, value]
+        raw = self.redis.execute_command(*cmd)
+        return raw == 'OK'
+
+    def config_get(self, option):
+        """Get runtime configuration option value.
+
+        ### Parameters
+
+        - **option**: the name of the configuration option.
+        """
+        cmd = [self.CONFIG_CMD, 'GET', option]
+        res = {}
+        raw = self.redis.execute_command(*cmd)
+        if raw:
+            for kvs in raw:
+                res[kvs[0]] = kvs[1]
+        return res
