@@ -11,7 +11,7 @@ requirements = list(map(str.strip, open("requirements.txt").readlines()))
 
 setup(
     name='redisearch',
-    version='1.0.0',
+    version='2.0.0',
     description='RedisSearch Python Client',
     long_description=read_all("README.md"),
     long_description_content_type='text/markdown',
