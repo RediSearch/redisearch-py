@@ -249,24 +249,19 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
 
     def testStopwords(self): 
-        conn = self.redis()
 
-        with conn as r:
-            # Creating a client with a given index name
-            client = Client('idx', port=conn.port)
-            try:
-                client.drop_index()
-            except:
-                pass
-            client.create_index((TextField('txt'),), stopwords = ['foo', 'bar', 'baz'])
-            client.add_document('doc1', txt = 'foo bar')
-            client.add_document('doc2', txt = 'hello world')
-            
-            q1 = Query("foo bar").no_content()
-            q2 = Query("foo bar hello world").no_content()
-            res1, res2 =  client.search(q1), client.search(q2)
-            self.assertEqual(0, res1.total)
-            self.assertEqual(1, res2.total)
+        # Creating a client with a given index name
+        client = self.getCleanClient('idx')
+
+        client.create_index((TextField('txt'),), stopwords = ['foo', 'bar', 'baz'])
+        client.add_document('doc1', txt = 'foo bar')
+        client.add_document('doc2', txt = 'hello world')
+        
+        q1 = Query("foo bar").no_content()
+        q2 = Query("foo bar hello world").no_content()
+        res1, res2 =  client.search(q1), client.search(q2)
+        self.assertEqual(0, res1.total)
+        self.assertEqual(1, res2.total)
 
     def testFilters(self):
 
@@ -431,11 +426,9 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                 self.assertTrue(sug.payload.startswith('pl'))
 
     def testNoIndex(self):
-        client = Client('idx', port=self.server.port)
-        try:
-            client.drop_index()
-        except:
-            pass
+        
+        # Creating a client with a given index name
+        client = self.getCleanClient('idx')
 
         client.create_index(
             (TextField('f1', no_index=True, sortable=True), TextField('f2')))
