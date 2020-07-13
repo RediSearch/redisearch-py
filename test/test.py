@@ -23,8 +23,6 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
     def createIndex(self, client, num_docs = 100):
 
         assert isinstance(client, Client)
-        #conn.flushdb()
-        #client = Client('test', port=conn.port)
         try:
             client.create_index((TextField('play', weight=5.0), 
                                 TextField('txt'), 
@@ -172,36 +170,9 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         except:
             pass
 
+        client.redis.flushdb()
         return client
     
-    def testAddHash(self):
-        conn = self.redis()
-        
-        with conn as r:
-            # Creating a client with a given index name
-            client = Client('idx', port=conn.port)
-
-            client.redis.flushdb()
-            # Creating the index definition and schema
-            client.create_index((TextField('title',
-                                        weight=5.0), TextField('body')))
-            
-            client.redis.hset(
-                'doc1',
-                mapping={
-                    'title': 'RediSearch',
-                    'body': 'Redisearch impements a search engine on top of redis'
-                })
-            # Indexing the hash
-            client.add_document_hash('doc1')
-
-            # Searching with complext parameters:
-            q = Query("search engine").verbatim().no_content().paging(0, 5)
-
-            res = client.search(q)
-
-            self.assertEqual('doc1', res.docs[0].id)
-
     def testPayloads(self):
         
         conn = self.redis()
@@ -276,24 +247,19 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
 
     def testStopwords(self): 
-        conn = self.redis()
 
-        with conn as r:
-            # Creating a client with a given index name
-            client = Client('idx', port=conn.port)
-            try:
-                client.drop_index()
-            except:
-                pass
-            client.create_index((TextField('txt'),), stopwords = ['foo', 'bar', 'baz'])
-            client.add_document('doc1', txt = 'foo bar')
-            client.add_document('doc2', txt = 'hello world')
-            
-            q1 = Query("foo bar").no_content()
-            q2 = Query("foo bar hello world").no_content()
-            res1, res2 =  client.search(q1), client.search(q2)
-            self.assertEqual(0, res1.total)
-            self.assertEqual(1, res2.total)
+        # Creating a client with a given index name
+        client = self.getCleanClient('idx')
+
+        client.create_index((TextField('txt'),), stopwords = ['foo', 'bar', 'baz'])
+        client.add_document('doc1', txt = 'foo bar')
+        client.add_document('doc2', txt = 'hello world')
+        
+        q1 = Query("foo bar").no_content()
+        q2 = Query("foo bar hello world").no_content()
+        res1, res2 =  client.search(q1), client.search(q2)
+        self.assertEqual(0, res1.total)
+        self.assertEqual(1, res2.total)
 
     def testFilters(self):
 
@@ -458,11 +424,9 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                 self.assertTrue(sug.payload.startswith('pl'))
 
     def testNoIndex(self):
-        client = Client('idx', port=self.server.port)
-        try:
-            client.drop_index()
-        except:
-            pass
+        
+        # Creating a client with a given index name
+        client = self.getCleanClient('idx')
 
         client.create_index(
             (TextField('f1', no_index=True, sortable=True), TextField('f2')))
