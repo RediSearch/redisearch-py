@@ -295,8 +295,11 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                 self.assertEqual(1, res1.total)
                 self.assertEqual(2, res2.total)
                 self.assertEqual('doc1', res1.docs[0].id)
-                self.assertEqual('doc2', res2.docs[0].id)
-                self.assertEqual('doc1', res2.docs[1].id)
+                
+                # Sort results, after RDB reload order may change
+                list = [res2.docs[0].id, res2.docs[1].id]
+                list.sort()
+                self.assertEqual(['doc1', 'doc2'], list)
 
     def testPayloadsWithNoContent(self):
         conn = self.redis()
