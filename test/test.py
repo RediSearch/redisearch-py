@@ -23,8 +23,6 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
     def createIndex(self, client, num_docs = 100):
 
         assert isinstance(client, Client)
-        #conn.flushdb()
-        #client = Client('test', port=conn.port)
         try:
             client.create_index((TextField('play', weight=5.0), 
                                 TextField('txt'), 
