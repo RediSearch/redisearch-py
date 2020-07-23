@@ -170,7 +170,6 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         except:
             pass
 
-        client.redis.flushdb()
         return client
     
     def testPayloads(self):
