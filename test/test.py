@@ -190,11 +190,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                     'title': 'RediSearch',
                     'body': 'Redisearch impements a search engine on top of redis'
                 })
-            
-            client.create_index((TextField('play', weight=5.0), 
-                                 TextField('txt'), 
-                                 NumericField('chapter')))
-            
+                        
             try:
                 # Indexing the hash
                 client.add_document_hash('doc1')
