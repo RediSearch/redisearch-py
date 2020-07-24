@@ -191,19 +191,18 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                     'body': 'Redisearch impements a search engine on top of redis'
                 })
             
+            client.create_index((TextField('play', weight=5.0), 
+                                 TextField('txt'), 
+                                 NumericField('chapter')))
+            
             try:
-                client.create_index((TextField('play', weight=5.0), 
-                                     TextField('txt'), 
-                                     NumericField('chapter')))
+                # Indexing the hash
+                client.add_document_hash('doc1')
             except redis.ResponseError as e:
                 # Support for FT.ADDHASH was removed in RediSearch 2.0
                 self.assertTrue( str(e).startswith('(error) ERR unknown command `FT.ADDHASH`'))
                 return
-            
-            
-            # Indexing the hash
-            client.add_document_hash('doc1')
-
+                        
             # Searching with complext parameters:
             q = Query("search engine").verbatim().no_content().paging(0, 5)
 
