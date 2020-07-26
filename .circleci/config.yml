@@ -8,7 +8,7 @@ jobs:
   build:
     docker:
       - image: circleci/python:2.7.15
-      - image: redislabs/redisearch:edge
+      - image: redislabs/redisearch:latest
 
     working_directory: ~/repo
 
