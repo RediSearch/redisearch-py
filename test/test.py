@@ -196,7 +196,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                 client.add_document_hash('doc1')
             except redis.ResponseError as e:
                 # Support for FT.ADDHASH was removed in RediSearch 2.0
-                self.assertTrue( str(e).startswith('(error) ERR unknown command `FT.ADDHASH`'))
+                self.assertTrue( str(e).startswith('unknown command `FT.ADDHASH`'))
                 return
                         
             # Searching with complext parameters:
