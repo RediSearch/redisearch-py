@@ -113,7 +113,7 @@ class IndexDefinition(object):
     SCORE = 'SCORE'
     PAYLOAD = 'PAYLOAD'
         
-    def __init__(self, async=false, prefix=[], filter=None, language_field=None, language=None, score_field=None, score=1.0, payload=None):
+    def __init__(self, async=False, prefix=[], filter=None, language_field=None, language=None, score_field=None, score=1.0, payload=None):
         
         args = [self.ON, self.HASH]
         
