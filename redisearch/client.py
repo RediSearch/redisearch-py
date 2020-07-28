@@ -148,7 +148,9 @@ class IndexDefinition(object):
             
         if payload is not None:
             args.append(self.PAYLOAD)
-            args.append(payload) 
+            args.append(payload)
+            
+        self.args = args
     
 
 class Client(object):
