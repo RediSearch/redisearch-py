@@ -97,6 +97,60 @@ class TagField(Field):
         Field.__init__(self, name, *args)
 
 
+class IndexDefinition(object):
+    """
+    IndexDefinition is used to define a index definition for automatic indexing on Hash update
+    """
+
+    ON = 'ON'
+    HASH = 'HASH'
+    ASYNC = 'ASYNC'
+    PREFIX = 'PREFIX'
+    FILTER = 'FILTER'
+    LANGUAGE_FIELD = 'LANGUAGE_FIELD'
+    LANGUAGE = 'LANGUAGE'
+    SCORE_FIELD = 'SCORE_FIELD'
+    SCORE = 'SCORE'
+    PAYLOAD = 'PAYLOAD'
+        
+    def __init__(self, async=false, prefix=[], filter=None, language_field=None, language=None, score_field=None, score=1.0, payload=None):
+        
+        args = [self.ON, self.HASH]
+        
+        if async:
+            args.append(self.ASYNC)
+            
+        if len(prefix) > 0:
+            args.append(self.PREFIX)
+            args.append(len(prefix))
+            for p in prefix:
+                args.append(p)
+                
+        if filter is not None:
+            args.append(self.FILTER)
+            args.append(filter)
+            
+        if language_field is not None:
+            args.append(self.LANGUAGE_FIELD)
+            args.append(language_field)
+            
+        if language is not None:
+            args.append(self.LANGUAGE)
+            args.append(language)
+            
+        if score_field is not None:
+            args.append(self.SCORE_FIELD)
+            args.append(score_field)
+            
+        if score is not None:
+            args.append(self.SCORE)
+            args.append(score)
+            
+        if payload is not None:
+            args.append(self.PAYLOAD)
+            args.append(payload) 
+    
+
 class Client(object):
     """
     A client for the RediSearch module. 
@@ -198,7 +252,7 @@ class Client(object):
         return Client.BatchIndexer(self, chunk_size=chunk_size)
 
     def create_index(self, fields, no_term_offsets=False,
-                     no_field_flags=False, stopwords=None):
+                     no_field_flags=False, stopwords=None, definition=None):
         """
         Create the search index. The index must not already exist.
 
@@ -211,6 +265,8 @@ class Client(object):
         """
 
         args = [self.CREATE_CMD, self.index_name]
+        if definition is not None:
+            args += definition.args            
         if no_term_offsets:
             args.append(self.NOOFFSETS)
         if no_field_flags:
