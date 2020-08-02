@@ -20,16 +20,16 @@ TITLES_CSV = os.path.abspath(os.path.dirname(__file__)) + '/titles.csv'
 
 class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
-    def createIndex(self, client, num_docs = 100):
+    def createIndex(self, client, num_docs = 100, definition=None):
 
         assert isinstance(client, Client)
         try:
             client.create_index((TextField('play', weight=5.0), 
                                 TextField('txt'), 
-                                NumericField('chapter')))
+                                NumericField('chapter')), definition=definition)
         except redis.ResponseError:
             client.drop_index()
-            return self.createIndex(client, num_docs=num_docs)
+            return self.createIndex(client, num_docs=num_docs, definition=definition)
 
         chapters = {}
         bzfp = bz2.BZ2File(WILL_PLAY_TEXT)
@@ -57,6 +57,25 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         for key, doc in six.iteritems(chapters):
             indexer.add_document(key, **doc)
         indexer.commit()
+
+    def testCreateClientDefiniontion(self):
+
+        conn = self.redis()
+        
+        with conn as r:
+            r.flushdb()
+            client = Client('test', port=conn.port)
+            
+            definition = IndexDefinition(prefix=['hset:', 'henry'])
+            self.createIndex(client, num_docs=500, definition=definition)
+
+            info = client.info()
+            self.assertEqual(494, int(info['num_docs']))
+
+            r.hset('hset:1', 'f1', 'v1');
+
+            info = client.info()
+            self.assertEqual(495, int(info['num_docs']))
 
     def testClient(self):
 
