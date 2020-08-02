@@ -6,6 +6,7 @@ import redis
 import unittest
 import bz2
 import csv
+import time
 from io import TextIOWrapper
 
 import six
@@ -17,6 +18,13 @@ import redisearch.reducers as reducers
 WILL_PLAY_TEXT = os.path.abspath(os.path.dirname(__file__)) + '/will_play_text.csv.bz2'
 
 TITLES_CSV = os.path.abspath(os.path.dirname(__file__)) + '/titles.csv'
+
+def waitForIndex(env, idx):
+    while True:
+        res = env.execute_command('ft.info', idx)
+        if int(res[res.index('indexing') + 1]) == 0:
+            break
+        time.sleep(0.1)
 
 class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
@@ -70,6 +78,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             self.createIndex(client, num_docs =num_docs)
 
             for _ in r.retry_with_rdb_reload():
+                waitForIndex(r, 'test')
                 #verify info
                 info = client.info()
                 for k in [  'index_name', 'index_options', 'fields', 'num_docs',
@@ -309,8 +318,8 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             client.add_document('doc2', txt = 'foo baz', num = 2, loc = '-0.1,51.2')
 
             for i in r.retry_with_rdb_reload():
-
-                # Test numerical filter
+                waitForIndex(r, 'idx')
+                # Test numerical filter     
                 q1 = Query("foo").add_filter(NumericFilter('num', 0, 2)).no_content()
                 q2 = Query("foo").add_filter(NumericFilter('num', 2, NumericFilter.INF, minExclusive=True)).no_content()
                 res1, res2 =  client.search(q1), client.search(q2)
@@ -498,6 +507,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         client.add_document('doc2', f3='f3_val', replace=True)
 
         for i in self.retry_with_reload():
+            waitForIndex(client.redis, 'idx')
             # Search for f3 value. All documents should have it
             res = client.search('@f3:f3_val')
             self.assertEqual(2, res.total)
@@ -519,6 +529,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         client.add_document('doc2', f3='f3_val', no_create=True, partial=True)
 
         for i in self.retry_with_reload():
+            waitForIndex(client.redis, 'idx')
             # Search for f3 value. All documents should have it
             res = client.search('@f3:f3_val')
             self.assertEqual(2, res.total)
@@ -542,6 +553,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         self.createIndex(client)
 
         for i in self.retry_with_reload():
+            waitForIndex(client.redis, 'idx')
             q = Query('king henry').paging(0, 1)
             q.highlight(fields=('play', 'txt'), tags=('<b>', '</b>'))
             q.summarize('txt')
@@ -571,7 +583,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             client.add_document('doc1', txt = 'fooz barz', tags = 'foo,foo bar,hello;world')
             
             for i in r.retry_with_rdb_reload():
-
+                waitForIndex(r, 'idx')
                 q = Query("@tags:{foo}")
                 res = client.search(q)
                 self.assertEqual(1, res.total)
@@ -636,6 +648,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         client.add_document('doc2', f1='very important', f2='lorem ipsum')
 
         for i in self.retry_with_reload():
+            waitForIndex(client.redis, 'idx')
             res = client.spellcheck('impornant')
             self.assertEqual('important', res['impornant'][0]['suggestion'])
 
@@ -647,6 +660,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         client.create_index((TextField('f1'), TextField('f2')))
 
         for i in self.retry_with_reload():
+            waitForIndex(client.redis, 'idx')
             # Add three items
             res = client.dict_add('custom_dict', 'item1', 'item2', 'item3')
             self.assertEqual(3, res)
