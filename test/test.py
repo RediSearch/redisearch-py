@@ -58,25 +58,6 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             indexer.add_document(key, **doc)
         indexer.commit()
 
-    def testCreateClientDefiniontion(self):
-
-        conn = self.redis()
-        
-        with conn as r:
-            r.flushdb()
-            client = Client('test', port=conn.port)
-            
-            definition = IndexDefinition(prefix=['hset:', 'henry'])
-            self.createIndex(client, num_docs=500, definition=definition)
-
-            info = client.info()
-            self.assertEqual(494, int(info['num_docs']))
-
-            r.hset('hset:1', 'f1', 'v1');
-
-            info = client.info()
-            self.assertEqual(495, int(info['num_docs']))
-
     def testClient(self):
 
         conn = self.redis()
@@ -799,6 +780,37 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             self.assertEqual([b'RediSearch', b'RedisAI', b'RedisJson'], res[21])
             self.assertEqual(b'RediSearch', res[23])
             self.assertEqual(2, len(res[25]))
+
+    def testIndexDefiniontion(self):
+        
+        definition = IndexDefinition(async=True, prefix=['hset:', 'henry'],
+        filter='@f1=32', language='English', language_field='mylang',
+        score_field='myscore', score=0.5, payload_field='mypayload' )
+
+        self.assertEqual(['ON','HASH','ASYNC','PREFIX',2,'hset:','henry',
+        'FILTER','@f1=32','LANGUAGE_FIELD','mylang','LANGUAGE','English',
+        'SCORE_FIELD','myscore','SCORE',0.5,'PAYLOAD_FIELD','mypayload'],
+        definition.args)
+
+    def testCreateClientDefiniontion(self):
+
+        conn = self.redis()
+        
+        with conn as r:
+            r.flushdb()
+            client = Client('test', port=conn.port)
+            
+            definition = IndexDefinition(prefix=['hset:', 'henry'])
+            self.createIndex(client, num_docs=500, definition=definition)
+
+            info = client.info()
+            self.assertEqual(494, int(info['num_docs']))
+
+            r.hset('hset:1', 'f1', 'v1');
+
+            info = client.info()
+            self.assertEqual(495, int(info['num_docs']))
+
 
 if __name__ == '__main__':
 

@@ -111,9 +111,9 @@ class IndexDefinition(object):
     LANGUAGE = 'LANGUAGE'
     SCORE_FIELD = 'SCORE_FIELD'
     SCORE = 'SCORE'
-    PAYLOAD = 'PAYLOAD'
+    PAYLOAD_FIELD = 'PAYLOAD_FIELD'
         
-    def __init__(self, async=False, prefix=[], filter=None, language_field=None, language=None, score_field=None, score=1.0, payload=None):
+    def __init__(self, async=False, prefix=[], filter=None, language_field=None, language=None, score_field=None, score=1.0, payload_field=None):
         
         args = [self.ON, self.HASH]
         
@@ -146,9 +146,9 @@ class IndexDefinition(object):
             args.append(self.SCORE)
             args.append(score)
             
-        if payload is not None:
-            args.append(self.PAYLOAD)
-            args.append(payload)
+        if payload_field is not None:
+            args.append(self.PAYLOAD_FIELD)
+            args.append(payload_field)
             
         self.args = args
     
