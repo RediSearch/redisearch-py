@@ -783,14 +783,23 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
     def testIndexDefiniontion(self):
         
-        definition = IndexDefinition(async=True, prefix=['hset:', 'henry'],
-        filter='@f1=32', language='English', language_field='mylang',
-        score_field='myscore', score=0.5, payload_field='mypayload' )
+        conn = self.redis()
+        
+        with conn as r:
+            r.flushdb()
+            client = Client('test', port=conn.port)
+            
+            definition = IndexDefinition(async=True, prefix=['hset:', 'henry'],
+            filter='@f1==32', language='English', language_field='play',
+            score_field='chapter', score=0.5, payload_field='txt' )
 
-        self.assertEqual(['ON','HASH','ASYNC','PREFIX',2,'hset:','henry',
-        'FILTER','@f1=32','LANGUAGE_FIELD','mylang','LANGUAGE','English',
-        'SCORE_FIELD','myscore','SCORE',0.5,'PAYLOAD_FIELD','mypayload'],
-        definition.args)
+            self.assertEqual(['ON','HASH','ASYNC','PREFIX',2,'hset:','henry',
+            'FILTER','@f1==32','LANGUAGE_FIELD','play','LANGUAGE','English',
+            'SCORE_FIELD','chapter','SCORE',0.5,'PAYLOAD_FIELD','txt'],
+            definition.args)
+
+            self.createIndex(client, num_docs=500, definition=definition)
+
 
     def testCreateClientDefiniontion(self):
 
