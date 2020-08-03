@@ -31,6 +31,16 @@ def waitForIndex(env, idx):
             break
         time.sleep(0.1)
 
+def check_version_2(r):
+    try:
+        # Indexing the hash
+        r.execute_command('ft.addhash foo bar 1')
+    except redis.ResponseError as e:
+        # Support for FT.ADDHASH was removed in RediSearch 2.0
+        if str(e).startswith('unknown command `FT.ADDHASH`'):
+            return True
+        return False
+
 class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
     def createIndex(self, client, num_docs = 100, definition=None):
@@ -190,6 +200,8 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         conn = self.redis()
         
         with conn as r:
+            if check_version_2(r):
+                return
             # Creating a client with a given index name
             client = Client('idx', port=conn.port)
 
@@ -204,15 +216,9 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                     'title': 'RediSearch',
                     'body': 'Redisearch impements a search engine on top of redis'
                 })
-                        
-            try:
-                # Indexing the hash
-                client.add_document_hash('doc1')
-            except redis.ResponseError as e:
-                # Support for FT.ADDHASH was removed in RediSearch 2.0
-                self.assertTrue( str(e).startswith('unknown command `FT.ADDHASH`'))
-                return
-                        
+
+            client.add_document_hash('doc1')
+     
             # Searching with complext parameters:
             q = Query("search engine").verbatim().no_content().paging(0, 5)
 
@@ -806,6 +812,8 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         
         with conn as r:
             r.flushdb()
+            if not check_version_2(r):
+                return
             client = Client('test', port=conn.port)
             
             definition = IndexDefinition(async=True, prefix=['hset:', 'henry'],
@@ -826,6 +834,8 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         
         with conn as r:
             r.flushdb()
+            if not check_version_2(r):
+                return
             client = Client('test', port=conn.port)
             
             definition = IndexDefinition(prefix=['hset:', 'henry'])
