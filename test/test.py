@@ -28,16 +28,16 @@ def waitForIndex(env, idx):
 
 class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
-    def createIndex(self, client, num_docs = 100):
+    def createIndex(self, client, num_docs = 100, definition=None):
 
         assert isinstance(client, Client)
         try:
             client.create_index((TextField('play', weight=5.0), 
                                 TextField('txt'), 
-                                NumericField('chapter')))
+                                NumericField('chapter')), definition=definition)
         except redis.ResponseError:
             client.drop_index()
-            return self.createIndex(client, num_docs=num_docs)
+            return self.createIndex(client, num_docs=num_docs, definition=definition)
 
         chapters = {}
         bzfp = bz2.BZ2File(WILL_PLAY_TEXT)
@@ -794,6 +794,46 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             self.assertEqual([b'RediSearch', b'RedisAI', b'RedisJson'], res[21])
             self.assertEqual(b'RediSearch', res[23])
             self.assertEqual(2, len(res[25]))
+
+    def testIndexDefiniontion(self):
+        
+        conn = self.redis()
+        
+        with conn as r:
+            r.flushdb()
+            client = Client('test', port=conn.port)
+            
+            definition = IndexDefinition(async=True, prefix=['hset:', 'henry'],
+            filter='@f1==32', language='English', language_field='play',
+            score_field='chapter', score=0.5, payload_field='txt' )
+
+            self.assertEqual(['ON','HASH','ASYNC','PREFIX',2,'hset:','henry',
+            'FILTER','@f1==32','LANGUAGE_FIELD','play','LANGUAGE','English',
+            'SCORE_FIELD','chapter','SCORE',0.5,'PAYLOAD_FIELD','txt'],
+            definition.args)
+
+            self.createIndex(client, num_docs=500, definition=definition)
+
+
+    def testCreateClientDefiniontion(self):
+
+        conn = self.redis()
+        
+        with conn as r:
+            r.flushdb()
+            client = Client('test', port=conn.port)
+            
+            definition = IndexDefinition(prefix=['hset:', 'henry'])
+            self.createIndex(client, num_docs=500, definition=definition)
+
+            info = client.info()
+            self.assertEqual(494, int(info['num_docs']))
+
+            r.hset('hset:1', 'f1', 'v1');
+
+            info = client.info()
+            self.assertEqual(495, int(info['num_docs']))
+
 
 if __name__ == '__main__':
 
