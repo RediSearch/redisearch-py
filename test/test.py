@@ -558,14 +558,14 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             q.highlight(fields=('play', 'txt'), tags=('<b>', '</b>'))
             q.summarize('txt')
 
-            res = client.search(q)
-            doc = res.docs[0]
+            doc = sorted(client.search(q).docs)[0]
             self.assertEqual('<b>Henry</b> IV', doc.play)
             self.assertEqual('ACT I SCENE I. London. The palace. Enter <b>KING</b> <b>HENRY</b>, LORD JOHN OF LANCASTER, the EARL of WESTMORELAND, SIR... ',
                             doc.txt)
 
             q = Query('king henry').paging(0, 1).summarize().highlight()
-            doc = client.search(q).docs[0]
+            
+            doc = sorted(client.search(q).docs)[0]
             self.assertEqual('<b>Henry</b> ... ', doc.play)
             self.assertEqual('ACT I SCENE I. London. The palace. Enter <b>KING</b> <b>HENRY</b>, LORD JOHN OF LANCASTER, the EARL of WESTMORELAND, SIR... ',
                             doc.txt)
