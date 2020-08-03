@@ -22,6 +22,11 @@ TITLES_CSV = os.path.abspath(os.path.dirname(__file__)) + '/titles.csv'
 def waitForIndex(env, idx):
     while True:
         res = env.execute_command('ft.info', idx)
+        try:
+            res.index('indexing')
+        except:
+            break
+        
         if int(res[res.index('indexing') + 1]) == 0:
             break
         time.sleep(0.1)
