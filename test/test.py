@@ -6,6 +6,7 @@ import redis
 import unittest
 import bz2
 import csv
+import time
 from io import TextIOWrapper
 
 import six
@@ -17,6 +18,35 @@ import redisearch.reducers as reducers
 WILL_PLAY_TEXT = os.path.abspath(os.path.dirname(__file__)) + '/will_play_text.csv.bz2'
 
 TITLES_CSV = os.path.abspath(os.path.dirname(__file__)) + '/titles.csv'
+
+def waitForIndex(env, idx, timeout=None):
+    delay = 0.1
+    while True:
+        res = env.execute_command('ft.info', idx)
+        try:
+            res.index('indexing')
+        except:
+            break
+        
+        if int(res[res.index('indexing') + 1]) == 0:
+            break
+        
+        time.sleep(delay)
+        if timeout is not None:
+            timeout -= delay
+            if timeout <= 0:
+                break
+
+def check_version_2(env):
+    try:
+        # Indexing the hash
+        env.execute_command('FT.ADDHASH foo bar 1')
+    except redis.ResponseError as e:
+        # Support for FT.ADDHASH was removed in RediSearch 2.0
+        print str(e)
+        if str(e).startswith('unknown command `FT.ADDHASH`'):
+            return True
+        return False
 
 class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
@@ -70,6 +100,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             self.createIndex(client, num_docs =num_docs)
 
             for _ in r.retry_with_rdb_reload():
+                waitForIndex(r, 'test')
                 #verify info
                 info = client.info()
                 for k in [  'index_name', 'index_options', 'fields', 'num_docs',
@@ -176,6 +207,8 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         conn = self.redis()
         
         with conn as r:
+            if check_version_2(r):
+                return
             # Creating a client with a given index name
             client = Client('idx', port=conn.port)
 
@@ -190,15 +223,9 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                     'title': 'RediSearch',
                     'body': 'Redisearch impements a search engine on top of redis'
                 })
-                        
-            try:
-                # Indexing the hash
-                client.add_document_hash('doc1')
-            except redis.ResponseError as e:
-                # Support for FT.ADDHASH was removed in RediSearch 2.0
-                self.assertTrue( str(e).startswith('unknown command `FT.ADDHASH`'))
-                return
-                        
+
+            client.add_document_hash('doc1')
+     
             # Searching with complext parameters:
             q = Query("search engine").verbatim().no_content().paging(0, 5)
 
@@ -309,8 +336,8 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             client.add_document('doc2', txt = 'foo baz', num = 2, loc = '-0.1,51.2')
 
             for i in r.retry_with_rdb_reload():
-
-                # Test numerical filter
+                waitForIndex(r, 'idx')
+                # Test numerical filter     
                 q1 = Query("foo").add_filter(NumericFilter('num', 0, 2)).no_content()
                 q2 = Query("foo").add_filter(NumericFilter('num', 2, NumericFilter.INF, minExclusive=True)).no_content()
                 res1, res2 =  client.search(q1), client.search(q2)
@@ -498,6 +525,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         client.add_document('doc2', f3='f3_val', replace=True)
 
         for i in self.retry_with_reload():
+            waitForIndex(client.redis, 'idx')
             # Search for f3 value. All documents should have it
             res = client.search('@f3:f3_val')
             self.assertEqual(2, res.total)
@@ -519,6 +547,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         client.add_document('doc2', f3='f3_val', no_create=True, partial=True)
 
         for i in self.retry_with_reload():
+            waitForIndex(client.redis, 'idx')
             # Search for f3 value. All documents should have it
             res = client.search('@f3:f3_val')
             self.assertEqual(2, res.total)
@@ -542,18 +571,19 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         self.createIndex(client)
 
         for i in self.retry_with_reload():
+            waitForIndex(client.redis, 'idx')
             q = Query('king henry').paging(0, 1)
             q.highlight(fields=('play', 'txt'), tags=('<b>', '</b>'))
             q.summarize('txt')
 
-            res = client.search(q)
-            doc = res.docs[0]
+            doc = sorted(client.search(q).docs)[0]
             self.assertEqual('<b>Henry</b> IV', doc.play)
             self.assertEqual('ACT I SCENE I. London. The palace. Enter <b>KING</b> <b>HENRY</b>, LORD JOHN OF LANCASTER, the EARL of WESTMORELAND, SIR... ',
                             doc.txt)
 
             q = Query('king henry').paging(0, 1).summarize().highlight()
-            doc = client.search(q).docs[0]
+            
+            doc = sorted(client.search(q).docs)[0]
             self.assertEqual('<b>Henry</b> ... ', doc.play)
             self.assertEqual('ACT I SCENE I. London. The palace. Enter <b>KING</b> <b>HENRY</b>, LORD JOHN OF LANCASTER, the EARL of WESTMORELAND, SIR... ',
                             doc.txt)
@@ -571,7 +601,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             client.add_document('doc1', txt = 'fooz barz', tags = 'foo,foo bar,hello;world')
             
             for i in r.retry_with_rdb_reload():
-
+                waitForIndex(r, 'idx')
                 q = Query("@tags:{foo}")
                 res = client.search(q)
                 self.assertEqual(1, res.total)
@@ -636,6 +666,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         client.add_document('doc2', f1='very important', f2='lorem ipsum')
 
         for i in self.retry_with_reload():
+            waitForIndex(client.redis, 'idx')
             res = client.spellcheck('impornant')
             self.assertEqual('important', res['impornant'][0]['suggestion'])
 
@@ -647,6 +678,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         client.create_index((TextField('f1'), TextField('f2')))
 
         for i in self.retry_with_reload():
+            waitForIndex(client.redis, 'idx')
             # Add three items
             res = client.dict_add('custom_dict', 'item1', 'item2', 'item3')
             self.assertEqual(3, res)
@@ -787,6 +819,8 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         
         with conn as r:
             r.flushdb()
+            if not check_version_2(r):
+                return
             client = Client('test', port=conn.port)
             
             definition = IndexDefinition(async=True, prefix=['hset:', 'henry'],
@@ -807,6 +841,8 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         
         with conn as r:
             r.flushdb()
+            if not check_version_2(r):
+                return
             client = Client('test', port=conn.port)
             
             definition = IndexDefinition(prefix=['hset:', 'henry'])
