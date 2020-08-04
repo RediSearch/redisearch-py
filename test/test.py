@@ -19,7 +19,8 @@ WILL_PLAY_TEXT = os.path.abspath(os.path.dirname(__file__)) + '/will_play_text.c
 
 TITLES_CSV = os.path.abspath(os.path.dirname(__file__)) + '/titles.csv'
 
-def waitForIndex(env, idx):
+def waitForIndex(env, idx, timeout=None):
+    delay = 0.1
     while True:
         res = env.execute_command('ft.info', idx)
         try:
@@ -29,14 +30,20 @@ def waitForIndex(env, idx):
         
         if int(res[res.index('indexing') + 1]) == 0:
             break
-        time.sleep(0.1)
+        
+        time.sleep(delay)
+        if timeout is not None:
+            timeout -= delay
+            if timeout <= 0:
+                break
 
-def check_version_2(r):
+def check_version_2(env):
     try:
         # Indexing the hash
-        r.execute_command('ft.addhash foo bar 1')
+        env.execute_command('FT.ADDHASH foo bar 1')
     except redis.ResponseError as e:
         # Support for FT.ADDHASH was removed in RediSearch 2.0
+        print str(e)
         if str(e).startswith('unknown command `FT.ADDHASH`'):
             return True
         return False
