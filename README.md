@@ -15,7 +15,7 @@ It is the "official" client of redisearch, and should be regarded as its canonic
 
 ## Features
 
-RediSearch is a source avaliable (RSAL), high performance search engine implemented as a [Redis Module](https://redis.io/topics/modules-intro). 
+RediSearch is a source avaliable ([RSAL](https://raw.githubusercontent.com/RediSearch/RediSearch/master/LICENSE)), high performance search engine implemented as a [Redis Module](https://redis.io/topics/modules-intro). 
 It uses custom data types to allow fast, stable and feature rich full-text search inside redis.
 
 This client is a wrapper around the RediSearch API protocol, that allows you to utilize its features easily. 
