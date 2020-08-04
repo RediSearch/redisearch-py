@@ -15,7 +15,7 @@ It is the "official" client of redisearch, and should be regarded as its canonic
 
 ## Features
 
-RediSearch is an open-source (AGPL), high performance search engine implemented as a [Redis Module](https://redis.io/topics/modules-intro). 
+RediSearch is a source avaliable (RSAL), high performance search engine implemented as a [Redis Module](https://redis.io/topics/modules-intro). 
 It uses custom data types to allow fast, stable and feature rich full-text search inside redis.
 
 This client is a wrapper around the RediSearch API protocol, that allows you to utilize its features easily. 
@@ -42,12 +42,22 @@ from redisearch import Client, TextField
 # Creating a client with a given index name
 client = Client("myIndex")
 
-# Creating the index definition and schema
-client.create_index((TextField("title", weight=5.0), TextField("body")))
+# IndexDefinition is avaliable for RediSearch 2.0+
+definition = IndexDefinition(prefix=['doc:', 'article:'])
 
-# Indexing a document
+# Creating the index definition and schema
+client.create_index((TextField("title", weight=5.0), TextField("body")), definition=definition)
+
+# Indexing a document for RediSearch 2.0+
+client.redis.hset('doc:1',
+                mapping={
+                    'title': 'RediSearch',
+                    'body': 'Redisearch impements a search engine on top of redis'
+                })
+
+# Indexing a document for RediSearch 1.x
 client.add_document(
-    "doc1",
+    "doc:2",
     title="RediSearch",
     body="Redisearch implements a search engine on top of redis",
 )
@@ -62,7 +72,6 @@ res = client.search("search engine", snippet_sizes={"body": 50})
 q = Query("search engine").verbatim().no_content().with_scores().paging(0, 5)
 res = client.search(q)
 
-
 # The result has the total number of results, and a list of documents
 print(res.total)  # "1"
 print(res.docs[0].title)
@@ -70,11 +79,8 @@ print(res.docs[0].title)
 
 ## Installing
 
-1. Install Redis 4.0 or above
-
-2. [Install RediSearch](http://redisearch.io/Quick_Start/#building-and-running)
-
-3. Install the python client
+1. [Install RediSearch](http://redisearch.io/Quick_Start
+2. Install the python client:
 
 ```sh
 $ pip install redisearch
