@@ -67,7 +67,7 @@ class AutoCompleter(object):
     FUZZY = 'FUZZY'
     WITHPAYLOADS = 'WITHPAYLOADS'
 
-    def __init__(self, key, host='localhost', port=6379, conn = None):
+    def __init__(self, key, host='localhost', port=6379, conn = None, password=None):
         """
         Create a new AutoCompleter client for the given key, and optional host and port
 
@@ -76,7 +76,7 @@ class AutoCompleter(object):
 
         self.key = key
         self.redis = conn if conn is not None else Redis(
-            connection_pool = ConnectionPool(host=host, port=port))
+            connection_pool = ConnectionPool(host=host, port=port, password=password))
 
     def add_suggestions(self,  *suggestions, **kwargs):
         """
