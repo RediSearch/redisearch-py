@@ -65,13 +65,13 @@ client.add_document(
 # Simple search
 res = client.search("search engine")
 
+# the result has the total number of results, and a list of documents
+print res.total # "1"
+print res.docs[0].title
+
 # Searching with complex parameters:
 q = Query("search engine").verbatim().no_content().with_scores().paging(0, 5)
 res = client.search(q)
-
-# The result has the total number of results, and a list of documents
-print(res.total)  # "1"
-print(res.docs[0])
 ```
 
 ## Installing
