@@ -37,7 +37,7 @@ For more details, visit [http://redisearch.io](http://redisearch.io)
 ## Example: Using the Python Client
 
 ```py
-from redisearch import Client, TextField
+from redisearch import Client, TextField, IndexDefinition, Query
 
 # Creating a client with a given index name
 client = Client("myIndex")
@@ -65,16 +65,13 @@ client.add_document(
 # Simple search
 res = client.search("search engine")
 
-# Searching with snippets
-res = client.search("search engine", snippet_sizes={"body": 50})
-
 # Searching with complex parameters:
 q = Query("search engine").verbatim().no_content().with_scores().paging(0, 5)
 res = client.search(q)
 
 # The result has the total number of results, and a list of documents
 print(res.total)  # "1"
-print(res.docs[0].title)
+print(res.docs[0])
 ```
 
 ## Installing
