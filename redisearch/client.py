@@ -113,11 +113,11 @@ class IndexDefinition(object):
     SCORE = 'SCORE'
     PAYLOAD_FIELD = 'PAYLOAD_FIELD'
         
-    def __init__(self, async=False, prefix=[], filter=None, language_field=None, language=None, score_field=None, score=1.0, payload_field=None):
+    def __init__(self, async_=False, prefix=[], filter=None, language_field=None, language=None, score_field=None, score=1.0, payload_field=None):
         
         args = [self.ON, self.HASH]
         
-        if async:
+        if async_:
             args.append(self.ASYNC)
             
         if len(prefix) > 0:
