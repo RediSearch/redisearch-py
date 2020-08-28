@@ -30,9 +30,6 @@ res = client.search("search engine")
 print res.total # "1"
 print res.docs[0].title 
 
-# Searching with snippets
-res = client.search("search engine", snippet_sizes = {'body': 50})
-
 # Searching with complext parameters:
 q = Query("search engine").verbatim().no_content().paging(0,5)
 res = client.search(q)
