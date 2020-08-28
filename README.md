@@ -65,9 +65,6 @@ client.add_document(
 # Simple search
 res = client.search("search engine")
 
-# Searching with snippets
-res = client.search("search engine", snippet_sizes={"body": 50})
-
 # Searching with complex parameters:
 q = Query("search engine").verbatim().no_content().with_scores().paging(0, 5)
 res = client.search(q)
