@@ -465,7 +465,6 @@ class Client(object):
 
         - **query**: the search query. Either a text for simple queries with default parameters, or a Query object for complex queries.
                      See RediSearch's documentation on query format
-        - **snippet_sizes**: A dictionary of {field: snippet_size} used to trim and format the result. e.g.e {'body': 500}
         """
         args, query = self._mk_query_args(query)
         st = time.time()
