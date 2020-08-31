@@ -104,7 +104,6 @@ class IndexDefinition(object):
 
     ON = 'ON'
     HASH = 'HASH'
-    ASYNC = 'ASYNC'
     PREFIX = 'PREFIX'
     FILTER = 'FILTER'
     LANGUAGE_FIELD = 'LANGUAGE_FIELD'
@@ -113,43 +112,40 @@ class IndexDefinition(object):
     SCORE = 'SCORE'
     PAYLOAD_FIELD = 'PAYLOAD_FIELD'
         
-    def __init__(self, async_=False, prefix=[], filter=None, language_field=None, language=None, score_field=None, score=1.0, payload_field=None):
-        
+    def __init__(self, prefix=[], filter=None, language_field=None, language=None, score_field=None, score=1.0, payload_field=None):
+
         args = [self.ON, self.HASH]
-        
-        if async_:
-            args.append(self.ASYNC)
-            
+
         if len(prefix) > 0:
             args.append(self.PREFIX)
             args.append(len(prefix))
             for p in prefix:
                 args.append(p)
-                
+
         if filter is not None:
             args.append(self.FILTER)
             args.append(filter)
-            
+
         if language_field is not None:
             args.append(self.LANGUAGE_FIELD)
             args.append(language_field)
-            
+
         if language is not None:
             args.append(self.LANGUAGE)
             args.append(language)
-            
+
         if score_field is not None:
             args.append(self.SCORE_FIELD)
             args.append(score_field)
-            
+
         if score is not None:
             args.append(self.SCORE)
             args.append(score)
-            
+
         if payload_field is not None:
             args.append(self.PAYLOAD_FIELD)
             args.append(payload_field)
-            
+
         self.args = args
     
 
