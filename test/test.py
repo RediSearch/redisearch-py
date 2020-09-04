@@ -43,7 +43,7 @@ def check_version_2(env):
         env.execute_command('FT.ADDHASH foo bar 1')
     except redis.ResponseError as e:
         # Support for FT.ADDHASH was removed in RediSearch 2.0
-        print str(e)
+        print( str(e))
         if str(e).startswith('unknown command `FT.ADDHASH`'):
             return True
         return False
@@ -823,7 +823,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                 return
             client = Client('test', port=conn.port)
             
-            definition = IndexDefinition(async=True, prefix=['hset:', 'henry'],
+            definition = IndexDefinition(prefix=['hset:', 'henry'],
             filter='@f1==32', language='English', language_field='play',
             score_field='chapter', score=0.5, payload_field='txt' )
 
