@@ -43,7 +43,7 @@ def check_version_2(env):
         env.execute_command('FT.ADDHASH foo bar 1')
     except redis.ResponseError as e:
         # Support for FT.ADDHASH was removed in RediSearch 2.0
-        print( str(e))
+        # print( str(e))
         if str(e).startswith('unknown command `FT.ADDHASH`'):
             return True
         return False
@@ -822,12 +822,12 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             if not check_version_2(r):
                 return
             client = Client('test', port=conn.port)
-            
+
             definition = IndexDefinition(prefix=['hset:', 'henry'],
             filter='@f1==32', language='English', language_field='play',
             score_field='chapter', score=0.5, payload_field='txt' )
 
-            self.assertEqual(['ON','HASH','ASYNC','PREFIX',2,'hset:','henry',
+            self.assertEqual(['ON','HASH','PREFIX',2,'hset:','henry',
             'FILTER','@f1==32','LANGUAGE_FIELD','play','LANGUAGE','English',
             'SCORE_FIELD','chapter','SCORE',0.5,'PAYLOAD_FIELD','txt'],
             definition.args)
