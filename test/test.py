@@ -827,7 +827,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             filter='@f1==32', language='English', language_field='play',
             score_field='chapter', score=0.5, payload_field='txt' )
 
-            self.assertEqual(['ON','HASH','ASYNC','PREFIX',2,'hset:','henry',
+            self.assertEqual(['ON','HASH', 'PREFIX',2,'hset:','henry',
             'FILTER','@f1==32','LANGUAGE_FIELD','play','LANGUAGE','English',
             'SCORE_FIELD','chapter','SCORE',0.5,'PAYLOAD_FIELD','txt'],
             definition.args)
