@@ -81,7 +81,7 @@ class Value(object):
         return ScalarValue(v)
 
     def to_string(self):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def __str__(self):
         return self.to_string()
@@ -211,7 +211,7 @@ class Node(object):
 
     @property
     def JOINSTR(self):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def to_string(self, with_parens=None):
         with_parens = self._should_use_paren(with_parens)
