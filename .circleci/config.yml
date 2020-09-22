@@ -30,6 +30,12 @@ commands:
             pip install -r requirements.txt
             pip install --force-reinstall git+https://github.com/RedisLabs/rmtest.git
             <<# parameters.coverage >> pip install codecov <</ parameters.coverage >>
+            python - <<'__'
+            import redis
+            r = redis.Redis(decode_responses=True)
+            print(r.execute_command('info server'))
+            print(r.execute_command('info modules'))
+            __
             
       - save_cache:
           paths:
