@@ -15,12 +15,6 @@ commands:
     steps: 
       - checkout
 
-      - run:
-          name: Redis info
-          command: |
-            redis-cli info server
-            redis-cli info modules
-
       - restore_cache: # Download and cache dependencies
           keys:
           - v1-dependencies-{{ checksum "requirements.txt" }}

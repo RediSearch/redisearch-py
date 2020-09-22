@@ -17,6 +17,5 @@ else
 	. ./venv3/bin/activate
 fi
 
-cd test
 python -m pip install -r requirements.txt
 python -m pip install --force-reinstall git+https://github.com/RedisLabs/rmtest.git
