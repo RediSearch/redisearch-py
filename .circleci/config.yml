@@ -30,7 +30,7 @@ commands:
             pip install -r requirements.txt
             pip install --force-reinstall git+https://github.com/RedisLabs/rmtest.git
             <<# parameters.coverage >> pip install codecov <</ parameters.coverage >>
-            python - <<'__'
+            python - \<<'__'
             import redis
             r = redis.Redis(decode_responses=True)
             print(r.execute_command('info server'))
@@ -64,6 +64,7 @@ commands:
           path: test-reports
           destination: test-reports
 
+
 jobs:
   test:
     parameters:
@@ -89,49 +90,6 @@ jobs:
           destination: test-reports
 
     working_directory: ~/repo
-
-
-#  test-nightly:
-#    docker:
-#      - image: circleci/python:<<# parameters.python_ver >>
-#      - image: redislabs/redisearch:<<# parameters.redisearch_ver >>
-#
-#    working_directory: ~/repo
-#
-#    steps:
-#      - checkout
-#
-#      - restore_cache: # Download and cache dependencies
-#          keys:
-#          - v1-dependencies-{{ checksum "requirements.txt" }}
-#          # fallback to using the latest cache if no exact match is found
-#          - v1-dependencies-
-#
-#      - run:
-#          name: install dependencies
-#          command: |
-#            virtualenv venv
-#            . venv/bin/activate
-#            pip install -r requirements.txt
-#            
-#      - save_cache:
-#          paths:
-#            - ./venv
-#          key: v1-dependencies-{{ checksum "requirements.txt" }}
-#
-#      - run:
-#          name: run tests
-#          command: |
-#            . venv/bin/activate
-#            REDIS_PORT=6379 python test/test.py
-#
-#      - run:
-#          name: run query builder tests
-#          command: |
-#            . venv/bin/activate
-#            REDIS_PORT=6379 python test/test_builder.py
-#
-#      # no need for store_artifacts on nightly builds 
 
 
 on-any-branch: &on-any-branch
@@ -196,12 +154,6 @@ workflows:
           python_ver: "2.7"
           redisearch_ver: "1.6.14"
           coverage: yes
-          <<: *on-any-branch
-      - test:
-          name: test-nightly
-          python_ver: "3"
-          redisearch_ver: edge
-          coverage: no
           <<: *on-any-branch
 
   nightly:
