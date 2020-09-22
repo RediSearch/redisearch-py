@@ -25,7 +25,7 @@ RUN if [ "$PYTHON_VER" = 2 ]; then \
 ADD ./ /build
 
 RUN pip install -r requirements.txt
-# RUN pip install --force-reinstall git+https://github.com/RedisLabs/rmtest.git
+RUN pip install --force-reinstall git+https://github.com/RedisLabs/rmtest.git
 
 ENV REDIS_PORT=6379
 
