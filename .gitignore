@@ -1,12 +1,5 @@
-*
-!/**/
-build
-dist
+/build
+/dist
 .env
-!.gitignore
-!requirements.txt
-!**/*.py
-!**/*.csv
-!**/*.md
-!.circleci/config.yml
-venv/
+/venv*/
+*.pyc
