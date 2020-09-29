@@ -256,7 +256,6 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             self.assertIsNone(res.docs[0].payload)
 
     def testScores(self):
-        
         conn = self.redis()
 
         with conn as r:
@@ -631,8 +630,8 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
             # Now get the index info to confirm its contents
             response = client.info()
-            self.assertIn(b'SORTABLE', response['fields'][0])
-            self.assertIn(b'NOSTEM', response['fields'][0])
+            self.assertIn('SORTABLE', response['fields'][0])
+            self.assertIn('NOSTEM', response['fields'][0])
 
     def testAlterSchemaAdd(self):
         conn = self.redis()
@@ -799,18 +798,18 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             res = res.rows[0]
 
             self.assertEqual(len(res), 26)
-            self.assertEqual(b'redis', res[1])
-            self.assertEqual(b'3', res[3])
-            self.assertEqual(b'3', res[5])
-            self.assertEqual(b'3', res[7])
-            self.assertEqual(b'21', res[9])
-            self.assertEqual(b'3', res[11])
-            self.assertEqual(b'10', res[13])
-            self.assertEqual(b'7', res[15])
-            self.assertEqual(b'3.60555127546', res[17])
-            self.assertEqual(b'10', res[19])
-            self.assertEqual([b'RediSearch', b'RedisAI', b'RedisJson'], res[21])
-            self.assertEqual(b'RediSearch', res[23])
+            self.assertEqual('redis', res[1])
+            self.assertEqual('3', res[3])
+            self.assertEqual('3', res[5])
+            self.assertEqual('3', res[7])
+            self.assertEqual('21', res[9])
+            self.assertEqual('3', res[11])
+            self.assertEqual('10', res[13])
+            self.assertEqual('7', res[15])
+            self.assertEqual('3.60555127546', res[17])
+            self.assertEqual('10', res[19])
+            self.assertEqual(['RediSearch', 'RedisAI', 'RedisJson'], res[21])
+            self.assertEqual('RediSearch', res[23])
             self.assertEqual(2, len(res[25]))
 
     def testIndexDefiniontion(self):
