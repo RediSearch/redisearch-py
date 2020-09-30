@@ -66,8 +66,8 @@ client.add_document(
 res = client.search("search engine")
 
 # the result has the total number of results, and a list of documents
-print res.total # "1"
-print res.docs[0].title
+print(res.total) # "2"
+print(res.docs[0].title) # "RediSearch"
 
 # Searching with complex parameters:
 q = Query("search engine").verbatim().no_content().with_scores().paging(0, 5)
