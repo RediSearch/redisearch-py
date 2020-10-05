@@ -656,7 +656,7 @@ class Client(object):
 
         ### Parameters
 
-        - **field**: Tag field name
+        - **tagfield**: Tag field name
         """
 
         cmd = self.redis.execute_command(self.TAGVALS_CMD, self.index_name, tagfield)
