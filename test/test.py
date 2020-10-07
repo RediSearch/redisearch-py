@@ -597,9 +597,11 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             
             client.create_index((TextField('txt'), TagField('tags')))
             
-            tags = 'foo,foo bar,hello;world'
+            tags  = 'foo,foo bar,hello;world'
+            tags2 = 'soba,ramen'
 
             client.add_document('doc1', txt = 'fooz barz', tags = tags)
+            client.add_document('doc2', txt = 'noodles', tags = tags2)
             
             for i in r.retry_with_rdb_reload():
                 waitForIndex(r, 'idx')
@@ -620,9 +622,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                 self.assertEqual(1, res.total)
 
                 q2 = client.tagvals('tags')
-                self.assertEqual(tags.split(','), q2)
-
-
+                self.assertEqual(tags.split(',') + tags2.split(','), q2)
 
     def testTextFieldSortableNostem(self):
         conn = self.redis()
