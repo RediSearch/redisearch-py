@@ -174,6 +174,7 @@ class Client(object):
     GET_CMD = 'FT.GET'
     MGET_CMD = 'FT.MGET'
     CONFIG_CMD = 'FT.CONFIG'
+    TAGVALS_CMD = 'FT.TAGVALS'
 
     NOOFFSETS = 'NOOFFSETS'
     NOFIELDS = 'NOFIELDS'
@@ -648,3 +649,16 @@ class Client(object):
             for kvs in raw:
                 res[kvs[0]] = kvs[1]
         return res
+
+    def tagvals(self, tagfield):
+        """
+        Return a list of all possible tag values
+
+        ### Parameters
+
+        - **tagfield**: Tag field name
+        """
+
+        cmd = self.redis.execute_command(self.TAGVALS_CMD, self.index_name, tagfield)
+        return cmd
+
