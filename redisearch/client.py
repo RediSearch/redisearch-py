@@ -1,12 +1,11 @@
-from redis import Redis, RedisError, ConnectionPool
+from redis import Redis, ConnectionPool
 import itertools
 import time
 import six
-from six.moves import zip
 
 from .document import Document
 from .result import Result
-from .query import Query, Filter
+from .query import Query
 from ._util import to_string
 from .aggregation import AggregateRequest, AggregateResult, Cursor
 
@@ -494,11 +493,9 @@ class Client(object):
         `rows` property, which will always yield the rows of the result
         """
         if isinstance(query, AggregateRequest):
-            has_schema = query._with_schema
             has_cursor = bool(query._cursor)
             cmd = [self.AGGREGATE_CMD, self.index_name] + query.build_args()
         elif isinstance(query, Cursor):
-            has_schema = False
             has_cursor = True
             cmd = [self.CURSOR_CMD, 'READ',
                    self.index_name] + query.build_args()

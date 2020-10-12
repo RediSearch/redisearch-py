@@ -81,7 +81,7 @@ class Value(object):
         return ScalarValue(v)
 
     def to_string(self):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def __str__(self):
         return self.to_string()
@@ -100,7 +100,6 @@ class RangeValue(Value):
         self.inclusive_max = inclusive_max
 
     def to_string(self):
-        a, b = self.range
         return '[{1}{0[0]} {2}{0[1]}]'.format(self.range,
                                     '(' if not self.inclusive_min else '',
                                     '(' if not self.inclusive_max else '',)
@@ -211,7 +210,7 @@ class Node(object):
 
     @property
     def JOINSTR(self):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def to_string(self, with_parens=None):
         with_parens = self._should_use_paren(with_parens)
