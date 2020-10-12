@@ -274,7 +274,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             self.assertEqual(3.0, res.docs[0].score)
 
             self.assertEqual('doc1', res.docs[1].id)
-            self.assertEqual(2.0, res.docs[1].score)
+            self.assertEqual(0.2, res.docs[1].score)
 
     def testReplace(self):
         
