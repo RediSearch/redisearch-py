@@ -43,7 +43,6 @@ def check_version_2(env):
         env.execute_command('FT.ADDHASH foo bar 1')
     except redis.ResponseError as e:
         # Support for FT.ADDHASH was removed in RediSearch 2.0
-        print( str(e))
         if str(e).startswith('unknown command `FT.ADDHASH`'):
             return True
         return False
@@ -453,14 +452,14 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                 self.assertEqual(2, len(ret))
                 self.assertEqual('badger', ret[0].string)
                 self.assertIsInstance(ret[0].score, float)
-                self.assertNotEquals(1.0, ret[0].score)
+                self.assertNotEqual(1.0, ret[0].score)
                 self.assertEqual('badalte rishtey', ret[1].string)
                 self.assertIsInstance(ret[1].score, float)
-                self.assertNotEquals(1.0, ret[1].score)
+                self.assertNotEqual(1.0, ret[1].score)
 
                 ret= ac.get_suggestions('bad', fuzzy=True, num=10)
                 self.assertEqual(10, len(ret))
-                self.assertEquals(1.0, ret[0].score)
+                self.assertEqual(1.0, ret[0].score)
                 strs = {x.string for x in ret}
 
             for sug in strs:
@@ -622,7 +621,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                 self.assertEqual(1, res.total)
 
                 q2 = client.tagvals('tags')
-                self.assertEqual(tags.split(',') + tags2.split(','), q2)
+                self.assertEqual((tags.split(',') + tags2.split(',')).sort(), q2.sort())
 
     def testTextFieldSortableNostem(self):
         conn = self.redis()
