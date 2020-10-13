@@ -100,7 +100,6 @@ class RangeValue(Value):
         self.inclusive_max = inclusive_max
 
     def to_string(self):
-        a, b = self.range
         return '[{1}{0[0]} {2}{0[1]}]'.format(self.range,
                                     '(' if not self.inclusive_min else '',
                                     '(' if not self.inclusive_max else '',)

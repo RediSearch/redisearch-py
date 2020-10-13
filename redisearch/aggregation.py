@@ -27,7 +27,6 @@ class Reducer(object):
         self._args = args
         self._field = None
         self._alias = None
-        pass
 
     def alias(self, alias):
         """
