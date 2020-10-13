@@ -1,12 +1,11 @@
-from redis import Redis, RedisError, ConnectionPool
+from redis import Redis, ConnectionPool
 import itertools
 import time
 import six
-from six.moves import zip
 
 from .document import Document
 from .result import Result
-from .query import Query, Filter
+from .query import Query
 from ._util import to_string
 from .aggregation import AggregateRequest, AggregateResult, Cursor
 
@@ -104,7 +103,6 @@ class IndexDefinition(object):
 
     ON = 'ON'
     HASH = 'HASH'
-    ASYNC = 'ASYNC'
     PREFIX = 'PREFIX'
     FILTER = 'FILTER'
     LANGUAGE_FIELD = 'LANGUAGE_FIELD'
@@ -113,43 +111,40 @@ class IndexDefinition(object):
     SCORE = 'SCORE'
     PAYLOAD_FIELD = 'PAYLOAD_FIELD'
         
-    def __init__(self, async=False, prefix=[], filter=None, language_field=None, language=None, score_field=None, score=1.0, payload_field=None):
-        
+    def __init__(self, prefix=[], filter=None, language_field=None, language=None, score_field=None, score=1.0, payload_field=None):
+
         args = [self.ON, self.HASH]
-        
-        if async:
-            args.append(self.ASYNC)
-            
+
         if len(prefix) > 0:
             args.append(self.PREFIX)
             args.append(len(prefix))
             for p in prefix:
                 args.append(p)
-                
+
         if filter is not None:
             args.append(self.FILTER)
             args.append(filter)
-            
+
         if language_field is not None:
             args.append(self.LANGUAGE_FIELD)
             args.append(language_field)
-            
+
         if language is not None:
             args.append(self.LANGUAGE)
             args.append(language)
-            
+
         if score_field is not None:
             args.append(self.SCORE_FIELD)
             args.append(score_field)
-            
+
         if score is not None:
             args.append(self.SCORE)
             args.append(score)
-            
+
         if payload_field is not None:
             args.append(self.PAYLOAD_FIELD)
             args.append(payload_field)
-            
+
         self.args = args
     
 
@@ -178,6 +173,7 @@ class Client(object):
     GET_CMD = 'FT.GET'
     MGET_CMD = 'FT.MGET'
     CONFIG_CMD = 'FT.CONFIG'
+    TAGVALS_CMD = 'FT.TAGVALS'
 
     NOOFFSETS = 'NOOFFSETS'
     NOFIELDS = 'NOFIELDS'
@@ -245,7 +241,8 @@ class Client(object):
         self.index_name = index_name
 
         self.redis = conn if conn is not None else Redis(
-            connection_pool=ConnectionPool(host=host, port=port, password=password))
+            connection_pool=ConnectionPool(host=host, port=port, password=password,
+            decode_responses=True))
 
     def batch_indexer(self, chunk_size=100):
         """
@@ -469,7 +466,6 @@ class Client(object):
 
         - **query**: the search query. Either a text for simple queries with default parameters, or a Query object for complex queries.
                      See RediSearch's documentation on query format
-        - **snippet_sizes**: A dictionary of {field: snippet_size} used to trim and format the result. e.g.e {'body': 500}
         """
         args, query = self._mk_query_args(query)
         st = time.time()
@@ -497,11 +493,9 @@ class Client(object):
         `rows` property, which will always yield the rows of the result
         """
         if isinstance(query, AggregateRequest):
-            has_schema = query._with_schema
             has_cursor = bool(query._cursor)
             cmd = [self.AGGREGATE_CMD, self.index_name] + query.build_args()
         elif isinstance(query, Cursor):
-            has_schema = False
             has_cursor = True
             cmd = [self.CURSOR_CMD, 'READ',
                    self.index_name] + query.build_args()
@@ -652,3 +646,16 @@ class Client(object):
             for kvs in raw:
                 res[kvs[0]] = kvs[1]
         return res
+
+    def tagvals(self, tagfield):
+        """
+        Return a list of all possible tag values
+
+        ### Parameters
+
+        - **tagfield**: Tag field name
+        """
+
+        cmd = self.redis.execute_command(self.TAGVALS_CMD, self.index_name, tagfield)
+        return cmd
+
