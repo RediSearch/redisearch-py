@@ -4,6 +4,7 @@
 [![GitHub issues](https://img.shields.io/github/release/RediSearch/redisearch-py.svg)](https://github.com/RediSearch/redisearch-py/releases/latest)
 [![Codecov](https://codecov.io/gh/RediSearch/redisearch-py/branch/master/graph/badge.svg)](https://codecov.io/gh/RediSearch/redisearch-py)
 [![Known Vulnerabilities](https://snyk.io/test/github/RediSearch/redisearch-py/badge.svg?targetFile=requirements.txt)](https://snyk.io/test/github/RediSearch/redisearch-py?targetFile=requirements.txt)
+[![Total alerts](https://img.shields.io/lgtm/alerts/g/RediSearch/redisearch-py.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/RediSearch/redisearch-py/alerts/)
 
 # RediSearch Python Client
 [![Forum](https://img.shields.io/badge/Forum-RediSearch-blue)](https://forum.redislabs.com/c/modules/redisearch/)
@@ -37,7 +38,7 @@ For more details, visit [http://redisearch.io](http://redisearch.io)
 ## Example: Using the Python Client
 
 ```py
-from redisearch import Client, TextField
+from redisearch import Client, TextField, IndexDefinition, Query
 
 # Creating a client with a given index name
 client = Client("myIndex")
@@ -65,16 +66,13 @@ client.add_document(
 # Simple search
 res = client.search("search engine")
 
-# Searching with snippets
-res = client.search("search engine", snippet_sizes={"body": 50})
+# the result has the total number of results, and a list of documents
+print(res.total) # "2"
+print(res.docs[0].title) # "RediSearch"
 
 # Searching with complex parameters:
 q = Query("search engine").verbatim().no_content().with_scores().paging(0, 5)
 res = client.search(q)
-
-# The result has the total number of results, and a list of documents
-print(res.total)  # "1"
-print(res.docs[0].title)
 ```
 
 ## Installing
@@ -86,5 +84,37 @@ print(res.docs[0].title)
 $ pip install redisearch
 ```
 
+## Testing
 
+Testing can easily be performed using using Docker.
+Run the following:
 
+```
+make -C test/docker test PYTHON_VER=3
+```
+
+(Replace `PYTHON_VER=3` with `PYTHON_VER=2` to test with Python 2.7.)
+
+Alternatively, use the following procedure:
+
+First, run:
+
+```
+PYTHON_VER=3 ./test/test-setup.sh
+```
+
+This will set up a Python virtual environment in `venv3` (or in `venv2` if `PYTHON_VER=2` is used).
+
+Afterwards, run RediSearch in a container as a daemon:
+
+```
+docker run -d -p 6379:6379 redislabs/redisearch:2.0.0
+```
+
+Finally, invoke the virtual environment and run the tests:
+
+```
+. ./venv3/bin/activate
+REDIS_PORT=6379 python test/test.py 
+REDIS_PORT=6379 python test/test_builder.py
+```

@@ -43,7 +43,6 @@ def check_version_2(env):
         env.execute_command('FT.ADDHASH foo bar 1')
     except redis.ResponseError as e:
         # Support for FT.ADDHASH was removed in RediSearch 2.0
-        print str(e)
         if str(e).startswith('unknown command `FT.ADDHASH`'):
             return True
         return False
@@ -256,7 +255,6 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             self.assertIsNone(res.docs[0].payload)
 
     def testScores(self):
-        
         conn = self.redis()
 
         with conn as r:
@@ -454,14 +452,14 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                 self.assertEqual(2, len(ret))
                 self.assertEqual('badger', ret[0].string)
                 self.assertIsInstance(ret[0].score, float)
-                self.assertNotEquals(1.0, ret[0].score)
+                self.assertNotEqual(1.0, ret[0].score)
                 self.assertEqual('badalte rishtey', ret[1].string)
                 self.assertIsInstance(ret[1].score, float)
-                self.assertNotEquals(1.0, ret[1].score)
+                self.assertNotEqual(1.0, ret[1].score)
 
                 ret= ac.get_suggestions('bad', fuzzy=True, num=10)
                 self.assertEqual(10, len(ret))
-                self.assertEquals(1.0, ret[0].score)
+                self.assertEqual(1.0, ret[0].score)
                 strs = {x.string for x in ret}
 
             for sug in strs:
@@ -597,8 +595,12 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             client.redis.flushdb()
             
             client.create_index((TextField('txt'), TagField('tags')))
+            
+            tags  = 'foo,foo bar,hello;world'
+            tags2 = 'soba,ramen'
 
-            client.add_document('doc1', txt = 'fooz barz', tags = 'foo,foo bar,hello;world')
+            client.add_document('doc1', txt = 'fooz barz', tags = tags)
+            client.add_document('doc2', txt = 'noodles', tags = tags2)
             
             for i in r.retry_with_rdb_reload():
                 waitForIndex(r, 'idx')
@@ -618,6 +620,9 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                 res = client.search(q)
                 self.assertEqual(1, res.total)
 
+                q2 = client.tagvals('tags')
+                self.assertEqual((tags.split(',') + tags2.split(',')).sort(), q2.sort())
+
     def testTextFieldSortableNostem(self):
         conn = self.redis()
 
@@ -631,8 +636,8 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
             # Now get the index info to confirm its contents
             response = client.info()
-            self.assertIn(b'SORTABLE', response['fields'][0])
-            self.assertIn(b'NOSTEM', response['fields'][0])
+            self.assertIn('SORTABLE', response['fields'][0])
+            self.assertIn('NOSTEM', response['fields'][0])
 
     def testAlterSchemaAdd(self):
         conn = self.redis()
@@ -799,18 +804,18 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             res = res.rows[0]
 
             self.assertEqual(len(res), 26)
-            self.assertEqual(b'redis', res[1])
-            self.assertEqual(b'3', res[3])
-            self.assertEqual(b'3', res[5])
-            self.assertEqual(b'3', res[7])
-            self.assertEqual(b'21', res[9])
-            self.assertEqual(b'3', res[11])
-            self.assertEqual(b'10', res[13])
-            self.assertEqual(b'7', res[15])
-            self.assertEqual(b'3.60555127546', res[17])
-            self.assertEqual(b'10', res[19])
-            self.assertEqual([b'RediSearch', b'RedisAI', b'RedisJson'], res[21])
-            self.assertEqual(b'RediSearch', res[23])
+            self.assertEqual('redis', res[1])
+            self.assertEqual('3', res[3])
+            self.assertEqual('3', res[5])
+            self.assertEqual('3', res[7])
+            self.assertEqual('21', res[9])
+            self.assertEqual('3', res[11])
+            self.assertEqual('10', res[13])
+            self.assertEqual('7', res[15])
+            self.assertEqual('3.60555127546', res[17])
+            self.assertEqual('10', res[19])
+            self.assertEqual(['RediSearch', 'RedisAI', 'RedisJson'], res[21])
+            self.assertEqual('RediSearch', res[23])
             self.assertEqual(2, len(res[25]))
 
     def testIndexDefiniontion(self):
@@ -823,11 +828,11 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                 return
             client = Client('test', port=conn.port)
             
-            definition = IndexDefinition(async=True, prefix=['hset:', 'henry'],
+            definition = IndexDefinition(prefix=['hset:', 'henry'],
             filter='@f1==32', language='English', language_field='play',
             score_field='chapter', score=0.5, payload_field='txt' )
 
-            self.assertEqual(['ON','HASH','ASYNC','PREFIX',2,'hset:','henry',
+            self.assertEqual(['ON','HASH', 'PREFIX',2,'hset:','henry',
             'FILTER','@f1==32','LANGUAGE_FIELD','play','LANGUAGE','English',
             'SCORE_FIELD','chapter','SCORE',0.5,'PAYLOAD_FIELD','txt'],
             definition.args)
