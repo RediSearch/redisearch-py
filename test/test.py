@@ -47,6 +47,14 @@ def check_version_2(env):
             return True
         return False
 
+def check_version_latest(env):
+    res = env.execute_command('info modules')
+    latest = res.find('ver=999999')
+    print latest
+    if latest is not -1:
+        return True
+    return False
+
 class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
     def createIndex(self, client, num_docs = 100, definition=None):
@@ -267,8 +275,10 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             self.assertEqual(3.0, res.docs[0].score)
 
             self.assertEqual('doc1', res.docs[1].id)
-            # todo: enable once new RS version is tagged
-            #self.assertEqual(0.2, res.docs[1].score)
+            
+            if check_version_latest(r) is False:
+                self.assertEqual(0.2, res.docs[1].score)
+                print 'something'
 
     def testReplace(self):
         
