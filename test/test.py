@@ -50,7 +50,6 @@ def check_version_2(env):
 def check_version_latest(env):
     res = env.execute_command('info modules')
     latest = res.find('ver=999999')
-    print latest
     if latest is not -1:
         return True
     return False
@@ -274,11 +273,9 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             self.assertEqual('doc2', res.docs[0].id)
             self.assertEqual(3.0, res.docs[0].score)
 
-            self.assertEqual('doc1', res.docs[1].id)
-            
+            self.assertEqual('doc1', res.docs[1].id)            
             if check_version_latest(r) is False:
                 self.assertEqual(0.2, res.docs[1].score)
-                print 'something'
 
     def testReplace(self):
         
