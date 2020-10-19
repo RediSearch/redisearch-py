@@ -564,6 +564,21 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             self.assertEqual('ACT I SCENE I. London. The palace. Enter <b>KING</b> <b>HENRY</b>, LORD JOHN OF LANCASTER, the EARL of WESTMORELAND, SIR... ',
                             doc.txt)
 
+    def testAlias(self):
+        conn = self.redis()
+        with conn as r:
+            # Creating a client with a given index name
+            client = Client('idx', port=conn.port)
+            client.redis.flushdb()
+
+            client.create_index((TextField('txt'),))
+            client.add_document('doc1', txt = 'fooz barz')
+            client.aliasadd('myalias')
+
+            alias_client = Client('myalias', port=conn.port)
+            res = alias_client.search('*').docs[0]
+            self.assertEqual('doc1', res.id)
+
     def testTags(self):
         conn = self.redis()
 

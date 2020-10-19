@@ -174,6 +174,9 @@ class Client(object):
     MGET_CMD = 'FT.MGET'
     CONFIG_CMD = 'FT.CONFIG'
     TAGVALS_CMD = 'FT.TAGVALS'
+    ALIAS_ADD_CMD = 'FT.ALIASADD'
+    ALIAS_UPDATE_CMD = 'FT.ALIASUPDATE'
+    ALIAS_DEL_CMD = 'FT.ALIASDEL'
 
     NOOFFSETS = 'NOOFFSETS'
     NOFIELDS = 'NOFIELDS'
@@ -659,3 +662,14 @@ class Client(object):
         cmd = self.redis.execute_command(self.TAGVALS_CMD, self.index_name, tagfield)
         return cmd
 
+    def aliasadd(self, alias):
+        """
+        Alias a search index
+
+        ### Parameters
+
+        - **alias**: Name of the alias to create
+        """
+
+        cmd = self.redis.execute_command(self.ALIAS_ADD_CMD, alias, self.index_name)
+        return cmd
