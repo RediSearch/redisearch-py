@@ -664,7 +664,7 @@ class Client(object):
 
     def aliasadd(self, alias):
         """
-        Alias a search index
+        Alias a search index - will fail if alias already exists
 
         ### Parameters
 
@@ -672,4 +672,28 @@ class Client(object):
         """
 
         cmd = self.redis.execute_command(self.ALIAS_ADD_CMD, alias, self.index_name)
+        return cmd
+
+    def aliasupdate(self, alias):
+        """
+        Updates an alias - will fail if alias does not already exist
+
+        ### Parameters
+
+        - **alias**: Name of the alias to create
+        """
+
+        cmd = self.redis.execute_command(self.ALIAS_UPDATE_CMD, alias, self.index_name)
+        return cmd
+
+    def aliasdel(self, alias):
+        """
+        Removes an alias to a search index
+
+        ### Parameters
+
+        - **alias**: Name of the alias to delete
+        """
+
+        cmd = self.redis.execute_command(self.ALIAS_DEL_CMD, alias)
         return cmd
