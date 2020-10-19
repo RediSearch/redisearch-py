@@ -567,7 +567,49 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
     def testAlias(self):
         conn = self.redis()
         with conn as r:
-            if not check_version_2(r):
+            if check_version_2(r):
+
+                index1 = Client('testAlias', port=conn.port)
+                index1.redis.flushdb()
+                index2 = Client('testAlias2', port=conn.port)
+
+                index1.redis.hset("index1:lonestar", mapping = {'name': 'lonestar'})
+                index2.redis.hset("index2:yogurt", mapping = {'name': 'yogurt'})
+
+                time.sleep(2)
+
+                def1 =IndexDefinition(prefix=['index1:'],score_field='name')
+                def2 =IndexDefinition(prefix=['index2:'],score_field='name')
+                
+                index1.create_index((TextField('name'),),definition=def1)
+                index2.create_index((TextField('name'),),definition=def2)
+
+                res = index1.search('*').docs[0]
+                self.assertEqual('index1:lonestar', res.id)
+
+                # create alias and check for results
+                index1.aliasadd("spaceballs")
+                alias_client = Client('spaceballs', port=conn.port)
+                res = alias_client.search('*').docs[0]
+                self.assertEqual('index1:lonestar', res.id)
+
+                # We should throw an exception when trying to add an alias that already exists
+                with self.assertRaises(Exception) as context:
+                    index2.aliasadd('spaceballs')
+                self.assertEqual('Alias already exists', str(context.exception))
+
+                #update alias and ensure new results
+                index2.aliasupdate("spaceballs")
+                alias_client2 = Client('spaceballs', port=conn.port)
+                res = alias_client2.search('*').docs[0]
+                self.assertEqual('index2:yogurt', res.id)
+
+                index2.aliasdel("spaceballs")
+                with self.assertRaises(Exception) as context:
+                    alias_client2.search('*').docs[0]
+                self.assertEqual('spaceballs: no such index', str(context.exception))
+                
+            else:
 
                 # Creating a client with one index
                 index1 = Client('testAlias', port=conn.port)
