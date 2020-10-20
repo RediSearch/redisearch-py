@@ -564,6 +564,88 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             self.assertEqual('ACT I SCENE I. London. The palace. Enter <b>KING</b> <b>HENRY</b>, LORD JOHN OF LANCASTER, the EARL of WESTMORELAND, SIR... ',
                             doc.txt)
 
+    def testAlias(self):
+        conn = self.redis()
+        with conn as r:
+            if check_version_2(r):
+
+                index1 = Client('testAlias', port=conn.port)
+                index1.redis.flushdb()
+                index2 = Client('testAlias2', port=conn.port)
+
+                index1.redis.hset("index1:lonestar", mapping = {'name': 'lonestar'})
+                index2.redis.hset("index2:yogurt", mapping = {'name': 'yogurt'})
+
+                time.sleep(2)
+
+                def1 =IndexDefinition(prefix=['index1:'],score_field='name')
+                def2 =IndexDefinition(prefix=['index2:'],score_field='name')
+                
+                index1.create_index((TextField('name'),),definition=def1)
+                index2.create_index((TextField('name'),),definition=def2)
+
+                res = index1.search('*').docs[0]
+                self.assertEqual('index1:lonestar', res.id)
+
+                # create alias and check for results
+                index1.aliasadd("spaceballs")
+                alias_client = Client('spaceballs', port=conn.port)
+                res = alias_client.search('*').docs[0]
+                self.assertEqual('index1:lonestar', res.id)
+
+                # We should throw an exception when trying to add an alias that already exists
+                with self.assertRaises(Exception) as context:
+                    index2.aliasadd('spaceballs')
+                self.assertEqual('Alias already exists', str(context.exception))
+
+                #update alias and ensure new results
+                index2.aliasupdate("spaceballs")
+                alias_client2 = Client('spaceballs', port=conn.port)
+                res = alias_client2.search('*').docs[0]
+                self.assertEqual('index2:yogurt', res.id)
+
+                index2.aliasdel("spaceballs")
+                with self.assertRaises(Exception) as context:
+                    alias_client2.search('*').docs[0]
+                self.assertEqual('spaceballs: no such index', str(context.exception))
+                
+            else:
+
+                # Creating a client with one index
+                index1 = Client('testAlias', port=conn.port)
+                index1.redis.flushdb()
+
+                index1.create_index((TextField('txt'),))
+                index1.add_document('doc1', txt = 'text goes here')
+
+                index2 = Client('testAlias2', port=conn.port)
+                index2.create_index((TextField('txt'),))
+                index2.add_document('doc2', txt = 'text goes here')
+
+
+                # add the actual alias and check
+                index1.aliasadd('myalias')
+                alias_client = Client('myalias', port=conn.port)
+                res = alias_client.search('*').docs[0]
+                self.assertEqual('doc1', res.id)
+
+                # We should throw an exception when trying to add an alias that already exists
+                with self.assertRaises(Exception) as context:
+                    index2.aliasadd('myalias')
+                self.assertEqual('Alias already exists', str(context.exception))
+
+                # update the alias and ensure we get doc2
+                index2.aliasupdate('myalias')
+                alias_client2 = Client('myalias', port=conn.port)
+                res = alias_client2.search('*').docs[0]
+                self.assertEqual('doc2', res.id)
+
+                # delete the alias and expect an error if we try to query again
+                index2.aliasdel('myalias')
+                with self.assertRaises(Exception) as context:
+                    alias_client2.search('*').docs[0]
+                self.assertEqual('myalias: no such index', str(context.exception))
+
     def testTags(self):
         conn = self.redis()
 
