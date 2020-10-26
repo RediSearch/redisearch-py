@@ -16,13 +16,15 @@ It is the "official" client of RediSearch, and should be regarded as its canonic
 
 ## Features
 
-RediSearch is a source avaliable ([RSAL](https://raw.githubusercontent.com/RediSearch/RediSearch/master/LICENSE)), high performance search engine implemented as a [Redis Module](https://redis.io/topics/modules-intro). 
-It uses custom data types to allow fast, stable and feature rich full-text search inside Redis.
+RediSearch is a source avaliable ([RSAL](https://raw.githubusercontent.com/RediSearch/RediSearch/master/LICENSE)), high performance Secondary Index, Query Engine and Full-Text Search implemented as a [Redis Module](https://redis.io/topics/modules-intro). 
 
 This client is a wrapper around the RediSearch API protocol, that allows you to utilize its features easily. 
 
 ### RediSearch's features include:
 
+* Secondery Index
+* Multi fields query
+* Aggregation 
 * Full-Text indexing of multiple fields in documents.
 * Incremental indexing without performance loss.
 * Document ranking (provided manually by the user at index time) and field weights.
