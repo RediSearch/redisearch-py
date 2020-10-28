@@ -3,7 +3,7 @@
 [![CircleCI](https://circleci.com/gh/RediSearch/redisearch-py/tree/master.svg?style=svg)](https://circleci.com/gh/RediSearch/redisearch-py/tree/master)
 [![GitHub issues](https://img.shields.io/github/release/RediSearch/redisearch-py.svg)](https://github.com/RediSearch/redisearch-py/releases/latest)
 [![Codecov](https://codecov.io/gh/RediSearch/redisearch-py/branch/master/graph/badge.svg)](https://codecov.io/gh/RediSearch/redisearch-py)
-[![Known Vulnerabilities](https://snyk.io/test/github/RediSearch/redisearch-py/badge.svg?targetFile=requirements.txt)](https://snyk.io/test/github/RediSearch/redisearch-py?targetFile=requirements.txt)https://github.com/RediSearch/redisearch-py/edit/master/README.md
+[![Known Vulnerabilities](https://snyk.io/test/github/RediSearch/redisearch-py/badge.svg?targetFile=requirements.txt)](https://snyk.io/test/github/RediSearch/redisearch-py?targetFile=requirements.txt)
 [![Total alerts](https://img.shields.io/lgtm/alerts/g/RediSearch/redisearch-py.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/RediSearch/redisearch-py/alerts/)
 
 # RediSearch Python Client
