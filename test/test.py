@@ -241,11 +241,10 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             q = Query("foo bar").with_payloads()
             res = client.search(q)
             self.assertEqual(2, res.total)
-            self.assertEqual('doc2', res.docs[0].id)
-
-            self.assertEqual('doc1', res.docs[1].id)
-            self.assertEqual('foo baz', res.docs[1].payload)
-            self.assertIsNone(res.docs[0].payload)
+            self.assertEqual('doc1', res.docs[0].id)
+            self.assertEqual('doc2', res.docs[1].id)
+            self.assertEqual('foo baz', res.docs[0].payload)
+            self.assertIsNone(res.docs[1].payload)
 
     def testScores(self):
         conn = self.redis()
