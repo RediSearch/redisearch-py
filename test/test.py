@@ -47,6 +47,12 @@ def check_version_2(env):
             return True
         return False
 
+def check_edge(env):
+    v = env.execute_command('MODULE LIST')[0][3]
+    if v is "999999":
+        return True
+    return False
+
 class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
     def createIndex(self, client, num_docs = 100, definition=None):
@@ -230,6 +236,8 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         conn = self.redis()
 
         with conn as r:
+            if not check_edge(r):
+                return
             # Creating a client with a given index name
             client = Client('idx', port=conn.port)
             client.redis.flushdb()
@@ -802,6 +810,8 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
     def testConfig(self):
         client = self.getCleanClient('idx')
+        if not check_edge(client.redis):
+            return
         self.assertTrue(client.config_set('TIMEOUT', '100'))
         with self.assertRaises(redis.ResponseError) as error:
             client.config_set('TIMEOUT', "null")
