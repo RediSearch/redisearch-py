@@ -37,19 +37,9 @@ def waitForIndex(env, idx, timeout=None):
             if timeout <= 0:
                 break
 
-def check_version_2(env):
-    try:
-        # Indexing the hash
-        env.execute_command('FT.ADDHASH foo bar 1')
-    except redis.ResponseError as e:
-        # Support for FT.ADDHASH was removed in RediSearch 2.0
-        if str(e).startswith('unknown command `FT.ADDHASH`'):
-            return True
-        return False
-
-def check_edge(env):
+def check_version(env, version):
     v = env.execute_command('MODULE LIST')[0][3]
-    if v is "999999":
+    if int(v) >= version:
         return True
     return False
 
@@ -209,7 +199,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         conn = self.redis()
 
         with conn as r:
-            if check_version_2(r):
+            if check_version(r, 20000):
                 return
             # Creating a client with a given index name
             client = Client('idx', port=conn.port)
@@ -236,7 +226,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         conn = self.redis()
 
         with conn as r:
-            if not check_edge(r):
+            if not check_version(r, 20200):
                 return
             # Creating a client with a given index name
             client = Client('idx', port=conn.port)
@@ -574,7 +564,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
     def testAlias(self):
         conn = self.redis()
         with conn as r:
-            if check_version_2(r):
+            if check_version(r, 20000):
 
                 index1 = Client('testAlias', port=conn.port)
                 index1.redis.flushdb()
@@ -810,7 +800,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
     def testConfig(self):
         client = self.getCleanClient('idx')
-        if not check_edge(client.redis):
+        if not check_version(client.redis, 20200):
             return
         self.assertTrue(client.config_set('TIMEOUT', '100'))
         with self.assertRaises(redis.ResponseError) as error:
@@ -893,7 +883,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
         with conn as r:
             r.flushdb()
-            if not check_version_2(r):
+            if not check_version(r, 20000):
                 return
             client = Client('test', port=conn.port)
 
@@ -914,7 +904,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
         with conn as r:
             r.flushdb()
-            if not check_version_2(r):
+            if not check_version(r, 20000):
                 return
             client = Client('test', port=conn.port)
 
