@@ -19,6 +19,8 @@ WILL_PLAY_TEXT = os.path.abspath(os.path.dirname(__file__)) + '/will_play_text.c
 
 TITLES_CSV = os.path.abspath(os.path.dirname(__file__)) + '/titles.csv'
 
+v = 0
+
 def waitForIndex(env, idx, timeout=None):
     delay = 0.1
     while True:
@@ -38,7 +40,9 @@ def waitForIndex(env, idx, timeout=None):
                 break
 
 def check_version(env, version):
-    v = env.execute_command('MODULE LIST')[0][3]
+    global v
+    if v == 0:
+        v = env.execute_command('MODULE LIST')[0][3]
     if int(v) >= version:
         return True
     return False
