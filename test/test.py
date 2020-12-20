@@ -391,6 +391,40 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             self.assertEqual('doc2', res2.docs[1].id)
             self.assertEqual('doc3', res2.docs[0].id)
 
+    def testDropIndex(self):
+        """
+        Ensure the index gets dropped by data remains by default
+        """
+        for x in range(200):
+            print("Run ", x)
+            conn = self.redis()
+            with conn as r:
+                if check_version(r, 20000):
+                    idx = "HaveIt-%d" %(int(time.time()))
+                    index = Client(idx, port=conn.port)
+                    index.redis.hset("index:haveit", mapping = {'name': 'haveit'})
+                    idef = IndexDefinition(prefix=['index:'])
+                    index.create_index((TextField('name'),),definition=idef)
+                    waitForIndex(index.redis, idx)
+                    index.drop_index(keep_documents=True)
+                    i = index.redis.hgetall("index:haveit")
+                    self.assertEqual(i, {'name': 'haveit'})
+
+        for x in range(200):
+            print("Run ", x)
+            conn = self.redis()
+            with conn as r:
+                if check_version(r, 20000):
+                    idx = "HaveIt-%d" %(int(time.time()))
+                    index = Client(idx, port=conn.port)
+                    index.redis.hset("index:haveit", mapping = {'name': 'haveit'})
+                    idef = IndexDefinition(prefix=['index:'])
+                    index.create_index((TextField('name'),),definition=idef)
+                    waitForIndex(index.redis, idx)
+                    index.drop_index()
+                    i = index.redis.hgetall("index:haveit")
+                    self.assertEqual(i, {})
+
     def testExample(self):
         conn = self.redis()
 
@@ -922,7 +956,6 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
             info = client.info()
             self.assertEqual(495, int(info['num_docs']))
-
 
 if __name__ == '__main__':
     unittest.main()

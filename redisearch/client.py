@@ -299,11 +299,16 @@ class Client(object):
 
         return self.redis.execute_command(*args)
 
-    def drop_index(self):
+    def drop_index(self, keep_documents=False):
         """
-        Drop the index if it exists
+        Drop the index if it exists.
+
+        ### Parameters:
+
+        - **keep_documents**: If `True`, all documents will be deleted.
         """
-        return self.redis.execute_command(self.DROP_CMD, self.index_name)
+        keep_str = 'KEEPDOCS' if keep_documents else ''
+        return self.redis.execute_command(self.DROP_CMD, self.index_name, keep_str)
 
     def _add_document(self, doc_id, conn=None, nosave=False, score=1.0, payload=None,
                       replace=False, partial=False, language=None, no_create=False, **fields):
