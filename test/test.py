@@ -395,35 +395,20 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         """
         Ensure the index gets dropped by data remains by default
         """
-        for x in range(200):
-            print("Run ", x)
+        for x in range(20):
             conn = self.redis()
             with conn as r:
                 if check_version(r, 20000):
-                    idx = "HaveIt-%d" %(int(time.time()))
-                    index = Client(idx, port=conn.port)
-                    index.redis.hset("index:haveit", mapping = {'name': 'haveit'})
-                    idef = IndexDefinition(prefix=['index:'])
-                    index.create_index((TextField('name'),),definition=idef)
-                    waitForIndex(index.redis, idx)
-                    index.drop_index(keep_documents=True)
-                    i = index.redis.hgetall("index:haveit")
-                    self.assertEqual(i, {'name': 'haveit'})
-
-        for x in range(200):
-            print("Run ", x)
-            conn = self.redis()
-            with conn as r:
-                if check_version(r, 20000):
-                    idx = "HaveIt-%d" %(int(time.time()))
-                    index = Client(idx, port=conn.port)
-                    index.redis.hset("index:haveit", mapping = {'name': 'haveit'})
-                    idef = IndexDefinition(prefix=['index:'])
-                    index.create_index((TextField('name'),),definition=idef)
-                    waitForIndex(index.redis, idx)
-                    index.drop_index()
-                    i = index.redis.hgetall("index:haveit")
-                    self.assertEqual(i, {})
+                    for keep_docs in [[ True , {'name': 'haveit'} ], [ False , {} ]]:
+                        idx = "HaveIt-%d" %(int(time.time()))
+                        index = Client(idx, port=conn.port)
+                        index.redis.hset("index:haveit", mapping = {'name': 'haveit'})
+                        idef = IndexDefinition(prefix=['index:'])
+                        index.create_index((TextField('name'),),definition=idef)
+                        waitForIndex(index.redis, idx)
+                        index.drop_index(keep_documents=keep_docs[0])
+                        i = index.redis.hgetall("index:haveit")
+                        self.assertEqual(i, keep_docs[1])
 
     def testExample(self):
         conn = self.redis()
