@@ -161,7 +161,8 @@ class Client(object):
     SEARCH_CMD = 'FT.SEARCH'
     ADD_CMD = 'FT.ADD'
     ADDHASH_CMD = "FT.ADDHASH"
-    DROP_CMD = 'FT.DROP'
+    # DROP_CMD = 'FT.DROP' - deprecated
+    DROPINDEX_CMD = 'FT.DROPINDEX'
     EXPLAIN_CMD = 'FT.EXPLAIN'
     DEL_CMD = 'FT.DEL'
     AGGREGATE_CMD = 'FT.AGGREGATE'
@@ -299,16 +300,16 @@ class Client(object):
 
         return self.redis.execute_command(*args)
 
-    def drop_index(self, keep_documents=False):
+    def drop_index(self, delete_documents=True):
         """
         Drop the index if it exists.
 
         ### Parameters:
 
-        - **keep_documents**: If `True`, all documents will be deleted.
+        - **delete_documents**: If `True`, all documents will be deleted.
         """
-        keep_str = 'KEEPDOCS' if keep_documents else ''
-        return self.redis.execute_command(self.DROP_CMD, self.index_name, keep_str)
+        delete_str = 'DD' if delete_documents else ''
+        return self.redis.execute_command(self.DROPINDEX_CMD, self.index_name, delete_str)
 
     def _add_document(self, doc_id, conn=None, nosave=False, score=1.0, payload=None,
                       replace=False, partial=False, language=None, no_create=False, **fields):

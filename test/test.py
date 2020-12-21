@@ -399,14 +399,14 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             conn = self.redis()
             with conn as r:
                 if check_version(r, 20000):
-                    for keep_docs in [[ True , {'name': 'haveit'} ], [ False , {} ]]:
+                    for keep_docs in [[ True , {} ], [ False , {'name': 'haveit'} ]]:
                         idx = "HaveIt-%d" %(int(time.time()))
                         index = Client(idx, port=conn.port)
                         index.redis.hset("index:haveit", mapping = {'name': 'haveit'})
                         idef = IndexDefinition(prefix=['index:'])
                         index.create_index((TextField('name'),),definition=idef)
                         waitForIndex(index.redis, idx)
-                        index.drop_index(keep_documents=keep_docs[0])
+                        index.drop_index(delete_documents=keep_docs[0])
                         i = index.redis.hgetall("index:haveit")
                         self.assertEqual(i, keep_docs[1])
 
