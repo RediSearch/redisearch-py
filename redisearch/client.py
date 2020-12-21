@@ -161,8 +161,7 @@ class Client(object):
     SEARCH_CMD = 'FT.SEARCH'
     ADD_CMD = 'FT.ADD'
     ADDHASH_CMD = "FT.ADDHASH"
-    # DROP_CMD = 'FT.DROP' - deprecated
-    DROPINDEX_CMD = 'FT.DROPINDEX'
+    DROP_CMD = 'FT.DROP'
     EXPLAIN_CMD = 'FT.EXPLAIN'
     DEL_CMD = 'FT.DEL'
     AGGREGATE_CMD = 'FT.AGGREGATE'
@@ -308,8 +307,8 @@ class Client(object):
 
         - **delete_documents**: If `True`, all documents will be deleted.
         """
-        delete_str = 'DD' if delete_documents else ''
-        return self.redis.execute_command(self.DROPINDEX_CMD, self.index_name, delete_str)
+        keep_str = '' if delete_documents else 'KEEPDOCS'
+        return self.redis.execute_command(self.DROP_CMD, self.index_name, keep_str)
 
     def _add_document(self, doc_id, conn=None, nosave=False, score=1.0, payload=None,
                       replace=False, partial=False, language=None, no_create=False, **fields):
