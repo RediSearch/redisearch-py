@@ -57,7 +57,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                                 TextField('txt'), 
                                 NumericField('chapter')), definition=definition)
         except redis.ResponseError:
-            client.drop_index()
+            client.dropindex(delete_documents=True)
             return self.createIndex(client, num_docs=num_docs, definition=definition)
 
         chapters = {}
@@ -193,7 +193,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         """
         client = Client(name, port=self.server.port)
         try:
-            client.drop_index()
+            client.dropindex(delete_documents=True)
         except:
             pass
 
@@ -406,7 +406,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                         idef = IndexDefinition(prefix=['index:'])
                         index.create_index((TextField('name'),),definition=idef)
                         waitForIndex(index.redis, idx)
-                        index.drop_index(delete_documents=keep_docs[0])
+                        index.dropindex(delete_documents=keep_docs[0])
                         i = index.redis.hgetall("index:haveit")
                         self.assertEqual(i, keep_docs[1])
 

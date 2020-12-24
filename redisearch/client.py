@@ -301,7 +301,20 @@ class Client(object):
 
     def drop_index(self, delete_documents=True):
         """
+        Drop the index if it exists. Deprecated from RediSearch 2.0.
+
+        ### Parameters:
+
+        - **delete_documents**: If `True`, all documents will be deleted.
+        """
+        keep_str = '' if delete_documents else 'KEEPDOCS'
+        return self.redis.execute_command(self.DROP_CMD, self.index_name, keep_str)
+
+    def dropindex(self, delete_documents=False):
+        """
         Drop the index if it exists.
+        Replaced `drop_index` in RediSearch 2.0.
+        Default behavior was changed to not delete the indexed documents. 
 
         ### Parameters:
 
