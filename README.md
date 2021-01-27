@@ -43,7 +43,7 @@ from redisearch import Client, TextField, IndexDefinition, Query
 # Creating a client with a given index name
 client = Client("myIndex")
 
-# IndexDefinition is avaliable for RediSearch 2.0+
+# IndexDefinition is available for RediSearch 2.0+
 definition = IndexDefinition(prefix=['doc:', 'article:'])
 
 # Creating the index definition and schema
