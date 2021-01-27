@@ -19,6 +19,8 @@ WILL_PLAY_TEXT = os.path.abspath(os.path.dirname(__file__)) + '/will_play_text.c
 
 TITLES_CSV = os.path.abspath(os.path.dirname(__file__)) + '/titles.csv'
 
+v = 0
+
 def waitForIndex(env, idx, timeout=None):
     delay = 0.1
     while True:
@@ -37,15 +39,13 @@ def waitForIndex(env, idx, timeout=None):
             if timeout <= 0:
                 break
 
-def check_version_2(env):
-    try:
-        # Indexing the hash
-        env.execute_command('FT.ADDHASH foo bar 1')
-    except redis.ResponseError as e:
-        # Support for FT.ADDHASH was removed in RediSearch 2.0
-        if str(e).startswith('unknown command `FT.ADDHASH`'):
-            return True
-        return False
+def check_version(env, version):
+    global v
+    if v == 0:
+        v = env.execute_command('MODULE LIST')[0][3]
+    if int(v) >= version:
+        return True
+    return False
 
 class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
@@ -203,7 +203,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         conn = self.redis()
 
         with conn as r:
-            if check_version_2(r):
+            if check_version(r, 20000):
                 return
             # Creating a client with a given index name
             client = Client('idx', port=conn.port)
@@ -230,6 +230,8 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         conn = self.redis()
 
         with conn as r:
+            if not check_version(r, 20200):
+                return
             # Creating a client with a given index name
             client = Client('idx', port=conn.port)
             client.redis.flushdb()
@@ -241,11 +243,10 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             q = Query("foo bar").with_payloads()
             res = client.search(q)
             self.assertEqual(2, res.total)
-            self.assertEqual('doc2', res.docs[0].id)
-
-            self.assertEqual('doc1', res.docs[1].id)
-            self.assertEqual('foo baz', res.docs[1].payload)
-            self.assertIsNone(res.docs[0].payload)
+            self.assertEqual('doc1', res.docs[0].id)
+            self.assertEqual('doc2', res.docs[1].id)
+            self.assertEqual('foo baz', res.docs[0].payload)
+            self.assertIsNone(res.docs[1].payload)
 
     def testScores(self):
         conn = self.redis()
@@ -568,7 +569,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
     def testAlias(self):
         conn = self.redis()
         with conn as r:
-            if check_version_2(r):
+            if check_version(r, 20000):
 
                 index1 = Client('testAlias', port=conn.port)
                 index1.redis.flushdb()
@@ -804,8 +805,11 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
     def testConfig(self):
         client = self.getCleanClient('idx')
+        if not check_version(client.redis, 20200):
+            return
         self.assertTrue(client.config_set('TIMEOUT', '100'))
-        self.assertFalse(client.config_set('TIMEOUT', "null"))
+        with self.assertRaises(redis.ResponseError) as error:
+            client.config_set('TIMEOUT', "null")
         res = client.config_get('*')
         self.assertEqual('100', res['TIMEOUT'])
         res = client.config_get('TIMEOUT')
@@ -884,7 +888,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
         with conn as r:
             r.flushdb()
-            if not check_version_2(r):
+            if not check_version(r, 20000):
                 return
             client = Client('test', port=conn.port)
 
@@ -905,7 +909,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
         with conn as r:
             r.flushdb()
-            if not check_version_2(r):
+            if not check_version(r, 20000):
                 return
             client = Client('test', port=conn.port)
 

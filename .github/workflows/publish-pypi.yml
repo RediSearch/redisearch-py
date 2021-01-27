@@ -1,0 +1,50 @@
+name: Publish Pypi
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    name: publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Set up Python 2.7
+        uses: actions/setup-python@v1
+        with:
+          python-version: 2.7
+
+      - name: Install twine
+        run: |
+            pip install twine
+
+      - name: Install wheel
+        run: |
+            pip install wheel
+
+      - name: Create a source distribution
+        run: |
+          python setup.py sdist
+
+      - name: Create a wheel
+        run: |
+            python setup.py bdist_wheel
+
+      - name: Create a .pypirc
+        run: |
+            echo -e "[pypi]" >> ~/.pypirc
+            echo -e "username = __token__" >> ~/.pypirc
+            echo -e "password = ${{ secrets.PYPI_TOKEN }}" >> ~/.pypirc
+            echo -e "[testpypi]" >> ~/.pypirc
+            echo -e "username = __token__" >> ~/.pypirc
+            echo -e "password = ${{ secrets.TESTPYPI_TOKEN }}" >> ~/.pypirc
+
+      - name: Publish to Test PyPI
+        if: github.event_name == 'release'
+        run: |
+          twine upload --skip-existing -r testpypi dist/*
+
+      - name: Publish to PyPI
+        if: github.event_name == 'release'
+        run: |
+          twine upload -r pypi dist/*
