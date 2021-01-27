@@ -490,7 +490,6 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
         # Ensure exception is raised for non-indexable, non-sortable fields
         self.assertRaises(Exception, TextField,
-               
                           'name', no_index=True, sortable=False)
 
     def testPartial(self):
