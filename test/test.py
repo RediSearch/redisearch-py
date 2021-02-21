@@ -57,7 +57,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                                 TextField('txt'), 
                                 NumericField('chapter')), definition=definition)
         except redis.ResponseError:
-            client.drop_index()
+            client.dropindex(delete_documents=True)
             return self.createIndex(client, num_docs=num_docs, definition=definition)
 
         chapters = {}
@@ -193,7 +193,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         """
         client = Client(name, port=self.server.port)
         try:
-            client.drop_index()
+            client.dropindex(delete_documents=True)
         except:
             pass
 
@@ -390,6 +390,25 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             self.assertEqual('doc1', res2.docs[2].id)
             self.assertEqual('doc2', res2.docs[1].id)
             self.assertEqual('doc3', res2.docs[0].id)
+
+    def testDropIndex(self):
+        """
+        Ensure the index gets dropped by data remains by default
+        """
+        for x in range(20):
+            conn = self.redis()
+            with conn as r:
+                if check_version(r, 20000):
+                    for keep_docs in [[ True , {} ], [ False , {'name': 'haveit'} ]]:
+                        idx = "HaveIt"
+                        index = Client(idx, port=conn.port)
+                        index.redis.hset("index:haveit", mapping = {'name': 'haveit'})
+                        idef = IndexDefinition(prefix=['index:'])
+                        index.create_index((TextField('name'),),definition=idef)
+                        waitForIndex(index.redis, idx)
+                        index.dropindex(delete_documents=keep_docs[0])
+                        i = index.redis.hgetall("index:haveit")
+                        self.assertEqual(i, keep_docs[1])
 
     def testExample(self):
         conn = self.redis()
@@ -922,7 +941,6 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
             info = client.info()
             self.assertEqual(495, int(info['num_docs']))
-
 
 if __name__ == '__main__':
     unittest.main()
