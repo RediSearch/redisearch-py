@@ -562,6 +562,18 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         res = client.explain('@f3:f3_val @f2:f2_val @f1:f1_val')
         self.assertTrue(res)
 
+    def testScorer(self):
+        client = self.getCleanClient('idx')
+        client.create_index((TextField('f1'), ))
+
+        client.add_document('doc1', f1='hello world', score=0.5)
+        client.add_document('doc2', f1='world hello', score=1)
+
+        q = Query('hello').scorer('TFIDF').with_scores().no_content()
+        self.assertEqual(client.search(q).docs[1].score, 0.5)
+        q = Query('hello').scorer('DISMAX').with_scores().no_content()
+        self.assertEqual(client.search(q).docs[1].score, 1)
+
     def testSummarize(self):
         client = self.getCleanClient('idx')
         self.createIndex(client)
