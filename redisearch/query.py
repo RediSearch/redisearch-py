@@ -33,6 +33,7 @@ class Query(object):
         self._summarize_fields = []
         self._highlight_fields = []
         self._language = None
+        self._scorer = None
 
     def query_string(self):
         """
@@ -186,6 +187,9 @@ class Query(object):
         if self._language:
             args += ['LANGUAGE', self._language]
 
+        if self._scorer:
+            args += ['SCORER', self._scorer]
+
         args += self._summarize_fields + self._highlight_fields
         args += ["LIMIT", self._offset, self._num]
         return args
@@ -265,6 +269,15 @@ class Query(object):
         - **asc** - when `True`, sorting will be done in asceding order
         """
         self._sortby = SortbyField(field, asc)
+        return self
+
+    def scorer(self, scorer_type):
+        """
+        Set a scorer to the query
+
+        - **scorer_type** - the name of the scorer
+        """
+        self._scorer = scorer_type
         return self
 
 
