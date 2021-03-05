@@ -799,11 +799,25 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         client.add_document('doc2', description='Quick alice was beginning to get very tired of sitting by her quick sister on the bank, and of having nothing to do.')
 
         # default scorer is TFIDF
-        res = client.search(Query('quick'))
-        self.assertEqual('doc2', res.docs[0].id)
+        res = client.search(Query('quick').with_scores())
+        self.assertEqual(1.0, res.docs[0].score)
+        res = client.search(Query('quick').scorer('TFIDF').with_scores())
+        self.assertEqual(1.0, res.docs[0].score)
 
-        res = client.search(Query('quick').scorer('TFIDF.DOCNORM'))
-        self.assertEqual('doc1', res.docs[0].id)
+        res = client.search(Query('quick').scorer('TFIDF.DOCNORM').with_scores())
+        self.assertEqual(0.1111111111111111, res.docs[0].score)
+
+        res = client.search(Query('quick').scorer('BM25').with_scores())
+        self.assertEqual(0.17699114465425977, res.docs[0].score)
+
+        res = client.search(Query('quick').scorer('DISMAX').with_scores())
+        self.assertEqual(2.0, res.docs[0].score)
+
+        res = client.search(Query('quick').scorer('DOCSCORE').with_scores())
+        self.assertEqual(1.0, res.docs[0].score)
+
+        res = client.search(Query('quick').scorer('HAMMING').with_scores())
+        self.assertEqual(0.0, res.docs[0].score)
 
     def testGet(self):
         client = self.getCleanClient('idx')
