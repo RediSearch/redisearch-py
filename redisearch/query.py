@@ -5,13 +5,13 @@ class Query(object):
     Query is used to build complex queries that have more parameters than just the query string.
     The query string is set in the constructor, and other options have setter functions.
 
-    The setter functions return the query object, so they can be chained, 
+    The setter functions return the query object, so they can be chained,
     i.e. `Query("foo").verbatim().filter(...)` etc.
     """
 
     def __init__(self, query_string):
         """
-        Create a new query object. 
+        Create a new query object.
         The query string is set in the constructor, and other options have setter functions.
         """
 
@@ -24,6 +24,7 @@ class Query(object):
         self._verbatim = False
         self._with_payloads = False
         self._with_scores = False
+        self._scorer = False
         self._filters = list()
         self._ids = None
         self._slop = -1
@@ -130,6 +131,14 @@ class Query(object):
         self._in_order = True
         return self
 
+    def scorer(self, scorer):
+        """
+        Use a different scoring function to evaluate document relevance. Default is `TFIDF`
+        :param scorer: The scoring function to use (e.g. `TFIDF.DOCNORM` or `BM25`)
+        """
+        self._scorer = scorer
+        return self
+
     def get_args(self):
         """
         Format the redis arguments for this query and return them
@@ -145,7 +154,7 @@ class Query(object):
             args.append('INFIELDS')
             args.append(len(self._fields))
             args += self._fields
-        
+
         if self._verbatim:
             args.append('VERBATIM')
 
@@ -160,9 +169,12 @@ class Query(object):
         if self._with_payloads:
             args.append('WITHPAYLOADS')
 
+        if self._scorer:
+            args += ['SCORER', self._scorer]
+
         if self._with_scores:
             args.append('WITHSCORES')
-        
+
         if self._ids:
             args.append('INKEYS')
             args.append(len(self._ids))
@@ -221,7 +233,7 @@ class Query(object):
 
     def no_stopwords(self):
         """
-        Prevent the query from being filtered for stopwords. 
+        Prevent the query from being filtered for stopwords.
         Only useful in very big queries that you are certain contain no stopwords.
         """
         self._no_stopwords = True
@@ -240,7 +252,7 @@ class Query(object):
         """
         self._with_scores = True
         return self
-    
+
     def limit_fields(self, *fields):
         """
         Limit the search to specific TEXT fields only
@@ -252,7 +264,7 @@ class Query(object):
 
     def add_filter(self, flt):
         """
-        Add a numeric or geo filter to the query. 
+        Add a numeric or geo filter to the query.
         **Currently only one of each filter is supported by the engine**
 
         - **flt**: A NumericFilter or GeoFilter object, used on a corresponding field
@@ -286,7 +298,7 @@ class Filter(object):
     def __init__(self, keyword, field, *args):
 
         self.args = [keyword, field] + list(args)
-        
+
 class NumericFilter(Filter):
 
     INF = '+inf'
