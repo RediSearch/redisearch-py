@@ -53,11 +53,11 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
         assert isinstance(client, Client)
         try:
-            client.create_index((TextField('play', weight=5.0), 
-                                TextField('txt'), 
+            client.create_index((TextField('play', weight=5.0),
+                                TextField('txt'),
                                 NumericField('chapter')), definition=definition)
         except redis.ResponseError:
-            client.drop_index()
+            client.dropindex(delete_documents=True)
             return self.createIndex(client, num_docs=num_docs, definition=definition)
 
         chapters = {}
@@ -161,7 +161,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                 self.assertEqual(len(subset), docs.total)
                 ids = [x.id for x in docs.docs]
                 self.assertEqual(set(ids), set(subset))
- 
+
 #                 self.assertRaises(redis.ResponseError, client.search, Query('henry king').return_fields('play', 'nonexist'))
 
                 # test slop and in order
@@ -193,7 +193,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         """
         client = Client(name, port=self.server.port)
         try:
-            client.drop_index()
+            client.dropindex(delete_documents=True)
         except:
             pass
 
@@ -272,7 +272,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             #self.assertEqual(0.2, res.docs[1].score)
 
     def testReplace(self):
-        
+
         conn = self.redis()
 
         with conn as r:
@@ -296,7 +296,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             self.assertEqual(1, res.total)
             self.assertEqual('doc1', res.docs[0].id)
 
-    def testStopwords(self): 
+    def testStopwords(self):
         # Creating a client with a given index name
         client = self.getCleanClient('idx')
 
@@ -324,7 +324,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
             for i in r.retry_with_rdb_reload():
                 waitForIndex(r, 'idx')
-                # Test numerical filter     
+                # Test numerical filter
                 q1 = Query("foo").add_filter(NumericFilter('num', 0, 2)).no_content()
                 q2 = Query("foo").add_filter(NumericFilter('num', 2, NumericFilter.INF, minExclusive=True)).no_content()
                 res1, res2 =  client.search(q1), client.search(q2)
@@ -338,11 +338,11 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                 q1 = Query("foo").add_filter(GeoFilter('loc', -0.44, 51.45, 10)).no_content()
                 q2 = Query("foo").add_filter(GeoFilter('loc', -0.44, 51.45, 100)).no_content()
                 res1, res2 =  client.search(q1), client.search(q2)
-                
+
                 self.assertEqual(1, res1.total)
                 self.assertEqual(2, res2.total)
                 self.assertEqual('doc1', res1.docs[0].id)
-                
+
                 # Sort results, after RDB reload order may change
                 list = [res2.docs[0].id, res2.docs[1].id]
                 list.sort()
@@ -371,7 +371,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             # Creating a client with a given index name
             client = Client('idx', port=conn.port)
             client.redis.flushdb()
-            
+
             client.create_index((TextField('txt'), NumericField('num', sortable=True)))
             client.add_document('doc1', txt = 'foo bar', num = 1)
             client.add_document('doc2', txt = 'foo baz', num = 2)
@@ -381,7 +381,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             q1 = Query("foo").sort_by('num', asc=True).no_content()
             q2 = Query("foo").sort_by('num', asc=False).no_content()
             res1, res2 = client.search(q1), client.search(q2)
-            
+
             self.assertEqual(3, res1.total)
             self.assertEqual('doc1', res1.docs[0].id)
             self.assertEqual('doc2', res1.docs[1].id)
@@ -391,6 +391,25 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             self.assertEqual('doc2', res2.docs[1].id)
             self.assertEqual('doc3', res2.docs[0].id)
 
+    def testDropIndex(self):
+        """
+        Ensure the index gets dropped by data remains by default
+        """
+        for x in range(20):
+            conn = self.redis()
+            with conn as r:
+                if check_version(r, 20000):
+                    for keep_docs in [[ True , {} ], [ False , {'name': 'haveit'} ]]:
+                        idx = "HaveIt"
+                        index = Client(idx, port=conn.port)
+                        index.redis.hset("index:haveit", mapping = {'name': 'haveit'})
+                        idef = IndexDefinition(prefix=['index:'])
+                        index.create_index((TextField('name'),),definition=idef)
+                        waitForIndex(index.redis, idx)
+                        index.dropindex(delete_documents=keep_docs[0])
+                        i = index.redis.hgetall("index:haveit")
+                        self.assertEqual(i, keep_docs[1])
+
     def testExample(self):
         conn = self.redis()
 
@@ -398,7 +417,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             # Creating a client with a given index name
             client = Client('myIndex', port=conn.port)
             client.redis.flushdb()
-            
+
             # Creating the index definition and schema
             client.create_index((TextField('title', weight=5.0), TextField('body')))
 
@@ -533,7 +552,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             # values
             res = client.search('@f3:f3_val @f2:f2_val @f1:f1_val')
             self.assertEqual(1, res.total)
-            
+
         with self.assertRaises(redis.ResponseError) as error:
             client.add_document('doc3', f2='f2_val', f3='f3_val', no_create=True)
 
@@ -559,7 +578,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                             doc.txt)
 
             q = Query('king henry').paging(0, 1).summarize().highlight()
-            
+
             doc = sorted(client.search(q).docs)[0]
             self.assertEqual('<b>Henry</b> ... ', doc.play)
             self.assertEqual('ACT I SCENE I. London. The palace. Enter <b>KING</b> <b>HENRY</b>, LORD JOHN OF LANCASTER, the EARL of WESTMORELAND, SIR... ',
@@ -581,7 +600,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
                 def1 =IndexDefinition(prefix=['index1:'],score_field='name')
                 def2 =IndexDefinition(prefix=['index2:'],score_field='name')
-                
+
                 index1.create_index((TextField('name'),),definition=def1)
                 index2.create_index((TextField('name'),),definition=def2)
 
@@ -609,7 +628,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                 with self.assertRaises(Exception) as context:
                     alias_client2.search('*').docs[0]
                 self.assertEqual('spaceballs: no such index', str(context.exception))
-                
+
             else:
 
                 # Creating a client with one index
@@ -789,6 +808,36 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             self.assertEqual(2, len(res.docs))
             self.assertEqual(['John', 'Jon'], sorted([d.name for d in res.docs]))
 
+    def testScorer(self):
+        # Creating a client with a given index name
+        client = self.getCleanClient('idx')
+
+        client.create_index((TextField('description'),))
+
+        client.add_document('doc1', description='The quick brown fox jumps over the lazy dog')
+        client.add_document('doc2', description='Quick alice was beginning to get very tired of sitting by her quick sister on the bank, and of having nothing to do.')
+
+        # default scorer is TFIDF
+        res = client.search(Query('quick').with_scores())
+        self.assertEqual(1.0, res.docs[0].score)
+        res = client.search(Query('quick').scorer('TFIDF').with_scores())
+        self.assertEqual(1.0, res.docs[0].score)
+
+        res = client.search(Query('quick').scorer('TFIDF.DOCNORM').with_scores())
+        self.assertEqual(0.1111111111111111, res.docs[0].score)
+
+        res = client.search(Query('quick').scorer('BM25').with_scores())
+        self.assertEqual(0.17699114465425977, res.docs[0].score)
+
+        res = client.search(Query('quick').scorer('DISMAX').with_scores())
+        self.assertEqual(2.0, res.docs[0].score)
+
+        res = client.search(Query('quick').scorer('DOCSCORE').with_scores())
+        self.assertEqual(1.0, res.docs[0].score)
+
+        res = client.search(Query('quick').scorer('HAMMING').with_scores())
+        self.assertEqual(0.0, res.docs[0].score)
+
     def testGet(self):
         client = self.getCleanClient('idx')
         client.create_index((TextField('f1'), TextField('f2')))
@@ -922,7 +971,6 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
             info = client.info()
             self.assertEqual(495, int(info['num_docs']))
-
 
 if __name__ == '__main__':
     unittest.main()
