@@ -84,7 +84,8 @@ class AutoCompleter(object):
 
         If kwargs['increment'] is true and the terms are already in the server's dictionary, we increment their scores
         """
-        pipe = self.redis.pipeline()
+        # If Transaction is not set to false it will attempt a MULTI/EXEC which will error
+        pipe = self.redis.pipeline(transaction=False)
         for sug in suggestions:
             args = [AutoCompleter.SUGADD_COMMAND, self.key, sug.string, sug.score]
             if kwargs.get('increment'):
