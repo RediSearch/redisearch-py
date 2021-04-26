@@ -23,17 +23,21 @@ class Field(object):
     def __init__(self, name, *args, sortable=False, no_index=False):
         self.name = name
         self.args = list(args)
+        self.args_suffix = list()
 
         if sortable:
-            self.args.append(Field.SORTABLE)
+            self.args_suffix.append(Field.SORTABLE)
         if no_index:
-            self.args.append(Field.NOINDEX)
+            self.args_suffix.append(Field.NOINDEX)
 
         if no_index and not sortable:
             raise ValueError('Non-Sortable non-Indexable fields are ignored')
 
+    def append_arg(self, value):
+        self.args.append(value)
+
     def redis_args(self):
-        return [self.name] + self.args
+        return [self.name] + self.args + self.args_suffix
 
 
 class TextField(Field):
@@ -44,14 +48,13 @@ class TextField(Field):
     PHONETIC = 'PHONETIC'
 
     def __init__(self, name, weight=1.0, no_stem=False, phonetic_matcher=None, **kwargs):
-        args = [Field.TEXT, Field.WEIGHT, weight]
-        if no_stem:
-            args.append(self.NOSTEM)
-        if phonetic_matcher and phonetic_matcher in ['dm:en', 'dm:fr', 'dm:pt', 'dm:es']:
-            args.append(self.PHONETIC)
-            args.append(phonetic_matcher)
+        Field.__init__(self, name, Field.TEXT, Field.WEIGHT, weight, **kwargs)
 
-        Field.__init__(self, name, *args, **kwargs)
+        if no_stem:
+            Field.append_arg(self, self.NOSTEM)
+        if phonetic_matcher and phonetic_matcher in ['dm:en', 'dm:fr', 'dm:pt', 'dm:es']:
+            Field.append_arg(self, self.PHONETIC)
+            Field.append_arg(self, phonetic_matcher)
 
 
 class NumericField(Field):
