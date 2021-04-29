@@ -166,7 +166,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
                 # test slop and in order
                 self.assertEqual(193, client.search(Query('henry king')).total)
-                self.assertEqual(3,client.search(Query('henry king').slop(0).in_order()).total)
+                self.assertEqual(52,client.search(Query('henry king').slop(0).in_order()).total)
                 self.assertEqual(52,client.search(Query('king henry').slop(0).in_order()).total)
                 self.assertEqual(53,client.search(Query('henry king').slop(0)).total)
                 self.assertEqual(167,client.search(Query('henry king').slop(100)).total)
