@@ -19,15 +19,25 @@ class Field(object):
     TAG = 'TAG'
     SORTABLE = 'SORTABLE'
     NOINDEX = 'NOINDEX'
-    SEPARATOR = 'SEPARATOR'
-    PHONETIC = 'PHONETIC'
 
-    def __init__(self, name, *args):
+    def __init__(self, name, *args, sortable=False, no_index=False):
         self.name = name
-        self.args = args
+        self.args = list(args)
+        self.args_suffix = list()
+
+        if sortable:
+            self.args_suffix.append(Field.SORTABLE)
+        if no_index:
+            self.args_suffix.append(Field.NOINDEX)
+
+        if no_index and not sortable:
+            raise ValueError('Non-Sortable non-Indexable fields are ignored')
+
+    def append_arg(self, value):
+        self.args.append(value)
 
     def redis_args(self):
-        return [self.name] + list(self.args)
+        return [self.name] + self.args + self.args_suffix
 
 
 class TextField(Field):
@@ -35,65 +45,46 @@ class TextField(Field):
     TextField is used to define a text field in a schema definition
     """
     NOSTEM = 'NOSTEM'
+    PHONETIC = 'PHONETIC'
 
-    def __init__(self, name, weight=1.0, sortable=False, no_stem=False,
-                 no_index=False, phonetic_matcher=None):
-        args = [Field.TEXT, Field.WEIGHT, weight]
+    def __init__(self, name, weight=1.0, no_stem=False, phonetic_matcher=None, **kwargs):
+        Field.__init__(self, name, Field.TEXT, Field.WEIGHT, weight, **kwargs)
+
         if no_stem:
-            args.append(self.NOSTEM)
-        if sortable:
-            args.append(Field.SORTABLE)
-        if no_index:
-            args.append(self.NOINDEX)
+            Field.append_arg(self, self.NOSTEM)
         if phonetic_matcher and phonetic_matcher in ['dm:en', 'dm:fr', 'dm:pt', 'dm:es']:
-            args.append(self.PHONETIC)
-            args.append(phonetic_matcher)
-
-        if no_index and not sortable:
-            raise ValueError('Non-Sortable non-Indexable fields are ignored')
-        Field.__init__(self, name, *args)
+            Field.append_arg(self, self.PHONETIC)
+            Field.append_arg(self, phonetic_matcher)
 
 
 class NumericField(Field):
     """
-    NumericField is used to define a numeric field in a schema defintion
+    NumericField is used to define a numeric field in a schema definition
     """
 
-    def __init__(self, name, sortable=False, no_index=False):
-        args = [Field.NUMERIC]
-        if sortable:
-            args.append(Field.SORTABLE)
-        if no_index:
-            args.append(Field.NOINDEX)
-
-        if no_index and not sortable:
-            raise ValueError('Non-Sortable non-Indexable fields are ignored')
-
-        super(NumericField, self).__init__(name, *args)
+    def __init__(self, name, **kwargs):
+        Field.__init__(self, name, Field.NUMERIC, **kwargs)
 
 
 class GeoField(Field):
     """
-    GeoField is used to define a geo-indexing field in a schema defintion
+    GeoField is used to define a geo-indexing field in a schema definition
     """
 
-    def __init__(self, name):
-        Field.__init__(self, name, Field.GEO)
+    def __init__(self, name, **kwargs):
+        Field.__init__(self, name, Field.GEO, **kwargs)
 
 
 class TagField(Field):
+    SEPARATOR = 'SEPARATOR'
+
     """
     TagField is a tag-indexing field with simpler compression and tokenization. 
     See http://redisearch.io/Tags/
     """
 
-    def __init__(self, name, separator=',', no_index=False):
-        args = [Field.TAG, Field.SEPARATOR, separator]
-
-        if no_index:
-            args.append(Field.NOINDEX)
-
-        Field.__init__(self, name, *args)
+    def __init__(self, name, separator=',', **kwargs):
+        Field.__init__(self, name, Field.TAG, self.SEPARATOR, separator, **kwargs)
 
 
 class IndexDefinition(object):

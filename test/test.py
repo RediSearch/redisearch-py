@@ -489,27 +489,42 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         client = self.getCleanClient('idx')
 
         client.create_index(
-            (TextField('f1', no_index=True, sortable=True), TextField('f2')))
+            (TextField('field'),
+             TextField('text', no_index=True, sortable=True),
+             NumericField('numeric', no_index=True, sortable=True),
+             GeoField('geo', no_index=True, sortable=True),
+             TagField('tag', no_index=True, sortable=True)))
 
-        client.add_document('doc1', f1='MarkZZ', f2='MarkZZ')
-        client.add_document('doc2', f1='MarkAA', f2='MarkAA')
+        client.add_document('doc1', field='aaa', text='1', numeric='1', geo='1,1', tag='1')
+        client.add_document('doc2', field='aab', text='2', numeric='2', geo='2,2', tag='2')
 
-        res = client.search(Query('@f1:Mark*'))
+        res = client.search(Query('@text:aa*'))
         self.assertEqual(0, res.total)
 
-        res = client.search(Query('@f2:Mark*'))
+        res = client.search(Query('@field:aa*'))
         self.assertEqual(2, res.total)
 
-        res = client.search(Query('@f2:Mark*').sort_by('f1', asc=False))
+        res = client.search(Query('*').sort_by('text', asc=False))
         self.assertEqual(2, res.total)
-        self.assertEqual('doc1', res.docs[0].id)
-
-        res = client.search(Query('@f2:Mark*').sort_by('f1', asc=True))
         self.assertEqual('doc2', res.docs[0].id)
 
+        res = client.search(Query('*').sort_by('text', asc=True))
+        self.assertEqual('doc1', res.docs[0].id)
+
+        res = client.search(Query('*').sort_by('numeric', asc=True))
+        self.assertEqual('doc1', res.docs[0].id)
+
+        res = client.search(Query('*').sort_by('geo', asc=True))
+        self.assertEqual('doc1', res.docs[0].id)
+
+        res = client.search(Query('*').sort_by('tag', asc=True))
+        self.assertEqual('doc1', res.docs[0].id)
+
         # Ensure exception is raised for non-indexable, non-sortable fields
-        self.assertRaises(Exception, TextField,
-                          'name', no_index=True, sortable=False)
+        self.assertRaises(Exception, TextField, 'name', no_index=True, sortable=False)
+        self.assertRaises(Exception, NumericField, 'name', no_index=True, sortable=False)
+        self.assertRaises(Exception, GeoField, 'name', no_index=True, sortable=False)
+        self.assertRaises(Exception, TagField, 'name', no_index=True, sortable=False)
 
     def testPartial(self):
         client = self.getCleanClient('idx')
