@@ -20,9 +20,9 @@ class Field(object):
     SORTABLE = 'SORTABLE'
     NOINDEX = 'NOINDEX'
 
-    def __init__(self, name, *args, sortable=False, no_index=False):
+    def __init__(self, name, args=[], sortable=False, no_index=False):
         self.name = name
-        self.args = list(args)
+        self.args = args
         self.args_suffix = list()
 
         if sortable:
@@ -48,7 +48,7 @@ class TextField(Field):
     PHONETIC = 'PHONETIC'
 
     def __init__(self, name, weight=1.0, no_stem=False, phonetic_matcher=None, **kwargs):
-        Field.__init__(self, name, Field.TEXT, Field.WEIGHT, weight, **kwargs)
+        Field.__init__(self, name, args=[Field.TEXT, Field.WEIGHT, weight], **kwargs)
 
         if no_stem:
             Field.append_arg(self, self.NOSTEM)
@@ -63,7 +63,7 @@ class NumericField(Field):
     """
 
     def __init__(self, name, **kwargs):
-        Field.__init__(self, name, Field.NUMERIC, **kwargs)
+        Field.__init__(self, name, args=[Field.NUMERIC], **kwargs)
 
 
 class GeoField(Field):
@@ -72,7 +72,7 @@ class GeoField(Field):
     """
 
     def __init__(self, name, **kwargs):
-        Field.__init__(self, name, Field.GEO, **kwargs)
+        Field.__init__(self, name, args=[Field.GEO], **kwargs)
 
 
 class TagField(Field):
@@ -84,7 +84,7 @@ class TagField(Field):
     """
 
     def __init__(self, name, separator=',', **kwargs):
-        Field.__init__(self, name, Field.TAG, self.SEPARATOR, separator, **kwargs)
+        Field.__init__(self, name, args=[Field.TAG, self.SEPARATOR, separator], **kwargs)
 
 
 class IndexDefinition(object):
