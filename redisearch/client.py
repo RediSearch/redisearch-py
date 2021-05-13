@@ -236,7 +236,7 @@ class Client(object):
 
         self.redis = conn if conn is not None else Redis(
             connection_pool=ConnectionPool(host=host, port=port, password=password,
-            decode_responses=False))
+            decode_responses=True))
 
     def batch_indexer(self, chunk_size=100):
         """
