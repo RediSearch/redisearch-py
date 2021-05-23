@@ -212,7 +212,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             # Creating the index definition and schema
             client.create_index((TextField('title', weight=5.0), TextField('body')))
 
-            client.redis.hset(
+            client.redis.hmset(
                 'doc1',
                 mapping={
                     'title': 'RediSearch',
@@ -402,7 +402,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                     for keep_docs in [[ True , {} ], [ False , {'name': 'haveit'} ]]:
                         idx = "HaveIt"
                         index = Client(idx, port=conn.port)
-                        index.redis.hset("index:haveit", mapping = {'name': 'haveit'})
+                        index.redis.hmset("index:haveit", mapping = {'name': 'haveit'})
                         idef = IndexDefinition(prefix=['index:'])
                         index.create_index((TextField('name'),),definition=idef)
                         waitForIndex(index.redis, idx)
@@ -608,8 +608,8 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                 index1.redis.flushdb()
                 index2 = Client('testAlias2', port=conn.port)
 
-                index1.redis.hset("index1:lonestar", mapping = {'name': 'lonestar'})
-                index2.redis.hset("index2:yogurt", mapping = {'name': 'yogurt'})
+                index1.redis.hmset("index1:lonestar", mapping = {'name': 'lonestar'})
+                index2.redis.hmset("index2:yogurt", mapping = {'name': 'yogurt'})
 
                 time.sleep(2)
 

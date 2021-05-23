@@ -150,7 +150,7 @@ doc = {
     'title': 'RediSearch',
     'body': 'Redisearch adds querying, indexing, and full-text search to Redis'
 }
-client.redis.hset('doc:1', mapping=doc)
+client.redis.hmset('doc:1', mapping=doc)
 ```
 
 Past versions of RediSearch required that you call the `add_document()`
