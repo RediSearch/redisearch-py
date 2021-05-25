@@ -8,7 +8,7 @@ commands:
         default: "3"
       redisearch_ver:
         type: string
-        default: latest
+        default: edge
       coverage:
         type: boolean
         default: true
@@ -73,7 +73,7 @@ jobs:
         default: "3"
       redisearch_ver:
         type: string
-        default: latest
+        default: edge
       coverage:
         type: boolean
         default: true
@@ -134,13 +134,13 @@ workflows:
       - test:
           name: build
           python_ver: "3"
-          redisearch_ver: latest
+          redisearch_ver: edge
           coverage: yes
           <<: *on-any-branch
       - test:
           name: test_py2_latest
           python_ver: "2.7"
-          redisearch_ver: latest
+          redisearch_ver: edge
           coverage: yes
           <<: *on-any-branch
       - test:
