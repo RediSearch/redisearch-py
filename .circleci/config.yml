@@ -91,7 +91,7 @@ jobs:
         default: latest
       redisearch_version:
         type: string
-        default: latest
+        default: edge
     docker:
       - image: circleci/python:<<parameters.python_version >>
       - image: redislabs/redisearch:<<parameters.redisearch_version >>
@@ -126,6 +126,7 @@ redisearch-versions: &redisearch-versions
   matrix:
     parameters:
       redisearch_version:
+        - "latest"
         - "edge"
 
 workflows:
