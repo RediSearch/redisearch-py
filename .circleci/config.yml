@@ -126,10 +126,7 @@ redisearch-versions: &redisearch-versions
   matrix:
     parameters:
       redisearch_version:
-        - "1.6.14"
-        - "2.0.9"
         - "edge"
-        - "latest"
 
 workflows:
   version: 2
