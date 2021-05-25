@@ -89,12 +89,9 @@ jobs:
       python_version:
         type: string
         default: latest
-      redisearch_version:
-        type: string
-        default: edge
     docker:
       - image: circleci/python:<<parameters.python_version >>
-      - image: redislabs/redisearch:<<parameters.redisearch_version >>
+      - image: redislabs/redisearch:edge
     steps:
       - build_and_test
 
@@ -122,13 +119,6 @@ python-versions: &python-versions
         - "3.9.4"
         - "latest"
 
-redisearch-versions: &redisearch-versions
-  matrix:
-    parameters:
-      redisearch_version:
-        - "latest"
-        - "edge"
-
 workflows:
   version: 2
   commit:
@@ -136,7 +126,6 @@ workflows:
       - build:
          <<: *on-any-branch
          <<: *python-versions
-         <<: *redisearch-versions
 
   nightly:
     triggers:
