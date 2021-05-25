@@ -36,23 +36,10 @@ commands:
               circleci step halt
             fi
 
-#  test-steps:
-#    parameters:
-#      python_ver:
-#        type: string
-#        default: "3"
-#      redisearch_ver:
-#        type: string
-#        default: latest
-#      coverage:
-#        type: boolean
-#        default: true
   build_and_test:
-    parameters:
-      coverage:
-        type: boolean
-        default: true
     steps:
+      - abort_for_docs
+      - abort_for_noci
       - checkout
 
       - restore_cache: # Download and cache dependencies
@@ -67,10 +54,14 @@ commands:
             pip install --user --quiet -r .circleci/circle_requirements.txt
 
       - run:
-          name: build
+          name: install dependencies
           command: |
-            poetry build --format sdist
-            poetry build --format wheel
+            poetry install
+
+      - run:
+          name: build sdist and wheels
+          command: |
+            poetry build
 
       - run:
           name: lint
@@ -79,82 +70,33 @@ commands:
 
       - run:
           name: run tests
-          command: |
-            <<# parameters.coverage >> COV=1 <</ parameters.coverage >>
-            if [[ $COV == 1 ]]; then
-              tox -e cover
-            else
-              tox -e test_without_coverage
-            fi
+          command:
+            tox -e cover
 
       - save_cache:
           paths:
             - ./.tox
-            - ./.cache/pip
+            - ~/.cache/pip
           key: v1-dependencies-{{ checksum "pyproject.toml" }}
-
 
       - store_artifacts:
           path: test-reports
           destination: test-reports
-
-  docker:
-    parameters:
-      docker_version:
-        type: string
-        default: "edge"
-    steps:
-      - setup_remote_docker
-      - run:
-          name: dockers
-          description: Build and release docker
-          command: |
-            bash <(curl -fsSL https://get.docker.com)
-            docker login -u redisfab -p $DOCKER_REDISFAB_PWD
-            docker build -t redisgraph:<<parameters.docker_version>> .
-            docker push
 
 jobs:
   build:
     parameters:
       python_version:
         type: string
+        default: latest
       redisearch_version:
         type: string
         default: latest
-      coverage:
-        type: boolean
-        default: true
     docker:
       - image: circleci/python:<<parameters.python_version >>
       - image: redislabs/redisearch:<<parameters.redisearch_version >>
     steps:
-      - build_and_test:
-          coverage: <<parameters.coverage>>
-      - store_artifacts:
-          path: test-reports
-          destination: test-reports
-
-  # since this is used by cron, we by default build against latest
-  build_and_publish:
-    parameters:
-      python_version:
-        type: string
-        default: "latest"
-      docker_version:
-        type: string
-        default: "edge"
-      coverage:
-        type: boolean
-        default: true
-    docker:
-      - image: circleci/python:<< parameters.python_version >>
-      - image: redislabs/redisearch:<< parameters.docker_version >>
-
-    steps:
-      - build_and_test:
-          coverage: << parameters.coverage >>
-      - docker
+      - build_and_test
 
 on-any-branch: &on-any-branch
   filters:
@@ -166,7 +108,8 @@ on-any-branch: &on-any-branch
 on-master: &on-master
   filters:
     branches:
-      only: master
+      only:
+        - master
 
 # the is to build and test, per commit against all supported python versions
 python-versions: &python-versions
@@ -184,6 +127,8 @@ redisearch-versions: &redisearch-versions
     parameters:
       redisearch_version:
         - "1.6.14"
+        - "2.0.9"
+        - "edge"
         - "latest"
 
 workflows:
@@ -195,41 +140,10 @@ workflows:
          <<: *python-versions
          <<: *redisearch-versions
 
-#      - test:
-#          name: build
-#          python_ver: "3"
-#          redisearch_ver: latest
-#          coverage: yes
-#          <<: *on-any-branch
-#      - test:
-#          name: test_py2_latest
-#          python_ver: "2.7"
-#          redisearch_ver: latest
-#          coverage: yes
-#          <<: *on-any-branch
-#      - test:
-#          name: test_py3_search1.6
-#          python_ver: "3"
-#          redisearch_ver: "1.6.14"
-#          coverage: yes
-#          <<: *on-any-branch
-#      - test:
-#          name: test_py2_search1.6
-#          python_ver: "2.7"
-#          redisearch_ver: "1.6.14"
-#          coverage: yes
-#          <<: *on-any-branch
-
   nightly:
     triggers:
       - schedule:
           cron: "0 0 * * *"
           <<: *on-master
     jobs:
-      - build_and_publish:
-          coverage: no
-#      - test:
-#          name: test-nightly
-#          python_ver: "3"
-#          redisearch_ver: edge
-#          coverage: no
+      - build
