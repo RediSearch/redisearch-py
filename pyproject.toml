@@ -1,0 +1,45 @@
+[tool.poetry]
+name = "redisearch"
+version = "2.0.0"
+description = "RedisSearch Python Client"
+authors = ["RedisLabs <oss@redislabs.com>"]
+license = "BSD-3-Clause"
+readme = "README.md"
+
+classifiers = [
+    'Topic :: Database',
+    'Programming Language :: Python',
+    'Intended Audience :: Developers',
+    'Programming Language :: Python :: 3.6',
+    'Programming Language :: Python :: 3.7',
+    'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.9',
+    'License :: OSI Approved :: BSD License',
+    'Development Status :: 5 - Production/Stable'
+
+]
+keywords = ["Redis Search Extension"]
+
+[tool.poetry.dependencies]
+python = "^3.6"
+hiredis = "^2.0.0"
+redis = "^3.5.3"
+six = "^1.16.0"
+rmtest = {git = "https://github.com/RedisLabs/rmtest"}
+
+
+[tool.poetry.urls]
+url = "https://redisearch.io"
+repository = "https://github.com/RedisSearch/redisearch-py"
+
+[tool.poetry.dev-dependencies]
+codecov = "^2.1.11"
+flake8 = "^3.9.2"
+tox = "^3.23.1"
+tox-poetry = "^0.3.0"
+bandit = "^1.7.0"
+vulture = "^2.3"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

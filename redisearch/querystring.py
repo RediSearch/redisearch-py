@@ -203,7 +203,7 @@ class Node(object):
         return [s]
 
     @classmethod
-    def to_node(cls, obj):
+    def to_node(cls, obj):  # noqa
         if isinstance(obj, Node):
             return obj
         return BaseNode(obj)
