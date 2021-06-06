@@ -1,0 +1,3 @@
+poetry>=1.1.6
+tox>=3.23.1
+tox-poetry>=0.3.0

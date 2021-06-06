@@ -1,50 +1,43 @@
 name: Publish Pypi
 on:
   release:
-    types: [published]
+    types: [ published ]
 
 jobs:
-  publish:
-    name: publish
+  pytest:
+    name: Publish to PyPi
     runs-on: ubuntu-latest
+    env:
+      ACTIONS_ALLOW_UNSECURE_COMMANDS: true
     steps:
       - uses: actions/checkout@master
-      - name: Set up Python 2.7
+      - name: Set up Python 3.7
         uses: actions/setup-python@v1
         with:
-          python-version: 2.7
+          python-version: 3.7
 
-      - name: Install twine
-        run: |
-            pip install twine
+      - name: Install Poetry
+        uses: dschep/install-poetry-action@v1.3
 
-      - name: Install wheel
-        run: |
-            pip install wheel
+      - name: Cache Poetry virtualenv
+        uses: actions/cache@v1
+        id: cache
+        with:
+          path: ~/.virtualenvs
+          key: poetry-${{ hashFiles('**/poetry.lock') }}
+          restore-keys: |
+            poetry-${{ hashFiles('**/poetry.lock') }}
 
-      - name: Create a source distribution
+      - name: Set Poetry config
         run: |
-          python setup.py sdist
+          poetry config virtualenvs.in-project false
+          poetry config virtualenvs.path ~/.virtualenvs
 
-      - name: Create a wheel
-        run: |
-            python setup.py bdist_wheel
-
-      - name: Create a .pypirc
-        run: |
-            echo -e "[pypi]" >> ~/.pypirc
-            echo -e "username = __token__" >> ~/.pypirc
-            echo -e "password = ${{ secrets.PYPI_TOKEN }}" >> ~/.pypirc
-            echo -e "[testpypi]" >> ~/.pypirc
-            echo -e "username = __token__" >> ~/.pypirc
-            echo -e "password = ${{ secrets.TESTPYPI_TOKEN }}" >> ~/.pypirc
-
-      - name: Publish to Test PyPI
-        if: github.event_name == 'release'
-        run: |
-          twine upload --skip-existing -r testpypi dist/*
+      - name: Install Dependencies
+        run: poetry install
+        if: steps.cache.outputs.cache-hit != 'true'
 
       - name: Publish to PyPI
         if: github.event_name == 'release'
         run: |
-          twine upload -r pypi dist/*
+          poetry publish -u __token__ -p ${{ secrets.PYPI_TOKEN }} --build

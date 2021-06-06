@@ -3,7 +3,7 @@
 [![CircleCI](https://circleci.com/gh/RediSearch/redisearch-py/tree/master.svg?style=svg)](https://circleci.com/gh/RediSearch/redisearch-py/tree/master)
 [![GitHub issues](https://img.shields.io/github/release/RediSearch/redisearch-py.svg)](https://github.com/RediSearch/redisearch-py/releases/latest)
 [![Codecov](https://codecov.io/gh/RediSearch/redisearch-py/branch/master/graph/badge.svg)](https://codecov.io/gh/RediSearch/redisearch-py)
-[![Known Vulnerabilities](https://snyk.io/test/github/RediSearch/redisearch-py/badge.svg?targetFile=requirements.txt)](https://snyk.io/test/github/RediSearch/redisearch-py?targetFile=requirements.txt)
+[![Known Vulnerabilities](https://snyk.io/test/github/RediSearch/redisearch-py/badge.svg?targetFile=pyproject.toml)](https://snyk.io/test/github/RediSearch/redisearch-py?targetFile=pyproject.toml)
 [![Total alerts](https://img.shields.io/lgtm/alerts/g/RediSearch/redisearch-py.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/RediSearch/redisearch-py/alerts/)
 
 # RediSearch Python Client
@@ -393,6 +393,15 @@ req = AggregateRequest('*').group_by(
 ```sh
 $ pip install redisearch
 ```
+
+## Developing
+
+1. Create a virtualenv to manage your python dependencies, and ensure it's active.
+   ```virtualenv -v venv```
+2. Install [pypoetry](https://python-poetry.org/) to manage your dependencies.
+   ```pip install --user poetry```
+3. Install dependencies.
+   ```poetry install```
 
 ## Testing
 

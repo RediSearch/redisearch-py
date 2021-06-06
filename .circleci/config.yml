@@ -1,96 +1,99 @@
 version: 2.1
 
 commands:
-  test-steps:
-    parameters:
-      python_ver:
-        type: string
-        default: "3"
-      redisearch_ver:
-        type: string
-        default: latest
-      coverage:
-        type: boolean
-        default: true
-    steps: 
+
+  abort_for_docs:
+    steps:
+      - run:
+          name: Avoid tests for docs
+          command: |
+            if [[ $CIRCLE_BRANCH == *docs ]]; then
+              echo "Identifies as documents PR, no testing required"
+              circleci step halt
+            fi
+
+  abort_for_noci:
+    steps:
+      - run:
+          name: Ignore CI for specific branches
+          command: |
+            if [[ $CIRCLE_BRANCH == *noci ]]; then
+              echo "Identifies as actively ignoring CI, no testing required."
+              circleci step halt
+            fi
+
+
+  early_return_for_forked_pull_requests:
+    description: >-
+      If this build is from a fork, stop executing the current job and return success.
+      This is useful to avoid steps that will fail due to missing credentials.
+    steps:
+      - run:
+          name: Early return if this build is from a forked PR
+          command: |
+            if [[ -n "$CIRCLE_PR_NUMBER" ]]; then
+              echo "Nothing to do for forked PRs, so marking this step successful"
+              circleci step halt
+            fi
+
+  build_and_test:
+    steps:
+      - abort_for_docs
+      - abort_for_noci
       - checkout
 
       - restore_cache: # Download and cache dependencies
           keys:
-          - v1-dependencies-{{ checksum "requirements.txt" }}
+          - v1-dependencies-{{ checksum "pyproject.toml" }}
           # fallback to using the latest cache if no exact match is found
           - v1-dependencies-
 
       - run:
-          name: install dependencies
+          name: install tox dependencies
           command: |
-            virtualenv venv
-            . venv/bin/activate
-            python --version
-            pip install -r requirements.txt
-            pip install --force-reinstall git+https://github.com/RedisLabs/rmtest.git
-            <<# parameters.coverage >> pip install codecov <</ parameters.coverage >>
-            python - \<<'__'
-            import redis
-            r = redis.Redis(decode_responses=True)
-            print(r.execute_command('info server'))
-            print(r.execute_command('info modules'))
-            __
-            
-      - save_cache:
-          paths:
-            - ./venv
-          key: v1-dependencies-{{ checksum "requirements.txt" }}
+            pip install --user --quiet -r .circleci/circle_requirements.txt
 
       - run:
-          name: test dist
-          command: python setup.py sdist
+          name: install dependencies
+          command: |
+            poetry install
+
+      - run:
+          name: build sdist and wheels
+          command: |
+            poetry build
+
+      - run:
+          name: lint
+          command: |
+            tox -e linters
 
       - run:
           name: run tests
-          command: |
-            . venv/bin/activate
-            <<# parameters.coverage >> COV=1 <</ parameters.coverage >>
-            if [[ $COV == 1 ]]; then
-                REDIS_PORT=6379 coverage run test/test.py
-                REDIS_PORT=6379 coverage run -a test/test_builder.py
-                codecov
-            else
-                REDIS_PORT=6379 python test/test.py
-                REDIS_PORT=6379 python test/test_builder.py
-            fi
+          command:
+            tox -e cover
+
+      - save_cache:
+          paths:
+            - ./.tox
+            - ~/.cache/pip
+          key: v1-dependencies-{{ checksum "pyproject.toml" }}
 
       - store_artifacts:
           path: test-reports
           destination: test-reports
-
 
 jobs:
-  test:
+  build:
     parameters:
-      python_ver:
-        type: string
-        default: "3"
-      redisearch_ver:
+      python_version:
         type: string
         default: latest
-      coverage:
-        type: boolean
-        default: true
     docker:
-      - image: circleci/python:<<parameters.python_ver >>
-      - image: redislabs/redisearch:<<parameters.redisearch_ver >>
+      - image: circleci/python:<<parameters.python_version >>
+      - image: redislabs/redisearch:edge
     steps:
-      - test-steps:
-          python_ver: <<parameters.python_ver>>
-          redisearch_ver: <<parameters.redisearch_ver>>
-          coverage: <<parameters.coverage>>
-      - store_artifacts:
-          path: test-reports
-          destination: test-reports
-
-    working_directory: ~/repo
-
+      - build_and_test
 
 on-any-branch: &on-any-branch
   filters:
@@ -99,62 +102,30 @@ on-any-branch: &on-any-branch
     tags:
       only: /.*/
 
-never: &never
-  filters:
-    branches:
-      ignore: /.*/
-    tags:
-      ignore: /.*/
-
 on-master: &on-master
-  filters:
-    branches:
-      only: master
-
-on-version-tags: &on-version-tags
-  filters:
-    branches:
-      ignore: /.*/
-    tags:
-      only: /^v[0-9].*/
-
-on-master-and-version-tags: &on-master-and-version-tags
   filters:
     branches:
       only:
         - master
-    tags:
-      only: /^v[0-9].*/ 
 
+# the is to build and test, per commit against all supported python versions
+python-versions: &python-versions
+  matrix:
+    parameters:
+      python_version:
+        - "3.6.9"
+        - "3.7.9"
+        - "3.8.9"
+        - "3.9.4"
+        - "latest"
 
 workflows:
   version: 2
   commit:
     jobs:
-      - test:
-          name: build
-          python_ver: "3"
-          redisearch_ver: latest
-          coverage: yes
-          <<: *on-any-branch
-      - test:
-          name: test_py2_latest
-          python_ver: "2.7"
-          redisearch_ver: latest
-          coverage: yes
-          <<: *on-any-branch
-      - test:
-          name: test_py3_search1.6
-          python_ver: "3"
-          redisearch_ver: "1.6.14"
-          coverage: yes
-          <<: *on-any-branch
-      - test:
-          name: test_py2_search1.6
-          python_ver: "2.7"
-          redisearch_ver: "1.6.14"
-          coverage: yes
-          <<: *on-any-branch
+      - build:
+         <<: *on-any-branch
+         <<: *python-versions
 
   nightly:
     triggers:
@@ -162,8 +133,4 @@ workflows:
           cron: "0 0 * * *"
           <<: *on-master
     jobs:
-      - test:
-          name: test-nightly
-          python_ver: "3"
-          redisearch_ver: edge
-          coverage: no
+      - build
