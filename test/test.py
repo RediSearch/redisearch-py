@@ -1,4 +1,6 @@
 import os, sys
+
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from rmtest import ModuleTestCase
@@ -12,6 +14,7 @@ from io import TextIOWrapper
 import six
 
 from redisearch import *
+from redisearch.client import IndexType
 import redisearch.aggregation as aggregations
 import redisearch.reducers as reducers
 
@@ -957,11 +960,11 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
             definition = IndexDefinition(prefix=['hset:', 'henry'],
             filter='@f1==32', language='English', language_field='play',
-            score_field='chapter', score=0.5, payload_field='txt' )
+            score_field='chapter', score=0.5, payload_field='txt', index_type=IndexType.JSON)
 
-            self.assertEqual(['ON','HASH', 'PREFIX',2,'hset:','henry',
-            'FILTER','@f1==32','LANGUAGE_FIELD','play','LANGUAGE','English',
-            'SCORE_FIELD','chapter','SCORE',0.5,'PAYLOAD_FIELD','txt'],
+            self.assertEqual(['ON', 'JSON', 'PREFIX', 2, 'hset:', 'henry',
+            'FILTER', '@f1==32', 'LANGUAGE_FIELD', 'play', 'LANGUAGE', 'English',
+            'SCORE_FIELD', 'chapter', 'SCORE', 0.5, 'PAYLOAD_FIELD', 'txt'],
             definition.args)
 
             self.createIndex(client, num_docs=500, definition=definition)

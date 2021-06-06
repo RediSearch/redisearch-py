@@ -8,6 +8,7 @@ from .result import Result
 from .query import Query
 from ._util import to_string
 from .aggregation import AggregateRequest, AggregateResult, Cursor
+from enum import Enum
 
 
 class Field(object):
@@ -87,6 +88,10 @@ class TagField(Field):
         Field.__init__(self, name, args=[Field.TAG, self.SEPARATOR, separator], **kwargs)
 
 
+class IndexType(Enum):
+    HASH = 1
+    JSON = 2
+
 class IndexDefinition(object):
     """
     IndexDefinition is used to define a index definition for automatic indexing on Hash update
@@ -94,6 +99,7 @@ class IndexDefinition(object):
 
     ON = 'ON'
     HASH = 'HASH'
+    JSON = 'JSON'
     PREFIX = 'PREFIX'
     FILTER = 'FILTER'
     LANGUAGE_FIELD = 'LANGUAGE_FIELD'
@@ -102,9 +108,17 @@ class IndexDefinition(object):
     SCORE = 'SCORE'
     PAYLOAD_FIELD = 'PAYLOAD_FIELD'
         
-    def __init__(self, prefix=[], filter=None, language_field=None, language=None, score_field=None, score=1.0, payload_field=None):
+    def __init__(self, prefix=[], filter=None, language_field=None, language=None, score_field=None, score=1.0, payload_field=None, index_type=None):
+        args = []
 
-        args = [self.ON, self.HASH]
+        if index_type:
+            args.append(self.ON)
+            if index_type is IndexType.HASH:
+                args.append(self.HASH)
+            elif index_type is IndexType.JSON:
+                args.append(self.JSON)
+            else:
+                raise RuntimeError("index_type must be an Enum of type IndexType")
 
         if len(prefix) > 0:
             args.append(self.PREFIX)
