@@ -949,7 +949,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             self.assertEqual('RediSearch', res[23])
             self.assertEqual(2, len(res[25]))
 
-    def testIndexDefiniontion(self):
+    def testIndexDefinition(self):
         conn = self.redis()
 
         with conn as r:
@@ -969,8 +969,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
             self.createIndex(client, num_docs=500, definition=definition)
 
-
-    def testCreateClientDefiniontion(self):
+    def testCreateClientDefinition(self):
         conn = self.redis()
 
         with conn as r:
@@ -989,6 +988,11 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
             info = client.info()
             self.assertEqual(495, int(info['num_docs']))
+
+    def testCreateClientDefinitionJson(self):
+        conn = self.redis()
+        pass
+
 
 if __name__ == '__main__':
     unittest.main()
