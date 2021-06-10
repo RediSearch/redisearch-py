@@ -91,7 +91,7 @@ jobs:
         default: latest
     docker:
       - image: circleci/python:<<parameters.python_version >>
-      - image: redislabs/redismod:latest
+      - image: redislabs/redismod:edge
     steps:
       - build_and_test
 
