@@ -26,6 +26,7 @@ hiredis = "^2.0.0"
 redis = "^3.5.3"
 six = "^1.16.0"
 rmtest = {git = "https://github.com/RedisLabs/rmtest"}
+rejson = "^0.5.4"
 
 
 [tool.poetry.urls]
