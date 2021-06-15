@@ -14,6 +14,7 @@ from io import TextIOWrapper
 import six
 
 from redisearch import *
+import rejson
 from redisearch.client import IndexType
 import redisearch.aggregation as aggregations
 import redisearch.reducers as reducers
@@ -89,6 +90,25 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         for key, doc in six.iteritems(chapters):
             indexer.add_document(key, **doc)
         indexer.commit()
+
+    def testJSONIndex(self):
+        conn = self.redis()
+        with conn as r:
+            r.flushdb()
+            if not check_version(r, 20200):
+                return
+
+            client = Client('json1', port=conn.port)
+
+            definition = IndexDefinition(prefix=['king:'], index_type=IndexType.JSON)
+            client.create_index((TextField('$.name'),), definition=definition)
+            
+            rj = rejson.Client(host='localhost', port=conn.port, decode_responses=True)
+            rj.jsonset('king:1', rejson.Path.rootPath(), {'name': 'henry'})
+            rj.jsonset('king:2', rejson.Path.rootPath(), {'name': 'james'})
+            #
+            #res = client.search('henry')
+            #self.assertEqual(res.docs[0].id, 'king:1')
 
     def testClient(self):
 
@@ -490,6 +510,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
     def testNoIndex(self):
         # Creating a client with a given index name
         client = self.getCleanClient('idx')
+        client.redis.flushdb()
 
         client.create_index(
             (TextField('field'),
