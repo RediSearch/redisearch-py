@@ -111,14 +111,14 @@ class IndexDefinition(object):
     def __init__(self, prefix=[], filter=None, language_field=None, language=None, score_field=None, score=1.0, payload_field=None, index_type=None):
         args = []
 
-        if index_type:
+        if index_type is IndexType.HASH:
             args.append(self.ON)
-            if index_type is IndexType.HASH:
-                args.append(self.HASH)
-            elif index_type is IndexType.JSON:
-                args.append(self.JSON)
-            else:
-                raise RuntimeError("index_type must be an Enum of type IndexType")
+            args.append(self.HASH)
+        elif index_type is IndexType.JSON:
+            args.append(self.ON)
+            args.append(self.JSON)
+        elif index_type is not None:
+            raise RuntimeError("index_type must be an Enum of type IndexType")
 
         if len(prefix) > 0:
             args.append(self.PREFIX)
