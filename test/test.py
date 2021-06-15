@@ -93,6 +93,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
     def testJSONIndex(self):
         conn = self.redis()
+
         with conn as r:
             r.flushdb()
             if not check_version(r, 20200):
