@@ -106,9 +106,9 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             rj = rejson.Client(host='localhost', port=conn.port, decode_responses=True)
             rj.jsonset('king:1', rejson.Path.rootPath(), {'name': 'henry'})
             rj.jsonset('king:2', rejson.Path.rootPath(), {'name': 'james'})
-            #
-            #res = client.search('henry')
-            #self.assertEqual(res.docs[0].id, 'king:1')
+            
+            res = client.search('henry')
+            self.assertEqual(res.docs[0].id, 'king:1')
 
     def testClient(self):
 
