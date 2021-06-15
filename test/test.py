@@ -93,6 +93,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
     def testJSONIndex(self):
         conn = self.redis()
+
         with conn as r:
             r.flushdb()
             if not check_version(r, 20200):
@@ -1009,10 +1010,6 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
             info = client.info()
             self.assertEqual(495, int(info['num_docs']))
-
-    def testCreateClientDefinitionJson(self):
-        conn = self.redis()
-        pass
 
 
 if __name__ == '__main__':
