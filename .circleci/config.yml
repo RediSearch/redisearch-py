@@ -51,7 +51,7 @@ commands:
       - run:
           name: install dependencies
           command: |
-            pip install --user --quiet -r .circleci/circle_requirements.txt
+            pip install -q -r .circleci/circle_requirements.txt
             poetry config virtualenvs.create false
             poetry install --no-interaction --no-dev
             poetry build

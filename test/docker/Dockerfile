@@ -23,8 +23,8 @@ ADD ./ /build
 RUN python --version
 RUN pip install --quiet -r .circleci/circle_requirements.txt
 
-RUN poetry install --no-dev
 RUN poetry config virtualenvs.create false
+RUN poetry install --no-dev
 RUN poetry build 
 
 RUN pip install --force-reinstall git+https://github.com/RedisLabs/rmtest.git
