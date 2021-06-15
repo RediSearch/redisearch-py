@@ -50,7 +50,6 @@ def check_version(env, version):
 class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
     def createIndex(self, client, num_docs = 100, definition=None):
-
         assert isinstance(client, Client)
         try:
             client.create_index((TextField('play', weight=5.0),
@@ -88,7 +87,6 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         indexer.commit()
 
     def testClient(self):
-
         conn = self.redis()
 
         with conn as r:
@@ -272,7 +270,6 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             #self.assertEqual(0.2, res.docs[1].score)
 
     def testReplace(self):
-
         conn = self.redis()
 
         with conn as r:
@@ -603,7 +600,6 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         conn = self.redis()
         with conn as r:
             if check_version(r, 20000):
-
                 index1 = Client('testAlias', port=conn.port)
                 index1.redis.flushdb()
                 index2 = Client('testAlias2', port=conn.port)
@@ -643,9 +639,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                 with self.assertRaises(Exception) as context:
                     alias_client2.search('*').docs[0]
                 self.assertEqual('spaceballs: no such index', str(context.exception))
-
             else:
-
                 # Creating a client with one index
                 index1 = Client('testAlias', port=conn.port)
                 index1.redis.flushdb()
@@ -965,7 +959,6 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             definition.args)
 
             self.createIndex(client, num_docs=500, definition=definition)
-
 
     def testCreateClientDefiniontion(self):
         conn = self.redis()

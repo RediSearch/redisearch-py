@@ -21,8 +21,8 @@ classifiers = [
 keywords = ["Redis Search Extension"]
 
 [tool.poetry.dependencies]
-python = "^3.6"
-hiredis = "^2.0.0"
+# python = "^3.6"
+# hiredis = "^2.0.0"
 redis = "^3.5.3"
 six = "^1.16.0"
 rmtest = {git = "https://github.com/RedisLabs/rmtest"}
