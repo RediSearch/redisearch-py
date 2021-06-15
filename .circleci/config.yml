@@ -49,29 +49,20 @@ commands:
           - v1-dependencies-
 
       - run:
-          name: install tox dependencies
-          command: |
-            pip install --user --quiet -r .circleci/circle_requirements.txt
-
-      - run:
           name: install dependencies
           command: |
-            poetry install
-
-      - run:
-          name: build sdist and wheels
-          command: |
+            pip install --user --quiet -r .circleci/circle_requirements.txt
+            poetry install --no-dev
+            poetry config virtualenvs.create false
             poetry build
 
       - run:
           name: lint
-          command: |
-            tox -e linters
+          command: tox -e linters
 
       - run:
           name: run tests
-          command:
-            tox -e cover
+          command: tox -e cover
 
       - save_cache:
           paths:
@@ -90,7 +81,7 @@ jobs:
         type: string
         default: latest
     docker:
-      - image: circleci/python:<<parameters.python_version >>
+      - image: circleci/python:<<parameters.python_version>>
       - image: redislabs/redisearch:edge
     steps:
       - build_and_test
