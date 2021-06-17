@@ -2,7 +2,6 @@ from six.moves import xrange, zip as izip
 
 from .document import Document
 from ._util import to_string
-import json
 
 
 
