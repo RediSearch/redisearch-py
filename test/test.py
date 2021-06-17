@@ -963,6 +963,8 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                 return
             client = Client('test', port=conn.port)
 
+            self.assertRaises(RuntimeError, IndexDefinition, prefix=['hset:', 'henry'], index_type='json')
+
             definition = IndexDefinition(prefix=['hset:', 'henry'],
             filter='@f1==32', language='English', language_field='play',
             score_field='chapter', score=0.5, payload_field='txt', index_type=IndexType.JSON)
