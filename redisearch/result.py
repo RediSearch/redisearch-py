@@ -53,8 +53,7 @@ class Result(object):
             except KeyError:
                 pass
 
-            doc = Document(id, score=score, payload=payload, **fields) if with_scores \
-                else Document(id, payload=payload, **fields)
+            doc = Document(id, score=score, payload=payload, **fields) if with_scores else Document(id, payload=payload, **fields)
             self.docs.append(doc)
 
     def __repr__(self):
