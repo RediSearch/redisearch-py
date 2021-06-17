@@ -118,7 +118,7 @@ class IndexDefinition(object):
             args.append(self.ON)
             args.append(self.JSON)
         elif index_type is not None:
-            raise RuntimeError("index_type must be an Enum of type IndexType")
+            raise RuntimeError("index_type must be one of {}".format(list(IndexType)))
 
         if len(prefix) > 0:
             args.append(self.PREFIX)
