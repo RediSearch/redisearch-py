@@ -19,7 +19,6 @@ from redisearch.client import IndexType
 import redisearch.aggregation as aggregations
 import redisearch.reducers as reducers
 import rejson
-import json
 
 WILL_PLAY_TEXT = os.path.abspath(os.path.dirname(__file__)) + '/will_play_text.csv.bz2'
 
