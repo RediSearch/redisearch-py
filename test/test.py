@@ -1,3 +1,4 @@
+import json
 import os, sys
 
 
@@ -18,6 +19,7 @@ from redisearch.client import IndexType
 import redisearch.aggregation as aggregations
 import redisearch.reducers as reducers
 import rejson
+import json
 
 WILL_PLAY_TEXT = os.path.abspath(os.path.dirname(__file__)) + '/will_play_text.csv.bz2'
 
@@ -1048,7 +1050,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             res = client.search('henry')
             self.assertEqual(res.docs[0].id, 'king:1')
             self.assertIsNone(res.docs[0].payload)
-            self.assertEqual(res.docs[0].__getattribute__('$'), '{"name":"henry"}')
+            self.assertEqual(res.docs[0].json, '{"name":"henry"}')
             self.assertEqual(res.total, 1)
 
 
