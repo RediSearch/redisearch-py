@@ -1,3 +1,4 @@
+import json
 import os, sys
 
 
@@ -1048,7 +1049,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             res = client.search('henry')
             self.assertEqual(res.docs[0].id, 'king:1')
             self.assertIsNone(res.docs[0].payload)
-            self.assertEqual(res.docs[0].__getattribute__('$'), '{"name":"henry"}')
+            self.assertEqual(res.docs[0].json, '{"name":"henry"}')
             self.assertEqual(res.total, 1)
 
 
