@@ -53,8 +53,8 @@ commands:
           command: |
             pip install -q -r .circleci/circle_requirements.txt
             poetry config virtualenvs.create false
-            # poetry install --no-interaction --no-dev  ## https://github.com/python-poetry/poetry/issues/1214
-            pip install --user --requirement <(poetry export --format requirements.txt)  # IDEALLY not, but because of the 2.7 pain
+            poetry install --no-interaction --no-dev  ## https://github.com/python-poetry/poetry/issues/1214
+            # pip install --user --requirement <(poetry export --format requirements.txt)  # IDEALLY not, but because of the 2.7 pain
             poetry build
 
       - run:
