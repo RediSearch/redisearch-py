@@ -76,6 +76,7 @@ commands:
           destination: test-reports
 
 jobs:
+  # keeping for when we can eliminate python 2.7 - the matrix will be back
   build:
     parameters:
       python_version:
@@ -86,6 +87,42 @@ jobs:
       - image: redislabs/redisearch:edge
     steps:
       - build_and_test
+
+  build-py36:
+    docker:
+      - image: circleci/python:3.6.9
+      - image: redislabs/redisearch:edge
+    steps:
+      - build_and_test
+
+  build-py37:
+    docker:
+      - image: circleci/python:3.7.9
+      - image: redislabs/redisearch:edge
+    steps:
+      - build_and_test
+
+  build-py38:
+    docker:
+      - image: circleci/python:3.8.9
+      - image: redislabs/redisearch:edge
+    steps:
+      - build_and_test
+
+  build-py39:
+    docker:
+      - image: circleci/python:3.9.4
+      - image: redislabs/redisearch:edge
+    steps:
+      - build_and_test
+
+  build-latest:
+    docker:
+      - image: circleci/python:latest
+      - image: redislabs/redisearch:edge
+    steps:
+      - build_and_test
+
 
 on-any-branch: &on-any-branch
   filters:
@@ -101,23 +138,38 @@ on-master: &on-master
         - master
 
 # the is to build and test, per commit against all supported python versions
-python-versions: &python-versions
-  matrix:
-    parameters:
-      python_version:
-        - "3.6.9"
-        - "3.7.9"
-        - "3.8.9"
-        - "3.9.4"
-        - "latest"
-
+#python-versions: &python-versions
+#  matrix:
+#    parameters:
+#      python_version:
+#        - "3.6.9"
+#        - "3.7.9"
+#        - "3.8.9"
+#        - "3.9.4"
+#        - "latest"
+#
 workflows:
   version: 2
   commit:
     jobs:
-      - build:
+      - build-py36:
          <<: *on-any-branch
-         <<: *python-versions
+      - build-py37:
+         <<: *on-any-branch
+         requires:
+           - build-py36
+      - build-py38:
+         <<: *on-any-branch
+         requires:
+           - build-py37
+      - build-py39:
+         <<: *on-any-branch
+         requires:
+           - build-py38
+      - build-latest:
+         <<: *on-any-branch
+         requires:
+           - build-py39
 
   nightly:
     triggers:
