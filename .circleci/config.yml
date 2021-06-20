@@ -105,10 +105,10 @@ python-versions: &python-versions
     parameters:
       python_version:
         - "3.6.9"
-        - "3.7.9"
-        - "3.8.9"
-        - "3.9.4"
-        - "latest"
+#        - "3.7.9"
+#        - "3.8.9"
+#        - "3.9.4"
+#        - "latest"
 
 workflows:
   version: 2
