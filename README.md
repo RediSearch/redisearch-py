@@ -397,7 +397,10 @@ $ pip install redisearch
 ## Developing
 
 1. Create a virtualenv to manage your python dependencies, and ensure it's active.
-   ```virtualenv -v venv```
+   ```
+   virtualenv -v venv
+   . venv/bin/activate
+   ```
 2. Install [pypoetry](https://python-poetry.org/) to manage your dependencies.
    ```pip install --user poetry```
 3. Install dependencies.
@@ -409,31 +412,59 @@ Testing can easily be performed using using Docker.
 Run the following:
 
 ```
-make -C test/docker test PYTHON_VER=3
+make -C test/docker
 ```
 
-(Replace `PYTHON_VER=3` with `PYTHON_VER=2` to test with Python 2.7.)
+To select specific Python and Redis Server versions, use the following:
 
-Alternatively, use the following procedure:
+```
+make -C test/docker PYTHON_VER=3.9 REDIS_VER=6.2.4
+```
+
+It is possible to install all the relevant artifacts within a Docker container, while operating on redisearch-py sources from the host (let's assume they're located in `/home/user/redisearch-py`:
 
 First, run:
 
 ```
-PYTHON_VER=3 ./test/test-setup.sh
+cd tests/docker
+make build DOCKER_ARGS="-v /home:/home"
+make start
+make sh
+```
+Then, from within the container, one can use `pudb` to run and debug the tests:
+
+```
+cd /home/user/redisearch-py
+python -m pudb test/test.py
 ```
 
-This will set up a Python virtual environment in `venv3` (or in `venv2` if `PYTHON_VER=2` is used).
+When done, exit the container, and stop it using `make stop`.
+
+It is also possible to have all relevant Python artifacts installed within a virtualenv on the host:
+
+```
+python -m virtualenv venv
+. venv/activate
+pip install -r .circleci/circle_requirements.txt
+poetry install
+poetry build
+```
 
 Afterwards, run RediSearch in a container as a daemon:
 
 ```
-docker run -d -p 6379:6379 redislabs/redisearch:2.0.0
+docker run -d -p 6379:6379 redislabs/redisearch:edge
 ```
 
-Finally, invoke the virtual environment and run the tests:
+Finally, run the tests using `tox`:
 
 ```
-. ./venv3/bin/activate
-REDIS_PORT=6379 python test/test.py
-REDIS_PORT=6379 python test/test_builder.py
+tox -e test_without_coverage
 ```
+
+or just execute them directly:
+
+```
+python test/test.py
+```
+
