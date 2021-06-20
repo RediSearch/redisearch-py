@@ -53,7 +53,8 @@ commands:
           command: |
             pip install -q -r .circleci/circle_requirements.txt
             poetry config virtualenvs.create false
-            poetry install --no-interaction --no-dev
+            # poetry install --no-interaction --no-dev  ## https://github.com/python-poetry/poetry/issues/1214
+            pip install --user --requirement <(poetry export --format requirements.txt)  # IDEALLY not, but because of the 2.7 pain
             poetry build
 
       - run:
@@ -105,10 +106,10 @@ python-versions: &python-versions
     parameters:
       python_version:
         - "3.6.9"
-#        - "3.7.9"
-#        - "3.8.9"
-#        - "3.9.4"
-#        - "latest"
+        - "3.7.9"
+        - "3.8.9"
+        - "3.9.4"
+        - "latest"
 
 workflows:
   version: 2
