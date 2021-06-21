@@ -42,12 +42,12 @@ commands:
       - abort_for_noci
       - checkout
 
-#      - restore_cache: # Download and cache dependencies
-#          keys:
-#          - v1-dependencies-{{ checksum "pyproject.toml" }}
-#          # fallback to using the latest cache if no exact match is found
-#          - v1-dependencies-
-#
+      - restore_cache: # Download and cache dependencies
+          keys:
+          - v1-dependencies-{{ checksum "pyproject.toml" }}
+          # fallback to using the latest cache if no exact match is found
+          - v1-dependencies-
+
       - run:
           name: install ci dependencies
           command: |
@@ -69,12 +69,12 @@ commands:
           name: run tests
           command: tox -e cover
 
-#      - save_cache:
-#          paths:
-#            - ./.tox
-#            - ~/.cache/pip
-#          key: v1-dependencies-{{ checksum "pyproject.toml" }}
-#
+      - save_cache:
+          paths:
+            - ./.tox
+            - ~/.cache/pip
+          key: v1-dependencies-{{ checksum "pyproject.toml" }}
+
       - store_artifacts:
           path: test-reports
           destination: test-reports
@@ -92,40 +92,47 @@ jobs:
     steps:
       - build_and_test
 
-  build-py36:
-    docker:
-      - image: circleci/python:3.6.9
-      - image: redislabs/redisearch:edge
-    steps:
-      - build_and_test
-
-  build-py37:
-    docker:
-      - image: circleci/python:3.7.9
-      - image: redislabs/redisearch:edge
-    steps:
-      - build_and_test
-
-  build-py38:
-    docker:
-      - image: circleci/python:3.8.9
-      - image: redislabs/redisearch:edge
-    steps:
-      - build_and_test
-
-  build-py39:
-    docker:
-      - image: circleci/python:3.9.4
-      - image: redislabs/redisearch:edge
-    steps:
-      - build_and_test
-
-  build-latest:
-    docker:
-      - image: circleci/python:latest
-      - image: redislabs/redisearch:edge
-    steps:
-      - build_and_test
+#  build-py27:
+#    docker:
+#      - image: circleci/python:2.7.18
+#      - image: redislabs/redisearch:edge
+#    steps:
+#      - build_and_test
+#
+#  build-py36:
+#    docker:
+#      - image: circleci/python:3.6.9
+#      - image: redislabs/redisearch:edge
+#    steps:
+#      - build_and_test
+#
+#  build-py37:
+#    docker:
+#      - image: circleci/python:3.7.9
+#      - image: redislabs/redisearch:edge
+#    steps:
+#      - build_and_test
+#
+#  build-py38:
+#    docker:
+#      - image: circleci/python:3.8.9
+#      - image: redislabs/redisearch:edge
+#    steps:
+#      - build_and_test
+#
+#  build-py39:
+#    docker:
+#      - image: circleci/python:3.9.4
+#      - image: redislabs/redisearch:edge
+#    steps:
+#      - build_and_test
+#
+#  build-latest:
+#    docker:
+#      - image: circleci/python:latest
+#      - image: redislabs/redisearch:edge
+#    steps:
+#      - build_and_test
 
 
 on-any-branch: &on-any-branch
@@ -142,38 +149,42 @@ on-master: &on-master
         - master
 
 # the is to build and test, per commit against all supported python versions
-#python-versions: &python-versions
-#  matrix:
-#    parameters:
-#      python_version:
-#        - "3.6.9"
-#        - "3.7.9"
-#        - "3.8.9"
-#        - "3.9.4"
-#        - "latest"
-#
+python-versions: &python-versions
+  matrix:
+    parameters:
+      python_version:
+        - "2.7.18"
+        - "3.6.9"
+        - "3.7.9"
+        - "3.8.9"
+        - "3.9.4"
+        - "latest"
+
 workflows:
   version: 2
   commit:
     jobs:
-      - build-py36:
-         <<: *on-any-branch
-      - build-py37:
-         <<: *on-any-branch
-         requires:
-           - build-py36
-      - build-py38:
-         <<: *on-any-branch
-         requires:
-           - build-py37
-      - build-py39:
-         <<: *on-any-branch
-         requires:
-           - build-py38
-      - build-latest:
-         <<: *on-any-branch
-         requires:
-           - build-py39
+      - build
+#      - build-py27:
+#         <<: *on-any-branch
+#      - build-py36:
+#         <<: *on-any-branch
+#      - build-py37:
+#         <<: *on-any-branch
+#         requires:
+#           - build-py36
+#      - build-py38:
+#         <<: *on-any-branch
+#         requires:
+#           - build-py37
+#      - build-py39:
+#         <<: *on-any-branch
+#         requires:
+#           - build-py38
+#      - build-latest:
+#         <<: *on-any-branch
+#         requires:
+#           - build-py39
 
   nightly:
     triggers:
