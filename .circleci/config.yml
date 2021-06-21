@@ -54,7 +54,7 @@ commands:
           name: install ci dependencies
           command: |
             pip install --user -r .circleci/circle_requirements.txt
-            sudo pip install --upgrade virtualenv=16.7.9
+            sudo pip install --upgrade virtualenv==16.7.9
 
       - run:
           name: poetry install
