@@ -36,6 +36,54 @@ commands:
               circleci step halt
             fi
 
+  # on python 2.7 there's a specific issue in virtualenv that requires pinning to this verison
+  # with poetry, pipfile, and other next-gen dependency managers
+  build_and_test_py27:
+    steps:
+      - abort_for_docs
+      - abort_for_noci
+      - checkout
+
+      - restore_cache: # Download and cache dependencies
+          keys:
+          - v1-dependencies-{{ checksum "pyproject.toml" }}
+          # fallback to using the latest cache if no exact match is found
+          - v1-dependencies-
+
+      - run:
+          name: install ci dependencies
+          command: |
+            pip install --user -r .circleci/circle_requirements.txt
+            sudo pip install --upgrade virtualenv==16.7.9
+
+      - run:
+          name: poetry install
+          command: |
+            poetry config virtualenvs.create false
+            poetry lock
+            #poetry install --no-interaction --no-dev  ## https://github.com/python-poetry/poetry/issues/1214
+            pip install --user -r <(poetry export --without-hashes --format requirements.txt)  # IDEALLY not, but because of the 2.7 pain
+            poetry build
+
+      - run:
+          name: lint
+          command: tox -e linters
+
+      - run:
+          name: run tests
+          command: tox -e cover
+
+      - save_cache:
+          paths:
+            - ./.tox
+            - ~/.cache/pip
+          key: v1-dependencies-{{ checksum "pyproject.toml" }}
+
+      - store_artifacts:
+          path: test-reports
+          destination: test-reports
+
+
   build_and_test:
     steps:
       - abort_for_docs
@@ -49,11 +97,17 @@ commands:
           - v1-dependencies-
 
       - run:
-          name: install dependencies
+          name: install ci dependencies
           command: |
-            pip install -q -r .circleci/circle_requirements.txt
+            pip install --user -r .circleci/circle_requirements.txt
+
+      - run:
+          name: poetry install
+          command: |
             poetry config virtualenvs.create false
-            poetry install --no-interaction --no-dev
+            poetry lock
+            #poetry install --no-interaction --no-dev  ## https://github.com/python-poetry/poetry/issues/1214
+            pip install --user -r <(poetry export --without-hashes --format requirements.txt)  # IDEALLY not, but because of the 2.7 pain
             poetry build
 
       - run:
@@ -75,6 +129,7 @@ commands:
           destination: test-reports
 
 jobs:
+  # keeping for when we can eliminate python 2.7 - the matrix will be back
   build:
     parameters:
       python_version:
@@ -85,6 +140,49 @@ jobs:
       - image: redislabs/redisearch:edge
     steps:
       - build_and_test
+
+  build-py27:
+    docker:
+      - image: circleci/python:2.7.18
+      - image: redislabs/redisearch:edge
+    steps:
+      - build_and_test_py27
+#
+#  build-py36:
+#    docker:
+#      - image: circleci/python:3.6.9
+#      - image: redislabs/redisearch:edge
+#    steps:
+#      - build_and_test
+#
+#  build-py37:
+#    docker:
+#      - image: circleci/python:3.7.9
+#      - image: redislabs/redisearch:edge
+#    steps:
+#      - build_and_test
+#
+#  build-py38:
+#    docker:
+#      - image: circleci/python:3.8.9
+#      - image: redislabs/redisearch:edge
+#    steps:
+#      - build_and_test
+#
+#  build-py39:
+#    docker:
+#      - image: circleci/python:3.9.4
+#      - image: redislabs/redisearch:edge
+#    steps:
+#      - build_and_test
+#
+#  build-latest:
+#    docker:
+#      - image: circleci/python:latest
+#      - image: redislabs/redisearch:edge
+#    steps:
+#      - build_and_test
+
 
 on-any-branch: &on-any-branch
   filters:
@@ -104,7 +202,6 @@ python-versions: &python-versions
   matrix:
     parameters:
       python_version:
-        - "2.7"
         - "3.6.9"
         - "3.7.9"
         - "3.8.9"
@@ -118,6 +215,26 @@ workflows:
       - build:
          <<: *on-any-branch
          <<: *python-versions
+      - build-py27:
+         <<: *on-any-branch
+#      - build-py36:
+#         <<: *on-any-branch
+#      - build-py37:
+#         <<: *on-any-branch
+#         requires:
+#           - build-py36
+#      - build-py38:
+#         <<: *on-any-branch
+#         requires:
+#           - build-py37
+#      - build-py39:
+#         <<: *on-any-branch
+#         requires:
+#           - build-py38
+#      - build-latest:
+#         <<: *on-any-branch
+#         requires:
+#           - build-py39
 
   nightly:
     triggers:
