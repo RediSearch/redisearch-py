@@ -164,7 +164,9 @@ workflows:
   version: 2
   commit:
     jobs:
-      - build
+      - build:
+         <<: *on-any-branch
+         <<: *python-versions
 #      - build-py27:
 #         <<: *on-any-branch
 #      - build-py36:
