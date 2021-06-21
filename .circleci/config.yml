@@ -49,10 +49,14 @@ commands:
 #          - v1-dependencies-
 #
       - run:
-          name: install dependencies
+          name: install ci dependencies
           command: |
             pip install --user -r .circleci/circle_requirements.txt
+      - run:
+          name: poetry install
+          command: |
             poetry config virtualenvs.create false
+            poetry lock
             #poetry install --no-interaction --no-dev  ## https://github.com/python-poetry/poetry/issues/1214
             pip install --user -r <(poetry export --without-hashes --format requirements.txt)  # IDEALLY not, but because of the 2.7 pain
             poetry build
@@ -65,12 +69,12 @@ commands:
           name: run tests
           command: tox -e cover
 
-      - save_cache:
-          paths:
-            - ./.tox
-            - ~/.cache/pip
-          key: v1-dependencies-{{ checksum "pyproject.toml" }}
-
+#      - save_cache:
+#          paths:
+#            - ./.tox
+#            - ~/.cache/pip
+#          key: v1-dependencies-{{ checksum "pyproject.toml" }}
+#
       - store_artifacts:
           path: test-reports
           destination: test-reports
