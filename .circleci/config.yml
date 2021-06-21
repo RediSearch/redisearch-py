@@ -202,7 +202,6 @@ python-versions: &python-versions
   matrix:
     parameters:
       python_version:
-        - "2.7.18"
         - "3.6.9"
         - "3.7.9"
         - "3.8.9"
@@ -216,8 +215,8 @@ workflows:
       - build:
          <<: *on-any-branch
          <<: *python-versions
-#      - build-py27:
-#         <<: *on-any-branch
+      - build-py27:
+         <<: *on-any-branch
 #      - build-py36:
 #         <<: *on-any-branch
 #      - build-py37:
