@@ -89,12 +89,15 @@ class TagField(Field):
 
 
 class IndexType(Enum):
+    """
+    Enum of the currently supported index types.
+    """
     HASH = 1
     JSON = 2
 
 class IndexDefinition(object):
     """
-    IndexDefinition is used to define a index definition for automatic indexing on Hash or Json update
+    IndexDefinition is used to define a index definition for automatic indexing on Hash or Json update.
     """
 
     def __init__(self, prefix=[], filter=None, language_field=None, language=None, score_field=None, score=1.0, payload_field=None, index_type=None):
