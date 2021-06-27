@@ -8,6 +8,7 @@ from .result import Result
 from .query import Query
 from ._util import to_string
 from .aggregation import AggregateRequest, AggregateResult, Cursor
+from enum import Enum
 
 
 class Field(object):
@@ -87,53 +88,56 @@ class TagField(Field):
         Field.__init__(self, name, args=[Field.TAG, self.SEPARATOR, separator], **kwargs)
 
 
+class IndexType(Enum):
+    """
+    Enum of the currently supported index types.
+    """
+    HASH = 1
+    JSON = 2
+
 class IndexDefinition(object):
     """
-    IndexDefinition is used to define a index definition for automatic indexing on Hash update
+    IndexDefinition is used to define a index definition for automatic indexing on Hash or Json update.
     """
 
-    ON = 'ON'
-    HASH = 'HASH'
-    PREFIX = 'PREFIX'
-    FILTER = 'FILTER'
-    LANGUAGE_FIELD = 'LANGUAGE_FIELD'
-    LANGUAGE = 'LANGUAGE'
-    SCORE_FIELD = 'SCORE_FIELD'
-    SCORE = 'SCORE'
-    PAYLOAD_FIELD = 'PAYLOAD_FIELD'
-        
-    def __init__(self, prefix=[], filter=None, language_field=None, language=None, score_field=None, score=1.0, payload_field=None):
+    def __init__(self, prefix=[], filter=None, language_field=None, language=None, score_field=None, score=1.0, payload_field=None, index_type=None):
+        args = []
 
-        args = [self.ON, self.HASH]
+        if index_type is IndexType.HASH:
+            args.extend(['ON', 'HASH'])
+        elif index_type is IndexType.JSON:
+            args.extend(['ON', 'JSON'])
+        elif index_type is not None:
+            raise RuntimeError("index_type must be one of {}".format(list(IndexType)))
 
         if len(prefix) > 0:
-            args.append(self.PREFIX)
+            args.append('PREFIX')
             args.append(len(prefix))
             for p in prefix:
                 args.append(p)
 
         if filter is not None:
-            args.append(self.FILTER)
+            args.append('FILTER')
             args.append(filter)
 
         if language_field is not None:
-            args.append(self.LANGUAGE_FIELD)
+            args.append('LANGUAGE_FIELD')
             args.append(language_field)
 
         if language is not None:
-            args.append(self.LANGUAGE)
+            args.append('LANGUAGE')
             args.append(language)
 
         if score_field is not None:
-            args.append(self.SCORE_FIELD)
+            args.append('SCORE_FIELD')
             args.append(score_field)
 
         if score is not None:
-            args.append(self.SCORE)
+            args.append('SCORE')
             args.append(score)
 
         if payload_field is not None:
-            args.append(self.PAYLOAD_FIELD)
+            args.append('PAYLOAD_FIELD')
             args.append(payload_field)
 
         self.args = args

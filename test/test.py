@@ -1,4 +1,7 @@
+import json
 import os, sys
+
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from rmtest import ModuleTestCase
@@ -12,8 +15,10 @@ from io import TextIOWrapper
 import six
 
 from redisearch import *
+from redisearch.client import IndexType
 import redisearch.aggregation as aggregations
 import redisearch.reducers as reducers
+import rejson
 
 WILL_PLAY_TEXT = os.path.abspath(os.path.dirname(__file__)) + '/will_play_text.csv.bz2'
 
@@ -487,6 +492,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
     def testNoIndex(self):
         # Creating a client with a given index name
         client = self.getCleanClient('idx')
+        client.redis.flushdb()
 
         client.create_index(
             (TextField('field'),
@@ -946,7 +952,10 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             self.assertEqual('RediSearch', res[23])
             self.assertEqual(2, len(res[25]))
 
-    def testIndexDefiniontion(self):
+    def testIndexDefinition(self):
+        """
+        Create definition and test its args
+        """
         conn = self.redis()
 
         with conn as r:
@@ -955,19 +964,24 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                 return
             client = Client('test', port=conn.port)
 
+            self.assertRaises(RuntimeError, IndexDefinition, prefix=['hset:', 'henry'], index_type='json')
+
             definition = IndexDefinition(prefix=['hset:', 'henry'],
             filter='@f1==32', language='English', language_field='play',
-            score_field='chapter', score=0.5, payload_field='txt' )
+            score_field='chapter', score=0.5, payload_field='txt', index_type=IndexType.JSON)
 
-            self.assertEqual(['ON','HASH', 'PREFIX',2,'hset:','henry',
-            'FILTER','@f1==32','LANGUAGE_FIELD','play','LANGUAGE','English',
-            'SCORE_FIELD','chapter','SCORE',0.5,'PAYLOAD_FIELD','txt'],
+            self.assertEqual(['ON', 'JSON', 'PREFIX', 2, 'hset:', 'henry',
+            'FILTER', '@f1==32', 'LANGUAGE_FIELD', 'play', 'LANGUAGE', 'English',
+            'SCORE_FIELD', 'chapter', 'SCORE', 0.5, 'PAYLOAD_FIELD', 'txt'],
             definition.args)
 
             self.createIndex(client, num_docs=500, definition=definition)
 
-
-    def testCreateClientDefiniontion(self):
+    def testCreateClientDefinition(self):
+        """
+        Create definition with no index type provided,
+        and use hset to test the client definition (the default is HASH).
+        """
         conn = self.redis()
 
         with conn as r:
@@ -986,6 +1000,58 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
             info = client.info()
             self.assertEqual(495, int(info['num_docs']))
+
+    def testCreateClientDefinitionHash(self):
+        """
+        Create definition with IndexType.HASH as index type (ON HASH),
+        and use hset to test the client definition.
+        """
+        conn = self.redis()
+
+        with conn as r:
+            r.flushdb()
+            if not check_version(r, 20000):
+                return
+            client = Client('test', port=conn.port)
+
+            definition = IndexDefinition(prefix=['hset:', 'henry'], index_type=IndexType.HASH)
+            self.createIndex(client, num_docs=500, definition=definition)
+
+            info = client.info()
+            self.assertEqual(494, int(info['num_docs']))
+
+            r.hset('hset:1', 'f1', 'v1');
+
+            info = client.info()
+            self.assertEqual(495, int(info['num_docs']))
+
+    def testCreateClientDefinitionJson(self):
+        """
+        Create definition with IndexType.JSON as index type (ON JSON),
+        and use json client to test it.
+        """
+        conn = self.redis()
+
+        with conn as r:
+            r.flushdb()
+            if not check_version(r, 20200):
+                return
+
+            client = Client('json1', port=conn.port)
+
+            definition = IndexDefinition(prefix=['king:'], index_type=IndexType.JSON)
+            client.create_index((TextField('$.name'),), definition=definition)
+
+            rj = rejson.Client(host='localhost', port=conn.port, decode_responses=True)
+            rj.jsonset('king:1', rejson.Path.rootPath(), {'name': 'henry'})
+            rj.jsonset('king:2', rejson.Path.rootPath(), {'name': 'james'})
+
+            res = client.search('henry')
+            self.assertEqual(res.docs[0].id, 'king:1')
+            self.assertIsNone(res.docs[0].payload)
+            self.assertEqual(res.docs[0].json, '{"name":"henry"}')
+            self.assertEqual(res.total, 1)
+
 
 if __name__ == '__main__':
     unittest.main()
