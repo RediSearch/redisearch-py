@@ -54,7 +54,7 @@ def check_version(env, version):
 
 class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
-    def createIndex(self, client, num_docs = 100, definition=None):
+    def createIndex(self, client, num_docs=100, definition=None):
 
         assert isinstance(client, Client)
         try:
@@ -101,7 +101,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             r.flushdb()
             client = Client('test', port=conn.port)
 
-            self.createIndex(client, num_docs =num_docs)
+            self.createIndex(client, num_docs=num_docs)
 
             for _ in r.retry_with_rdb_reload():
                 waitForIndex(r, 'test')
@@ -116,7 +116,6 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
                 self.assertEqual(client.index_name, info['index_name'])
                 self.assertEqual(num_docs, int(info['num_docs']))
-
 
                 res = client.search("henry iv")
                 self.assertIsInstance(res, Result)
@@ -144,9 +143,9 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                 self.assertGreater(total, vtotal)
 
                 # test in fields
-                txt_total =  client.search(Query('henry').no_content().limit_fields('txt')).total
+                txt_total = client.search(Query('henry').no_content().limit_fields('txt')).total
                 play_total = client.search(Query('henry').no_content().limit_fields('play')).total
-                both_total = client.search(Query('henry').no_content().limit_fields('play','txt')).total
+                both_total = client.search(Query('henry').no_content().limit_fields('play', 'txt')).total
                 self.assertEqual(129, txt_total)
                 self.assertEqual(494, play_total)
                 self.assertEqual(494, both_total)
@@ -171,13 +170,13 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
                 # test slop and in order
                 self.assertEqual(193, client.search(Query('henry king')).total)
-                self.assertEqual(3,client.search(Query('henry king').slop(0).in_order()).total)
-                self.assertEqual(52,client.search(Query('king henry').slop(0).in_order()).total)
-                self.assertEqual(53,client.search(Query('henry king').slop(0)).total)
-                self.assertEqual(167,client.search(Query('henry king').slop(100)).total)
+                self.assertEqual(3, client.search(Query('henry king').slop(0).in_order()).total)
+                self.assertEqual(52, client.search(Query('king henry').slop(0).in_order()).total)
+                self.assertEqual(53, client.search(Query('henry king').slop(0)).total)
+                self.assertEqual(167, client.search(Query('henry king').slop(100)).total)
 
                 # test delete document
-                client.add_document('doc-5ghs2', play = 'Death of a Salesman')
+                client.add_document('doc-5ghs2', play='Death of a Salesman')
                 res = client.search(Query('death of a salesman'))
                 self.assertEqual(1, res.total)
 
@@ -242,8 +241,8 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             client.redis.flushdb()
             client.create_index((TextField('txt'),))
 
-            client.add_document('doc1', payload = 'foo baz', txt = 'foo bar')
-            client.add_document('doc2', txt = 'foo bar')
+            client.add_document('doc1', payload='foo baz', txt='foo bar')
+            client.add_document('doc2', txt='foo bar')
 
             q = Query("foo bar").with_payloads()
             res = client.search(q)
@@ -262,8 +261,8 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             client.redis.flushdb()
             client.create_index((TextField('txt'),))
 
-            client.add_document('doc1', txt = 'foo baz')
-            client.add_document('doc2', txt = 'foo bar')
+            client.add_document('doc1', txt='foo baz')
+            client.add_document('doc2', txt='foo bar')
 
             q = Query("foo ~bar").with_scores()
             res = client.search(q)
@@ -286,12 +285,12 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             client.redis.flushdb()
             client.create_index((TextField('txt'),))
 
-            client.add_document('doc1', txt = 'foo bar')
-            client.add_document('doc2', txt = 'foo bar')
+            client.add_document('doc1', txt='foo bar')
+            client.add_document('doc2', txt='foo bar')
 
             res = client.search("foo bar")
             self.assertEqual(2, res.total)
-            client.add_document('doc1', replace = True, txt = 'this is a replaced doc')
+            client.add_document('doc1', replace=True, txt='this is a replaced doc')
 
             res = client.search("foo bar")
             self.assertEqual(1, res.total)
@@ -305,13 +304,13 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         # Creating a client with a given index name
         client = self.getCleanClient('idx')
 
-        client.create_index((TextField('txt'),), stopwords = ['foo', 'bar', 'baz'])
-        client.add_document('doc1', txt = 'foo bar')
-        client.add_document('doc2', txt = 'hello world')
+        client.create_index((TextField('txt'),), stopwords=['foo', 'bar', 'baz'])
+        client.add_document('doc1', txt='foo bar')
+        client.add_document('doc2', txt='hello world')
 
         q1 = Query("foo bar").no_content()
         q2 = Query("foo bar hello world").no_content()
-        res1, res2 =  client.search(q1), client.search(q2)
+        res1, res2 = client.search(q1), client.search(q2)
         self.assertEqual(0, res1.total)
         self.assertEqual(1, res2.total)
 
@@ -332,7 +331,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                 # Test numerical filter
                 q1 = Query("foo").add_filter(NumericFilter('num', 0, 2)).no_content()
                 q2 = Query("foo").add_filter(NumericFilter('num', 2, NumericFilter.INF, minExclusive=True)).no_content()
-                res1, res2 =  client.search(q1), client.search(q2)
+                res1, res2 = client.search(q1), client.search(q2)
 
                 self.assertEqual(1, res1.total)
                 self.assertEqual(1, res2.total)
@@ -342,7 +341,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                 # Test geo filter
                 q1 = Query("foo").add_filter(GeoFilter('loc', -0.44, 51.45, 10)).no_content()
                 q2 = Query("foo").add_filter(GeoFilter('loc', -0.44, 51.45, 100)).no_content()
-                res1, res2 =  client.search(q1), client.search(q2)
+                res1, res2 = client.search(q1), client.search(q2)
 
                 self.assertEqual(1, res1.total)
                 self.assertEqual(2, res2.total)
@@ -1020,10 +1019,45 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             info = client.info()
             self.assertEqual(494, int(info['num_docs']))
 
-            r.hset('hset:1', 'f1', 'v1');
+            r.hset('hset:1', 'f1', 'v1')
 
             info = client.info()
             self.assertEqual(495, int(info['num_docs']))
+
+    def testSearchReturn(self):
+        conn = self.redis()
+
+        with conn as r:
+            r.flushdb()
+
+            if not check_version(r, 20200):
+                return
+
+            # insert json data
+            rj = rejson.Client(host='localhost', port=conn.port, decode_responses=True)
+            res = rj.jsonset('doc:1', rejson.Path.rootPath(),
+                             {"t": "riceratops", "t2": "telmatosaurus", "n": 9072, "flt": 97.2})
+            self.assertTrue(res)
+
+            # create index json
+            definition = IndexDefinition(index_type=IndexType.JSON)
+            SCHEMA = (
+                TextField("$.t"),
+                NumericField("$.flt"),
+            )
+            json_client = Client('idxJson')
+            json_client.create_index(SCHEMA, definition=definition)
+
+            total = json_client.search(Query('*').return_field("$.t", as_field="txt")).docs
+            self.assertEqual(1, len(total))
+            self.assertEqual('doc:1', total[0].id)
+            self.assertEqual('"riceratops"', total[0].txt)
+
+            total = json_client.search(Query('*').return_field("$.t2", as_field="txt")).docs
+            self.assertEqual(1, len(total))
+            self.assertEqual('doc:1', total[0].id)
+            self.assertEqual('"telmatosaurus"', total[0].txt)
+
 
     def testCreateClientDefinitionJson(self):
         """
