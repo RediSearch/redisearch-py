@@ -1052,12 +1052,12 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             total = json_client.search(Query('*').return_field("$.t", as_field="txt")).docs
             self.assertEqual(1, len(total))
             self.assertEqual('doc:1', total[0].id)
-            self.assertEqual('"riceratops"', total[0].txt)
+            self.assertEqual('riceratops', total[0].txt)
 
             total = json_client.search(Query('*').return_field("$.t2", as_field="txt")).docs
             self.assertEqual(1, len(total))
             self.assertEqual('doc:1', total[0].id)
-            self.assertEqual('"telmatosaurus"', total[0].txt)
+            self.assertEqual('telmatosaurus', total[0].txt)
 
     def testCreateClientDefinitionJson(self):
         """
