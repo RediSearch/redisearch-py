@@ -38,17 +38,14 @@ class Field(object):
 
     def append_arg(self, value):
         self.args.append(value)
-        delattr(self, 'redis_args')
 
     def redis_args(self):
-        if getattr(self, 'redis_args', None) :
-            args = [self.name]
-            if self.as_name:
-                args += [self.AS, self.as_name]
-            args += self.args
-            args += self.args_suffix
-            setattr(self, 'redis_args', args)
-        return self.redis_args
+        args = [self.name]
+        if self.as_name:
+            args += [self.AS, self.as_name]
+        args += self.args
+        args += self.args_suffix
+        return args
 
 
 class TextField(Field):
