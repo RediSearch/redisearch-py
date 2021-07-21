@@ -1077,7 +1077,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             total = json_client.search(Query('Jon').return_fields('name', 'just_a_number')).docs
             self.assertEqual(1, len(total))
             self.assertEqual('doc:1', total[0].id)
-            self.assertEqual('"Jon"', total[0].name)
+            self.assertEqual('Jon', total[0].name)
             self.assertEqual('25', total[0].just_a_number)
 
     def testSearchReturnFields(self):
