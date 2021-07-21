@@ -52,7 +52,7 @@ To connect with a username and/or password, pass those options to the client
 initializer.
 
 ```py
-client = Client("my-index", username="user", password="my-password")
+client = Client("my-index", password="my-password")
 ```
 
 ### Using core Redis commands
@@ -65,7 +65,7 @@ import datetime
 
 from redisearch import Client
 
-START_TIME = datetime.datetime.now()
+START_TIME = datetime.datetime.now().strftime("%Y-%m-%d-%H:%M.%S")
 
 client = Client("my-index")
 
@@ -85,7 +85,7 @@ client = Client("my-index")
 
 try:
     client.info()
-except ResponseError
+except ResponseError:
     # Index does not exist. We need to create it!
 ```
 
@@ -108,7 +108,7 @@ index from within the Hashes that the index follows. The field types are:
 
 * TextField
 * TagField
-* NumericalField
+* NumericField
 * GeoField
 
 For more information on what these field types mean, consult the [RediSearch
