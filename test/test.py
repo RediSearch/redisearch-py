@@ -1025,12 +1025,66 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             info = client.info()
             self.assertEqual(495, int(info['num_docs']))
 
-    def testSearchReturn(self):
+    def testCreateClientDefinitionJson(self):
+        """
+        Create definition with IndexType.JSON as index type (ON JSON),
+        and use json client to test it.
+        """
         conn = self.redis()
 
         with conn as r:
             r.flushdb()
+            if not check_version(r, 20200):
+                return
 
+            client = Client('json1', port=conn.port)
+
+            definition = IndexDefinition(prefix=['king:'], index_type=IndexType.JSON)
+            client.create_index((TextField('$.name'),), definition=definition)
+
+            rj = rejson.Client(host='localhost', port=conn.port, decode_responses=True)
+            rj.jsonset('king:1', rejson.Path.rootPath(), {'name': 'henry'})
+            rj.jsonset('king:2', rejson.Path.rootPath(), {'name': 'james'})
+
+            res = client.search('henry')
+            self.assertEqual(res.docs[0].id, 'king:1')
+            self.assertIsNone(res.docs[0].payload)
+            self.assertEqual(res.docs[0].json, '{"name":"henry"}')
+            self.assertEqual(res.total, 1)
+
+    def testFieldsAsName(self):
+        conn = self.redis()
+
+        with conn as r:
+            r.flushdb()
+            if not check_version(r, 20200):
+                return
+
+            # create index
+            SCHEMA = (
+                TextField("$.name", sortable=True, as_name='name'),
+                NumericField("$.age", as_name='just_a_number'),
+            )
+            definition = IndexDefinition(index_type=IndexType.JSON)
+            json_client = Client('idxJson')
+            json_client.create_index(SCHEMA, definition=definition)
+
+            # insert json data
+            rj = rejson.Client(host='localhost', port=conn.port, decode_responses=True)
+            res = rj.jsonset('doc:1', rejson.Path.rootPath(), {'name': 'Jon', 'age': 25})
+            self.assertTrue(res)
+
+            total = json_client.search(Query('Jon').return_fields('name', 'just_a_number')).docs
+            self.assertEqual(1, len(total))
+            self.assertEqual('doc:1', total[0].id)
+            self.assertEqual('"Jon"', total[0].name)
+            self.assertEqual('25', total[0].just_a_number)
+
+    def testSearchReturnFields(self):
+        conn = self.redis()
+
+        with conn as r:
+            r.flushdb()
             if not check_version(r, 20200):
                 return
 
@@ -1058,33 +1112,6 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             self.assertEqual(1, len(total))
             self.assertEqual('doc:1', total[0].id)
             self.assertEqual('telmatosaurus', total[0].txt)
-
-    def testCreateClientDefinitionJson(self):
-        """
-        Create definition with IndexType.JSON as index type (ON JSON),
-        and use json client to test it.
-        """
-        conn = self.redis()
-
-        with conn as r:
-            r.flushdb()
-            if not check_version(r, 20200):
-                return
-
-            client = Client('json1', port=conn.port)
-
-            definition = IndexDefinition(prefix=['king:'], index_type=IndexType.JSON)
-            client.create_index((TextField('$.name'),), definition=definition)
-
-            rj = rejson.Client(host='localhost', port=conn.port, decode_responses=True)
-            rj.jsonset('king:1', rejson.Path.rootPath(), {'name': 'henry'})
-            rj.jsonset('king:2', rejson.Path.rootPath(), {'name': 'james'})
-
-            res = client.search('henry')
-            self.assertEqual(res.docs[0].id, 'king:1')
-            self.assertIsNone(res.docs[0].payload)
-            self.assertEqual(res.docs[0].json, '{"name":"henry"}')
-            self.assertEqual(res.total, 1)
 
 
 if __name__ == '__main__':
