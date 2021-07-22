@@ -20,11 +20,13 @@ class Field(object):
     TAG = 'TAG'
     SORTABLE = 'SORTABLE'
     NOINDEX = 'NOINDEX'
+    AS = 'AS'
 
-    def __init__(self, name, args=[], sortable=False, no_index=False):
+    def __init__(self, name, args=[], sortable=False, no_index=False, as_name=None):
         self.name = name
         self.args = args
         self.args_suffix = list()
+        self.as_name = as_name
 
         if sortable:
             self.args_suffix.append(Field.SORTABLE)
@@ -38,7 +40,12 @@ class Field(object):
         self.args.append(value)
 
     def redis_args(self):
-        return [self.name] + self.args + self.args_suffix
+        args = [self.name]
+        if self.as_name:
+            args += [self.AS, self.as_name]
+        args += self.args
+        args += self.args_suffix
+        return args
 
 
 class TextField(Field):

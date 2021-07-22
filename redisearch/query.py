@@ -50,9 +50,18 @@ class Query(object):
 
     def return_fields(self, *fields):
         """
-        Only return values from these fields
+        Add fields to return fields
         """
-        self._return_fields = fields
+        self._return_fields += fields
+        return self
+
+    def return_field(self, field, as_field=None):
+        """
+        Add field to return fields (Optional: add 'AS' name to the field)
+        """
+        self._return_fields.append(field)
+        if as_field is not None:
+            self._return_fields += ("AS", as_field)
         return self
 
     def _mk_field_list(self, fields):
