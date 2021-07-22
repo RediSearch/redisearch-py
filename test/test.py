@@ -107,7 +107,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
                 waitForIndex(r, 'test')
                 # verify info
                 info = client.info()
-                for k in ['index_name', 'index_options', 'fields', 'num_docs',
+                for k in ['index_name', 'index_options', 'attributes', 'num_docs',
                           'max_doc_id', 'num_terms', 'num_records', 'inverted_sz_mb',
                           'offset_vectors_sz_mb', 'doc_table_size_mb', 'key_table_size_mb',
                           'records_per_doc_avg', 'bytes_per_record_avg', 'offsets_per_term_avg',
@@ -732,8 +732,8 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
             # Now get the index info to confirm its contents
             response = client.info()
-            self.assertIn('SORTABLE', response['fields'][0])
-            self.assertIn('NOSTEM', response['fields'][0])
+            self.assertIn('SORTABLE', response['attributes'][0])
+            self.assertIn('NOSTEM', response['attributes'][0])
 
     def testAlterSchemaAdd(self):
         conn = self.redis()
