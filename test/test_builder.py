@@ -17,7 +17,7 @@ class QueryBuilderTest(unittest.TestCase):
 
     def testTags(self):
         self.assertRaises(ValueError, q.tags)
-        self.assertEqual('{1 | 2 | 3}', str(q.tags(1,2,3)))
+        self.assertEqual('{1 | 2 | 3}', str(q.tags(1, 2, 3)))
         self.assertEqual('{foo}', str(q.tags('foo')))
 
     def testUnion(self):
@@ -139,6 +139,6 @@ class QueryBuilderTest(unittest.TestCase):
 
         self.assertEqual(('f1', '50'), r.random_sample('f1', 50).args)
 
-if __name__ == '__main__':
 
+if __name__ == '__main__':
     unittest.main()
