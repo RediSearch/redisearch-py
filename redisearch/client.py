@@ -107,7 +107,8 @@ class IndexDefinition(object):
     IndexDefinition is used to define a index definition for automatic indexing on Hash or Json update.
     """
 
-    def __init__(self, prefix=[], filter=None, language_field=None, language=None, score_field=None, score=1.0, payload_field=None, index_type=None):
+    def __init__(self, prefix=[], filter=None, language_field=None, language=None, score_field=None,
+                 score=1.0, payload_field=None, index_type=None):
         args = []
 
         if index_type is IndexType.HASH:
@@ -182,7 +183,12 @@ class Client(object):
 
     NOOFFSETS = 'NOOFFSETS'
     NOFIELDS = 'NOFIELDS'
+    NOHL = 'NOHL'
+    NOFREQS = 'NOFREQS'
+    MAXTEXTFIELDS = 'MAXTEXTFIELDS'
+    TEMPORARY = 'TEMPORARY'
     STOPWORDS = 'STOPWORDS'
+    SKIPINITIALSCAN = 'SKIPINITIALSCAN'
 
     class BatchIndexer(object):
         """
@@ -256,7 +262,9 @@ class Client(object):
         return Client.BatchIndexer(self, chunk_size=chunk_size)
 
     def create_index(self, fields, no_term_offsets=False,
-                     no_field_flags=False, stopwords=None, definition=None):
+                     no_field_flags=False, stopwords=None, definition=None,
+                     max_text_fields=False, temporary=None, no_highlight=False,
+                     no_term_frequencies=False, skip_initial_scan=False):
         """
         Create the search index. The index must not already exist.
 
@@ -266,15 +274,33 @@ class Client(object):
         - **no_term_offsets**: If true, we will not save term offsets in the index
         - **no_field_flags**: If true, we will not save field flags that allow searching in specific fields
         - **stopwords**: If not None, we create the index with this custom stopword list. The list can be empty
+        - **max_text_fields**: If true, we will encode indexes as if there were more than 32 text fields,
+        which allows you to add additional fields (beyond 32).
+        - **temporary**: Create a lightweight temporary index which will expire after the specified period of
+        inactivity (in seconds). The internal idle timer is reset whenever the index is searched or added to.
+        - **no_highlight**: If true, disabling highlighting support. Also implied by no_term_offsets.
+        - **no_term_frequencies**: If true, we avoid saving the term frequencies in the index.
+        - **skip_initial_scan**: If true, we do not scan and index.
         """
 
         args = [self.CREATE_CMD, self.index_name]
         if definition is not None:
-            args += definition.args            
+            args += definition.args
+        if max_text_fields:
+            args.append(self.MAXTEXTFIELDS)
+        if temporary is not None and isinstance(temporary, int):
+            args.append(self.TEMPORARY)
+            args.append(temporary)
         if no_term_offsets:
             args.append(self.NOOFFSETS)
+        if no_highlight:
+            args.append(self.NOHL)
         if no_field_flags:
             args.append(self.NOFIELDS)
+        if no_term_frequencies:
+            args.append(self.NOFREQS)
+        if skip_initial_scan:
+            args.append(self.SKIPINITIALSCAN)
         if stopwords is not None and isinstance(stopwords, (list, tuple, set)):
             args += [self.STOPWORDS, len(stopwords)]
             if len(stopwords) > 0:
