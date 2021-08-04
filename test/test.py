@@ -336,6 +336,18 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         self.assertEqual(0, res1.total)
         self.assertEqual(1, res2.total)
 
+    def testSkipInitialScan(self):
+        client = self.getCleanClient('idx')
+        client.redis.hset("doc1", "foo", "bar")
+        q = Query('@foo:bar')
+
+        client1 = self.getCleanClient('idx1')
+        client1.create_index((TextField('foo'),))
+        self.assertEqual(1, client1.search(q).total)
+        client2 = self.getCleanClient('idx2')
+        client2.create_index((TextField('foo'),), skip_initial_scan=True)
+        self.assertEqual(0, client2.search(q).total)
+
     def testFilters(self):
         conn = self.redis()
 
@@ -623,6 +635,25 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             self.assertEqual('<b>Henry</b> ... ', doc.play)
             self.assertEqual('ACT I SCENE I. London. The palace. Enter <b>KING</b> <b>HENRY</b>, LORD JOHN OF LANCASTER, the EARL of WESTMORELAND, SIR... ',
                             doc.txt)
+
+    def testSummarizeDisabled(self):
+        # test NOOFFSETS
+        client = self.getCleanClient('idx')
+        client.create_index((TextField('txt'),), no_term_offsets=True)
+        client.add_document('doc1', txt='foo bar')
+        with self.assertRaises(Exception) as context:
+            client.search(Query('foo').summarize(fields=['txt']))
+        self.assertEqual('Cannot use highlight/summarize because NOOFSETS was specified at index level',
+                         str(context.exception))
+
+        # test NOHL
+        client = self.getCleanClient('idx')
+        client.create_index((TextField('txt'),), no_highlight=True)
+        client.add_document('doc1', txt='foo bar')
+        with self.assertRaises(Exception) as context:
+            client.search(Query('foo').summarize(fields=['txt']))
+        self.assertEqual('Cannot use highlight/summarize because NOOFSETS was specified at index level',
+                         str(context.exception))
 
     def testAlias(self):
         conn = self.redis()
