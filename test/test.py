@@ -300,6 +300,28 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             self.assertEqual(1, res.total)
             self.assertEqual('doc1', res.docs[0].id)
 
+    def testExpire(self):
+        client = self.getCleanClient('idx')
+        client.create_index((TextField('txt', sortable=True),), temporary=4)
+
+        redis_client = redis.client.Redis()
+        ttl = redis_client.execute_command('ft.debug', 'TTL', 'idx')
+        self.assertTrue(ttl > 2)
+        while ttl > 2:
+            ttl = redis_client.execute_command('ft.debug', 'TTL', 'idx')
+            time.sleep(0.01)
+
+        # add document - should reset the ttl
+        client.add_document('doc', txt='foo bar', text='this is a simple test')
+        ttl = redis_client.execute_command('ft.debug', 'TTL', 'idx')
+        self.assertTrue(ttl > 2)
+        try:
+            while True:
+                ttl = redis_client.execute_command('ft.debug', 'TTL', 'idx')
+                time.sleep(0.5)
+        except redis.exceptions.ResponseError:
+            self.assertEqual(ttl, 0)
+
     def testStopwords(self):
         # Creating a client with a given index name
         client = self.getCleanClient('idx')
