@@ -788,6 +788,35 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             self.assertIn('SORTABLE', response['attributes'][0])
             self.assertIn('NOSTEM', response['attributes'][0])
 
+    def testMaxTextFields(self):
+        conn = self.redis()
+
+        with conn as r:
+            # Creating a client
+            client = Client('idx1', port=conn.port)
+            client.redis.flushdb()
+
+            # Creating the index definition
+            client.create_index((TextField('f0'),))
+            # Fill the index with fields
+            for x in range(1, 32):
+                client.alter_schema_add((TextField('f{}'.format(x)),))
+            # OK for now.
+
+            # Should be too many indexes
+            with self.assertRaises(redis.ResponseError):
+                client.alter_schema_add((TextField('f{}'.format(x)),))
+
+            # Creating new client
+            client = Client('idx2', port=conn.port)
+            client.redis.flushdb()
+
+            # Creating the index definition
+            client.create_index((TextField('f0'),), max_text_fields=True)
+            # Fill the index with fields
+            for x in range(1, 50):
+                    client.alter_schema_add((TextField('f{}'.format(x)),))
+
     def testAlterSchemaAdd(self):
         conn = self.redis()
 
