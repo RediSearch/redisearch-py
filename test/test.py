@@ -1189,6 +1189,12 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             self.assertEqual('doc:1', total[0].id)
             self.assertEqual('telmatosaurus', total[0].txt)
 
+    def testSingleSchemaField(self):
+        definition = IndexDefinition(index_type=IndexType.JSON)
+        SCHEMA = TextField("$.phone", as_name="phone")
+        rc = Client("idx:user")
+        rc.create_index(SCHEMA, definition=definition)
+
 
 if __name__ == '__main__':
     unittest.main()

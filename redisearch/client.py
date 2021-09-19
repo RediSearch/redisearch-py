@@ -308,7 +308,10 @@ class Client(object):
 
         args.append('SCHEMA')
 
-        args += list(itertools.chain(*(f.redis_args() for f in fields)))
+        try:
+            args += list(itertools.chain(*(f.redis_args() for f in fields)))
+        except TypeError:
+            args += fields.redis_args()
 
         return self.redis.execute_command(*args)
 
