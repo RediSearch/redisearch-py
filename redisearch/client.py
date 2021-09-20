@@ -326,7 +326,10 @@ class Client(object):
 
         args = [self.ALTER_CMD, self.index_name, 'SCHEMA', 'ADD']
 
-        args += list(itertools.chain(*(f.redis_args() for f in fields)))
+        try:
+            args += list(itertools.chain(*(f.redis_args() for f in fields)))
+        except TypeError:
+            args += fields.redis_args()
 
         return self.redis.execute_command(*args)
 
