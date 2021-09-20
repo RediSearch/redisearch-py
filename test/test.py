@@ -826,10 +826,10 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             client.redis.flushdb()
 
             # Creating the index definition and schema
-            client.create_index((TextField('title')))
+            client.create_index(TextField('title'))
 
             # Using alter to add a field
-            client.alter_schema_add((TextField('body')))
+            client.alter_schema_add(TextField('body'))
 
             # Indexing a document
             client.add_document('doc1', title='MyTitle', body='Some content only in the body')
