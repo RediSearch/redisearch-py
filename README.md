@@ -120,7 +120,8 @@ have an `IndexDefinition` instance, you can create the instance by passing a
 schema iterable to the `create_index()` method.
 
 ```py
-from redisearch import Client, IndexDefinition
+from redis import ResponseError
+from redisearch import Client, IndexDefinition, TextField
 
 SCHEMA = (
     TextField("title", weight=5.0),
@@ -133,7 +134,7 @@ definition = IndexDefinition(prefix=['blog:'])
 
 try:
     client.info()
-except ResponseError
+except ResponseError:
     # Index does not exist. We need to create it!
     client.create_index(SCHEMA, definition=definition)
 ```
