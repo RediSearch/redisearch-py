@@ -300,6 +300,28 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             self.assertEqual(1, res.total)
             self.assertEqual('doc1', res.docs[0].id)
 
+    def testExpire(self):
+        client = self.getCleanClient('idx')
+        client.create_index((TextField('txt', sortable=True),), temporary=4)
+
+        redis_client = redis.client.Redis()
+        ttl = redis_client.execute_command('ft.debug', 'TTL', 'idx')
+        self.assertTrue(ttl > 2)
+        while ttl > 2:
+            ttl = redis_client.execute_command('ft.debug', 'TTL', 'idx')
+            time.sleep(0.01)
+
+        # add document - should reset the ttl
+        client.add_document('doc', txt='foo bar', text='this is a simple test')
+        ttl = redis_client.execute_command('ft.debug', 'TTL', 'idx')
+        self.assertTrue(ttl > 2)
+        try:
+            while True:
+                ttl = redis_client.execute_command('ft.debug', 'TTL', 'idx')
+                time.sleep(0.5)
+        except redis.exceptions.ResponseError:
+            self.assertEqual(ttl, 0)
+
     def testStopwords(self):
         # Creating a client with a given index name
         client = self.getCleanClient('idx')
@@ -313,6 +335,18 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
         res1, res2 = client.search(q1), client.search(q2)
         self.assertEqual(0, res1.total)
         self.assertEqual(1, res2.total)
+
+    def testSkipInitialScan(self):
+        client = self.getCleanClient('idx')
+        client.redis.hset("doc1", "foo", "bar")
+        q = Query('@foo:bar')
+
+        client1 = self.getCleanClient('idx1')
+        client1.create_index((TextField('foo'),))
+        self.assertEqual(1, client1.search(q).total)
+        client2 = self.getCleanClient('idx2')
+        client2.create_index((TextField('foo'),), skip_initial_scan=True)
+        self.assertEqual(0, client2.search(q).total)
 
     def testFilters(self):
         conn = self.redis()
@@ -602,6 +636,25 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             self.assertEqual('ACT I SCENE I. London. The palace. Enter <b>KING</b> <b>HENRY</b>, LORD JOHN OF LANCASTER, the EARL of WESTMORELAND, SIR... ',
                             doc.txt)
 
+    def testSummarizeDisabled(self):
+        # test NOOFFSETS
+        client = self.getCleanClient('idx')
+        client.create_index((TextField('txt'),), no_term_offsets=True)
+        client.add_document('doc1', txt='foo bar')
+        with self.assertRaises(Exception) as context:
+            client.search(Query('foo').summarize(fields=['txt']))
+        self.assertEqual('Cannot use highlight/summarize because NOOFSETS was specified at index level',
+                         str(context.exception))
+
+        # test NOHL
+        client = self.getCleanClient('idx')
+        client.create_index((TextField('txt'),), no_highlight=True)
+        client.add_document('doc1', txt='foo bar')
+        with self.assertRaises(Exception) as context:
+            client.search(Query('foo').summarize(fields=['txt']))
+        self.assertEqual('Cannot use highlight/summarize because NOOFSETS was specified at index level',
+                         str(context.exception))
+
     def testAlias(self):
         conn = self.redis()
         with conn as r:
@@ -734,6 +787,35 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             response = client.info()
             self.assertIn('SORTABLE', response['attributes'][0])
             self.assertIn('NOSTEM', response['attributes'][0])
+
+    def testMaxTextFields(self):
+        conn = self.redis()
+
+        with conn as r:
+            # Creating a client
+            client = Client('idx1', port=conn.port)
+            client.redis.flushdb()
+
+            # Creating the index definition
+            client.create_index((TextField('f0'),))
+            # Fill the index with fields
+            for x in range(1, 32):
+                client.alter_schema_add((TextField('f{}'.format(x)),))
+            # OK for now.
+
+            # Should be too many indexes
+            with self.assertRaises(redis.ResponseError):
+                client.alter_schema_add((TextField('f{}'.format(x)),))
+
+            # Creating new client
+            client = Client('idx2', port=conn.port)
+            client.redis.flushdb()
+
+            # Creating the index definition
+            client.create_index((TextField('f0'),), max_text_fields=True)
+            # Fill the index with fields
+            for x in range(1, 50):
+                    client.alter_schema_add((TextField('f{}'.format(x)),))
 
     def testAlterSchemaAdd(self):
         conn = self.redis()
