@@ -2,7 +2,7 @@
 name = "redisearch"
 version = "2.0.0"
 description = "RedisSearch Python Client"
-authors = ["RedisLabs <oss@redislabs.com>"]
+authors = ["Redis <oss@.com>"]
 license = "BSD-3-Clause"
 readme = "README.md"
 
@@ -25,7 +25,7 @@ keywords = ["Redis Search Extension"]
 python = ">=2.7,<=2.9.0 || >= 3.5.0"
 redis = "^3.5.3"
 six = "^1.16.0"
-rmtest = {git = "https://github.com/RedisLabs/rmtest"}
+rmtest = {git = "https://github.com/Redis/rmtest"}
 rejson = "^0.5.4"
 hiredis = [
     {version = "1.1.0", python = "~2.7"},

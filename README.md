@@ -7,7 +7,7 @@
 [![Total alerts](https://img.shields.io/lgtm/alerts/g/RediSearch/redisearch-py.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/RediSearch/redisearch-py/alerts/)
 
 # RediSearch Python Client
-[![Forum](https://img.shields.io/badge/Forum-RediSearch-blue)](https://forum.redislabs.com/c/modules/redisearch/)
+[![Forum](https://img.shields.io/badge/Forum-RediSearch-blue)](https://forum..com/c/modules/redisearch/)
 [![Discord](https://img.shields.io/discord/697882427875393627?style=flat-square)](https://discord.gg/xTbqgTB)
 
 This is a Python search engine library that utilizes the [RediSearch Redis Module](http://redisearch.io) API.
@@ -112,7 +112,7 @@ index from within the Hashes that the index follows. The field types are:
 * GeoField
 
 For more information on what these field types mean, consult the [RediSearch
-documentation](https://oss.redislabs.com/redisearch/Commands/#ftcreate) on
+documentation](https://oss..com/redisearch/Commands/#ftcreate) on
 the `FT.CREATE` command.
 
 With redisearch-py, the schema is an iterable of `Field` instances. Once you
@@ -201,7 +201,7 @@ res = client.search(q)
 ```
 
  For an explanation of these options, see the [RediSearch
- documentation](https://oss.redislabs.com/redisearch/Commands/#ftsearch) for
+ documentation](https://oss..com/redisearch/Commands/#ftsearch) for
  the `FT.SEARCH` command.
 
 #### Query syntax
@@ -232,13 +232,13 @@ client.search("@published_year:[2020 2021]")
 ```
 
 To learn more, see the [RediSearch
-documentation](https://oss.redislabs.com/redisearch/Query_Syntax/) on query
+documentation](https://oss..com/redisearch/Query_Syntax/) on query
 syntax.
 
 ### Aggregations
 
 This library contains a programmatic interface to run [aggregation
-queries](https://oss.redislabs.com/redisearch/Aggregations/) with RediSearch.
+queries](https://oss..com/redisearch/Aggregations/) with RediSearch.
 
 #### Making an aggregation query
 
@@ -281,7 +281,7 @@ FT.AGGREGATE books-idx *
 
 Aggregation queries return an `AggregateResult` object that contains the rows
 returned for the query and a cursor if you're using the [cursor
-API](https://oss.redislabs.com/redisearch/Aggregations/#cursor_api).
+API](https://oss..com/redisearch/Aggregations/#cursor_api).
 
 ```py
 from redisearch.aggregation import AggregateRequest, Asc
@@ -314,7 +314,7 @@ Out[54]:
 #### Reducer functions
 
 Notice from the example that we used an object from the `reducers` module.
-See the [RediSearch documentation](https://oss.redislabs.com/redisearch/Aggregations/#groupby_reducers)
+See the [RediSearch documentation](https://oss..com/redisearch/Aggregations/#groupby_reducers)
 for more examples of reducer functions you can use when grouping results.
 
 Reducer functions include an `alias()` method that gives the result of the
