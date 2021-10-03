@@ -1189,6 +1189,91 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             self.assertEqual('doc:1', total[0].id)
             self.assertEqual('telmatosaurus', total[0].txt)
 
+    def test_text_params(self):
+        conn = self.redis()
+
+        with conn as r:
+            # Creating a client with a given index name
+            client = Client('idx', port=conn.port)
+            client.redis.flushdb()
+            client.create_index((TextField('name'),))
+
+            client.add_document('doc1', name='Alice')
+            client.add_document('doc2', name='Bob')
+            client.add_document('doc3', name='Carol')
+
+
+            q = Query("@name:($name1 | $name2 )").set_params_dict({"name1":"Alice", "name2":"Bob"})
+            res = client.search(q)
+            self.assertEqual(2, res.total)
+            self.assertEqual('doc1', res.docs[0].id)
+            self.assertEqual('doc2', res.docs[1].id)
+
+            q = Query("@name:($name1 | $name2 )").add_param("name1", "Alice").add_param("name2", "Bob")
+            res = client.search(q)
+            self.assertEqual(2, res.total)
+            self.assertEqual('doc1', res.docs[0].id)
+            self.assertEqual('doc2', res.docs[1].id)
+
+
+    def test_numeric_params(self):
+        conn = self.redis()
+
+        with conn as r:
+            # Creating a client with a given index name
+            client = Client('idx', port=conn.port)
+            client.redis.flushdb()
+            client.create_index((NumericField('numval'),))
+
+            client.add_document('doc1', numval=101)
+            client.add_document('doc2', numval=102)
+            client.add_document('doc3', numval=103)
+
+            q = Query('@numval:[$min $max]').set_params_dict({"min":101, "max":102})
+            res = client.search(q)
+            self.assertEqual(2, res.total)
+
+            self.assertEqual('doc1', res.docs[0].id)
+            self.assertEqual('doc2', res.docs[1].id)
+
+            q = Query('@numval:[$min $max]').add_param("min", 101).add_param("max", 102)
+            res = client.search(q)
+            self.assertEqual(2, res.total)
+
+            self.assertEqual('doc1', res.docs[0].id)
+            self.assertEqual('doc2', res.docs[1].id)
+
+    def test_geo_params(self):
+        conn = self.redis()
+
+        with conn as r:
+            # Creating a client with a given index name
+            client = Client('idx', port=conn.port)
+            client.redis.flushdb()
+            client.create_index((GeoField('g'),))
+
+            client.add_document('doc1', g='29.69465, 34.95126')
+            client.add_document('doc2', g='29.69350, 34.94737')
+            client.add_document('doc3', g='29.68746, 34.94882')
+
+            q = Query('@g:[$lon $lat $radius $units]').set_params_dict({"lat":'34.95126', "lon":'29.69465', "radius":10, "units":"km"})
+            res = client.search(q)
+            self.assertEqual(3, res.total)
+
+            self.assertEqual('doc1', res.docs[0].id)
+            self.assertEqual('doc2', res.docs[1].id)
+            self.assertEqual('doc3', res.docs[2].id)
+
+
+            q = Query('@g:[$lon $lat $radius $units]').add_param("lat", '34.95126').add_param("lon", '29.69465',).add_param("radius", 10).add_param("units", "km")
+            res = client.search(q)
+            self.assertEqual(3, res.total)
+
+            self.assertEqual('doc1', res.docs[0].id)
+            self.assertEqual('doc2', res.docs[1].id)
+            self.assertEqual('doc3', res.docs[2].id)
+
+
 
 if __name__ == '__main__':
     unittest.main()
