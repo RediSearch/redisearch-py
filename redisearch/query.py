@@ -1,4 +1,3 @@
-from typing import Dict, Union
 import six
 
 class Query(object):
@@ -35,7 +34,6 @@ class Query(object):
         self._summarize_fields = []
         self._highlight_fields = []
         self._language = None
-        self._params = {}
 
     def query_string(self):
         """
@@ -149,17 +147,6 @@ class Query(object):
         self._scorer = scorer
         return self
 
-    @staticmethod
-    def get_params_args(params: Dict[str, Union[str, int, float]]):
-        args = []
-        if len(params) > 0:
-            args.append("PARAMS")
-            args.append(len(params)*2)
-            for key, value in params.items():
-                args.append(key)
-                args.append(value)
-        return args
-
     def get_args(self):
         """
         Format the redis arguments for this query and return them
@@ -222,8 +209,6 @@ class Query(object):
 
         args += self._summarize_fields + self._highlight_fields
         args += ["LIMIT", self._offset, self._num]
-
-        args+= Query.get_params_args(self._params)
 
         return args
 
@@ -303,26 +288,6 @@ class Query(object):
         """
         self._sortby = SortbyField(field, asc)
         return self
-
-    def set_params_dict(self, params: Dict[str, Union[str, int, float]]):
-        """"
-        Add a parameters dictionary. Overwrites an existing parameters dictionary.
-
-        - **params** - Dict[str, Union[str, int, float]] dictionary
-        """
-        self._params = params
-        return self
-
-    def set_param(self, param_name:str, value:Union[str, int, float]):
-        """
-        Adds a parameter to the parameters dictionary.
-
-        - **param_name** - parmaeter name
-        - **value** - parameter value
-        """
-        self._params[param_name] = value
-        return self
-
 
 class Filter(object):
 

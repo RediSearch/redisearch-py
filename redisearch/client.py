@@ -502,6 +502,16 @@ class Client(object):
         it = six.moves.map(to_string, res)
         return dict(six.moves.zip(it, it))
 
+    def get_params_args(self, params: Dict[str, Union[str, int, float]]):
+        args = []
+        if len(params) > 0:
+            args.append("PARAMS")
+            args.append(len(params)*2)
+            for key, value in params.items():
+                args.append(key)
+                args.append(value)
+        return args
+
     def _mk_query_args(self, query, query_params):
         args = [self.index_name]
 
@@ -512,7 +522,7 @@ class Client(object):
             raise ValueError("Bad query type %s" % type(query))
         args += query.get_args()
         if query_params is not None:
-            args+= Query.get_params_args(query_params)
+            args+= self.get_params_args(query_params)
         return args, query
 
     def search(self, query, query_params: Dict[str, Union[str, int, float]] = None):
@@ -559,7 +569,7 @@ class Client(object):
         else:
             raise ValueError('Bad query', query)
         if query_params is not None:
-            cmd+= Query.get_params_args(query_params)
+            cmd+= self.get_params_args(query_params)
         raw = self.redis.execute_command(*cmd)
         if has_cursor:
             if isinstance(query, Cursor):
