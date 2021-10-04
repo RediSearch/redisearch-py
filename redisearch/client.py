@@ -1,3 +1,4 @@
+from typing import Dict, Union
 from redis import Redis, ConnectionPool
 import itertools
 import time
@@ -501,7 +502,7 @@ class Client(object):
         it = six.moves.map(to_string, res)
         return dict(six.moves.zip(it, it))
 
-    def _mk_query_args(self, query):
+    def _mk_query_args(self, query, query_params):
         args = [self.index_name]
 
         if isinstance(query, six.string_types):
@@ -509,11 +510,12 @@ class Client(object):
             query = Query(query)
         if not isinstance(query, Query):
             raise ValueError("Bad query type %s" % type(query))
-
+        if query_params is not None:
+            query.set_params_dict(query_params)
         args += query.get_args()
         return args, query
 
-    def search(self, query):
+    def search(self, query, query_params: Dict[str, Union[str, int, float]] = None):
         """
         Search the index for a given query, and return a result of documents
 
@@ -522,7 +524,7 @@ class Client(object):
         - **query**: the search query. Either a text for simple queries with default parameters, or a Query object for complex queries.
                      See RediSearch's documentation on query format
         """
-        args, query = self._mk_query_args(query)
+        args, query = self._mk_query_args(query, query_params=query_params)
         st = time.time()
         res = self.redis.execute_command(self.SEARCH_CMD, *args)
 
@@ -532,8 +534,8 @@ class Client(object):
                       has_payload=query._with_payloads,
                       with_scores=query._with_scores)
 
-    def explain(self, query):
-        args, query_text = self._mk_query_args(query)
+    def explain(self, query, query_params: Dict[str, Union[str, int, float]] = None):
+        args, query_text = self._mk_query_args(query, query_params=query_params)
         return self.redis.execute_command(self.EXPLAIN_CMD, *args)
 
     def aggregate(self, query):
