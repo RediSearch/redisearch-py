@@ -510,9 +510,9 @@ class Client(object):
             query = Query(query)
         if not isinstance(query, Query):
             raise ValueError("Bad query type %s" % type(query))
-        if query_params is not None:
-            query.set_params_dict(query_params)
         args += query.get_args()
+        if query_params is not None:
+            args+= Query.get_params_args(query_params)
         return args, query
 
     def search(self, query, query_params: Dict[str, Union[str, int, float]] = None):
@@ -538,7 +538,7 @@ class Client(object):
         args, query_text = self._mk_query_args(query, query_params=query_params)
         return self.redis.execute_command(self.EXPLAIN_CMD, *args)
 
-    def aggregate(self, query):
+    def aggregate(self, query, query_params: Dict[str, Union[str, int, float]] = None):
         """
         Issue an aggregation query
 
@@ -558,7 +558,8 @@ class Client(object):
                    self.index_name] + query.build_args()
         else:
             raise ValueError('Bad query', query)
-
+        if query_params is not None:
+            cmd+= Query.get_params_args(query_params)
         raw = self.redis.execute_command(*cmd)
         if has_cursor:
             if isinstance(query, Cursor):

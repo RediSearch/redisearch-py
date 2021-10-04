@@ -149,6 +149,17 @@ class Query(object):
         self._scorer = scorer
         return self
 
+    @staticmethod
+    def get_params_args(params: Dict[str, Union[str, int, float]]):
+        args = []
+        if len(params) > 0:
+            args.append("PARAMS")
+            args.append(len(params)*2)
+            for key, value in params.items():
+                args.append(key)
+                args.append(value)
+        return args
+
     def get_args(self):
         """
         Format the redis arguments for this query and return them
@@ -212,12 +223,7 @@ class Query(object):
         args += self._summarize_fields + self._highlight_fields
         args += ["LIMIT", self._offset, self._num]
 
-        if len(self._params) > 0:
-            args.append("PARAMS")
-            args.append(len(self._params)*2)
-            for key, value in self._params.items():
-                args.append(key)
-                args.append(value)
+        args+= Query.get_params_args(self._params)
 
         return args
 
