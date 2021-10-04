@@ -307,7 +307,7 @@ class Query(object):
         self._params = params
         return self
 
-    def add_param(self, param_name:str, value:Union[str, int, float]):
+    def set_param(self, param_name:str, value:Union[str, int, float]):
         """
         Adds a parameter to the parameters dictionary.
 

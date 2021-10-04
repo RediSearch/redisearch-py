@@ -1209,7 +1209,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             self.assertEqual('doc1', res.docs[0].id)
             self.assertEqual('doc2', res.docs[1].id)
 
-            q = Query("@name:($name1 | $name2 )").add_param("name1", "Alice").add_param("name2", "Bob")
+            q = Query("@name:($name1 | $name2 )").set_param("name1", "Alice").set_param("name2", "Bob")
             res = client.search(q)
             self.assertEqual(2, res.total)
             self.assertEqual('doc1', res.docs[0].id)
@@ -1236,7 +1236,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             self.assertEqual('doc1', res.docs[0].id)
             self.assertEqual('doc2', res.docs[1].id)
 
-            q = Query('@numval:[$min $max]').add_param("min", 101).add_param("max", 102)
+            q = Query('@numval:[$min $max]').set_param("min", 101).set_param("max", 102)
             res = client.search(q)
             self.assertEqual(2, res.total)
 
@@ -1265,7 +1265,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             self.assertEqual('doc3', res.docs[2].id)
 
 
-            q = Query('@g:[$lon $lat $radius $units]').add_param("lat", '34.95126').add_param("lon", '29.69465',).add_param("radius", 10).add_param("units", "km")
+            q = Query('@g:[$lon $lat $radius $units]').set_param("lat", '34.95126').set_param("lon", '29.69465',).set_param("radius", 10).set_param("units", "km")
             res = client.search(q)
             self.assertEqual(3, res.total)
 
