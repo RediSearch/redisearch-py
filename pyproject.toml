@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "redisearch"
-version = "2.0.0"
+version = "2.1.0"
 description = "RedisSearch Python Client"
 authors = ["Redis <oss@.com>"]
 license = "BSD-3-Clause"
@@ -10,11 +10,11 @@ classifiers = [
     'Topic :: Database',
     'Programming Language :: Python',
     'Intended Audience :: Developers',
-    'Programming Language :: Python :: 2.7',
     'Programming Language :: Python :: 3.6',
     'Programming Language :: Python :: 3.7',
     'Programming Language :: Python :: 3.8',
     'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
     'License :: OSI Approved :: BSD License',
     'Development Status :: 5 - Production/Stable'
 
@@ -22,13 +22,12 @@ classifiers = [
 keywords = ["Redis Search Extension"]
 
 [tool.poetry.dependencies]
-python = ">=2.7,<=2.9.0 || >= 3.5.0"
+python = "^3.6.0"
 redis = "^3.5.3"
 six = "^1.16.0"
 rmtest = {git = "https://github.com/Redis/rmtest"}
 rejson = "^0.5.4"
 hiredis = [
-    {version = "1.1.0", python = "~2.7"},
     {version = "^2.0.0", python = "^3.6"},
 ]
 
@@ -40,11 +39,11 @@ repository = "https://github.com/RedisSearch/redisearch-py"
 
 [tool.poetry.dev-dependencies]
 codecov = "^2.1.11"
-flake8 = "^3.9.2"
-tox = "3.15.1"
-tox-poetry = "0.3.0"
+flake8 = "^4.0.0"
+tox = "^3.22.0 || <= 4.0.0"
+tox-poetry = "^0.4.0"
 bandit = "1.6.0"
-vulture = "1.6"
+vulture = "^2.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

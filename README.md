@@ -404,6 +404,11 @@ $ pip install redisearch
 3. Install dependencies.
    ```poetry install```
 
+Note: Due to an [interaction between](https://github.com/python-poetry/poetry/issues/4210) and python 3.10, you *may* need to run the following, if you receive a JSONError while installing packages.
+```
+poetry config experimental.new-installer false
+```
+
 ## Testing
 
 Testing can easily be performed using using Docker.
