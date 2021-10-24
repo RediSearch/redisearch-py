@@ -56,6 +56,8 @@ commands:
       - run:
           name: install dependencies
           command: |
+            # https://github.com/python-poetry/poetry/issues/4210
+            poetry config experimental.new-installer false
             poetry install
 
       - run:
@@ -118,6 +120,7 @@ python-versions: &python-versions
         - "3.7.9"
         - "3.8.9"
         - "3.9.4"
+        - "3.10.0"
         - "latest"
 
 workflows:
