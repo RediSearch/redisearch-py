@@ -51,6 +51,7 @@ commands:
       - run:
           name: install tox dependencies
           command: |
+            pip install --upgrade pip
             pip install --user --quiet -r .circleci/circle_requirements.txt
 
       - run:
