@@ -44,7 +44,7 @@ commands:
 
       - restore_cache: # Download and cache dependencies
           keys:
-          - v1-dependencies-{{ checksum "pyproject.toml" }}
+          - v1-dependencies-{{ checksum "pyproject.toml" }}-{{ checksum "tox.ini" }}-{{checksum ".circleci/config.yml" }}
           # fallback to using the latest cache if no exact match is found
           - v1-dependencies-
 
@@ -81,7 +81,7 @@ commands:
             - ./.tox
             - ~/.cache/pip
             - ~/.cache/pypoetry
-          key: v1-dependencies-{{ checksum "pyproject.toml" }}
+          key: v1-dependencies-{{ checksum "pyproject.toml" }}-{{ checksum "tox.ini" }}-{{checksum ".circleci/config.yml" }}
 
       - store_artifacts:
           path: test-reports
