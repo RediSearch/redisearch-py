@@ -42,15 +42,10 @@ commands:
       - abort_for_noci
       - checkout
 
-      - restore_cache: # Download and cache dependencies
-          keys:
-          - v1-dependencies-{{ checksum "pyproject.toml" }}
-          # fallback to using the latest cache if no exact match is found
-          - v1-dependencies-
-
       - run:
           name: install tox dependencies
           command: |
+            pip install --user --upgrade --quiet pip virtualenv
             pip install --user --quiet -r .circleci/circle_requirements.txt
 
       - run:
@@ -74,13 +69,6 @@ commands:
           name: run tests
           command:
             tox -e cover
-
-      - save_cache:
-          paths:
-            - ./.tox
-            - ~/.cache/pip
-            - ~/.cache/pypoetry
-          key: v1-dependencies-{{ checksum "pyproject.toml" }}
 
       - store_artifacts:
           path: test-reports
