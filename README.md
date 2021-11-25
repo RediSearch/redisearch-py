@@ -10,6 +10,12 @@
 [![Forum](https://img.shields.io/badge/Forum-RediSearch-blue)](https://forum.redislabs.com/c/modules/redisearch/)
 [![Discord](https://img.shields.io/discord/697882427875393627?style=flat-square)](https://discord.gg/xTbqgTB)
 
+## Deprecation notice
+
+As of [redis-py 4.0.0](https://pypi.org/project/redis/4.0.0) this library is deprecated. It's features have been merged into redis-py. Please either install it [from pypy](https://pypi.org/project/redis) or [the repo](https://github.com/redis/redis-py).
+
+--------------------------------
+
 This is a Python search engine library that utilizes the [RediSearch Redis Module](http://redisearch.io) API.
 
 It is the "official" client of RediSearch, and should be regarded as its canonical client implementation.
