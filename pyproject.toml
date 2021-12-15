@@ -30,14 +30,12 @@ hiredis = [
     {version = "^2.0.0", python = "^3.6"},
 ]
 
-[tool.poetry.dev-dependencies]
-rmtest = {git = "https://github.com/RedisLabs/rmtest"}
-
 [tool.poetry.urls]
 url = "https://redisearch.io"
 repository = "https://github.com/RedisSearch/redisearch-py"
 
 [tool.poetry.dev-dependencies]
+rmtest = {git = "https://github.com/RedisLabs/rmtest"}
 codecov = "^2.1.11"
 flake8 = "^4.0.0"
 tox = "^3.22.0 || <= 4.0.0"
