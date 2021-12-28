@@ -343,9 +343,11 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
 
         client1 = self.getCleanClient('idx1')
         client1.create_index((TextField('foo'),))
+        waitForIndex(client1.redis, 'idx1')
         self.assertEqual(1, client1.search(q).total)
         client2 = self.getCleanClient('idx2')
         client2.create_index((TextField('foo'),), skip_initial_scan=True)
+        waitForIndex(client2.redis, 'idx2')
         self.assertEqual(0, client2.search(q).total)
 
     def testFilters(self):
