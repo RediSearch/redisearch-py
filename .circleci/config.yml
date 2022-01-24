@@ -42,10 +42,11 @@ commands:
       - abort_for_noci
       - checkout
 
+      # https://github.com/python-poetry/poetry/issues/4515
       - run:
           name: install tox dependencies
           command: |
-            pip install --user --upgrade --quiet pip virtualenv
+            pip install --user --upgrade --quiet pip virtualenv==20.7.2
             pip install --user --quiet -r .circleci/circle_requirements.txt
 
       - run:

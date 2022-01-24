@@ -1180,6 +1180,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             )
             json_client = Client('idxJson')
             json_client.create_index(SCHEMA, definition=definition)
+            waitForIndex(r, 'idxJson')
 
             total = json_client.search(Query('*').return_field("$.t", as_field="txt")).docs
             self.assertEqual(1, len(total))
