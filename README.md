@@ -12,7 +12,7 @@
 
 ## Deprecation notice
 
-As of [redis-py 4.0.0](https://pypi.org/project/redis/4.0.0) this library is deprecated. It's features have been merged into redis-py. Please either install it [from pypy](https://pypi.org/project/redis) or [the repo](https://github.com/redis/redis-py).
+As of [redis-py 4.0.0](https://pypi.org/project/redis/4.0.0) this library is deprecated. It's features have been merged into redis-py. Please either install it [from pypi](https://pypi.org/project/redis) or [the repo](https://github.com/redis/redis-py).
 
 --------------------------------
 
