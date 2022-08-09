@@ -1026,7 +1026,7 @@ class RedisSearchTestCase(ModuleTestCase('../module.so')):
             self.assertEqual('7', res[15])
             self.assertEqual('3.60555127546', res[17])
             self.assertEqual('8', res[19])
-            self.assertEqual(['RediSearch', 'RedisAI', 'RedisJson'], res[21])
+            self.assertEqual(set(['RediSearch', 'RedisAI', 'RedisJson']), set(res[21]))
             self.assertEqual('RediSearch', res[23])
             self.assertEqual(2, len(res[25]))
 
