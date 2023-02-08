@@ -1,6 +1,5 @@
 [![license](https://img.shields.io/github/license/RediSearch/redisearch-py.svg)](https://github.com/RediSearch/redisearch-py/blob/master/LICENSE)
 [![PyPI version](https://badge.fury.io/py/redisearch.svg)](https://badge.fury.io/py/redisearch)
-[![CircleCI](https://circleci.com/gh/RediSearch/redisearch-py/tree/master.svg?style=svg)](https://circleci.com/gh/RediSearch/redisearch-py/tree/master)
 [![GitHub issues](https://img.shields.io/github/release/RediSearch/redisearch-py.svg)](https://github.com/RediSearch/redisearch-py/releases/latest)
 [![Codecov](https://codecov.io/gh/RediSearch/redisearch-py/branch/master/graph/badge.svg)](https://codecov.io/gh/RediSearch/redisearch-py)
 [![Known Vulnerabilities](https://snyk.io/test/github/RediSearch/redisearch-py/badge.svg?targetFile=pyproject.toml)](https://snyk.io/test/github/RediSearch/redisearch-py?targetFile=pyproject.toml)
