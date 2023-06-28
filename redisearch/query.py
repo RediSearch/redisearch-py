@@ -209,6 +209,7 @@ class Query(object):
 
         args += self._summarize_fields + self._highlight_fields
         args += ["LIMIT", self._offset, self._num]
+
         return args
 
     def paging(self, offset, num):
@@ -287,7 +288,6 @@ class Query(object):
         """
         self._sortby = SortbyField(field, asc)
         return self
-
 
 class Filter(object):
 
